@@ -12,8 +12,8 @@ Name your repository using the following format:
 ## TA
 &lt;Name of your group's TA&gt;
 
+## Objectives
+&lt;Description of what your project is about, your key functionalities, tech stacks used, etc. &gt;
+
 ## How to Run
 &lt;Instructions for how to run your project. Include the URI to your project at the top if applicable.&gt;
-
-## Objectives
-&lt;Description of what your project is about.&gt;
