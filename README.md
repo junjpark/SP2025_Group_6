@@ -1,8 +1,18 @@
-# Project Name (Must Follow the Format): <S2025 - [Insert Name] + [Insert Group Number]>
+# SP2025: Group <Group Number> <Project Name>
 
-### Team member names: <Insert Here>
-### Github ID of each individual: <Insert Here>
-### Email of each individual: <Insert Here>
-### TA: <Insert Here>
+## Instruction For Naming Repo:
+Name your repo following this format: <strong>SP2025_Group_<Group Number></strong> (Example: SP2025_Group_9)
 
-### Instructions/Link to access: <insert here>
+## Team Member Names, Github ID, Email:
+1. <Member Name>: <Github ID>, <Email Address>
+2. <Member Name>: <Github ID>, <Email Address>
+3. <Member Name>: <Github ID>, <Email Address>
+
+## TA:
+<Name of your group's TA>
+
+## How to Run:
+<Instruction for us to know how to run your project. Include URI to your project on top if applicable>
+
+## Objectives:
+<What your project is about>
