@@ -1,8 +1,8 @@
 # SP2025: Group &lt;Group Number&gt; &lt;Project Name&gt;
 
 ## Instruction For Naming Repo
-Name your repository using the following format: 
-**SP2025_Group_&lt;Group Number&gt;** 
+Name your repository using the following format:  
+**SP2025_Group_&lt;Group Number&gt;**  
 (Example: SP2025_Group_9)
 
 ## Team Members
