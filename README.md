@@ -1,4 +1,4 @@
-# SP2025: Group &lt;Group No.&gt; &lt;Project Name&gt;
+# SP2025: Group &lt;Group Number.&gt; &lt;Project Name&gt;
 
 Name your repository using the following format:  
 **SP2025_Group_&lt;Group Number&gt;**  
