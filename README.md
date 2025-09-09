@@ -1,8 +1,6 @@
-# SP2025: Group 6 cory
+# SP2025: Group 6 
 
-Name your repository using the following format:  
-**SP2025_Group_&lt;Group Number&gt;**  
-(Example: FL2025_Group_9)
+cory
 
 ## Team Members
 - **&lt;Justin Park&gt;**: &lt;junjpark02@gmail.com&gt; ; &lt;junjpark&gt;
