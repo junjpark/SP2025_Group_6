@@ -34,17 +34,26 @@ cory aims to make learning choreography as interactive and data-driven as possib
 
 
 ## How to Run
-Backend Instructions:
-'''bash
+
+### Backend Instructions
+
+<code>
 cd backend
 python -m venv venv
+# Mac/Linux:
 source venv/bin/activate
+# Windows:
+# venv\Scripts\activate
 pip install -r requirements.txt
 python main.py
+</code>
 
-Frontend Instructions:
-'''bash
+
+### Frontend Instructions
+<code>
 cd cory
 npm install
 npm run dev
+</code>
+
 
