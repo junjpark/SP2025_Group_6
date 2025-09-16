@@ -22,8 +22,8 @@ app.add_middleware(
 
 #tells the app to return json object message at root aka http://localhost:8000/
 @app.get("/", tags=["root"])
-"""
-This greets the world in a spectacular fashion.
-"""
 async def read_root():
+    """
+    This greets the world in a spectacular fashion.
+    """
     return {"message": "Hello world!"}
