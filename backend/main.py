@@ -1,3 +1,8 @@
+"""
+Main application module for the backend service.
+
+This module contains the primary application logic and entry points.
+"""
 import uvicorn
 
 if __name__ == "__main__":
