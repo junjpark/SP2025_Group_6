@@ -26,8 +26,7 @@ jobs:
     - name: Analysing the code with pylint
       run: |
         pylint $(git ls-files '*.py')
-
-  # --- ADDED THIS NEW JOB FOR ESLINT ---
+        
   eslint:
     name: Lint React App
     runs-on: ubuntu-latest
@@ -41,14 +40,14 @@ jobs:
         node-version: "20"
         cache: 'npm'
         # Point cache to the correct lock file location
-        cache-dependency-path: frontend/package-lock.json
+        cache-dependency-path: package-lock.json
 
     - name: Install dependencies
       # This command runs inside the 'frontend' folder
-      working-directory: ./frontend
+      working-directory: ./cory
       run: npm ci
 
     - name: Run ESLint
       # This command also runs inside the 'frontend' folder
-      working-directory: ./frontend
+      working-directory: ./cory
       run: npm run lint
