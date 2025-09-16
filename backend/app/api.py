@@ -1,3 +1,6 @@
+"""
+This is a file that makes the endpoints for our backend.
+"""
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,4 +24,3 @@ app.add_middleware(
 @app.get("/", tags=["root"])
 async def read_root():
     return {"message": "Hello world!"}
-
