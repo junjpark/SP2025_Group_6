@@ -5,7 +5,7 @@ cory
 ## Team Members
 - **Justin Park**: junjpark02@gmail.com junjpark
 - **Julie Baguio**: baguio@wustl.edu julesebags
-- **Andy Hoette**: a.h.hoette@wustl.eduAndyHoette
+- **Andy Hoette**: a.h.hoette@wustl.edu AndyHoette
 - **Abby Shen**: a.e.shen@wustl.edu aeshen27
 
 ## TA
