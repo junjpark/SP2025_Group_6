@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Library from "./pages/LIbrary/Library";
 
 function App() {
   const [message, setMessage] = useState("Loading...");
@@ -10,10 +11,7 @@ function App() {
       .catch((err) => setMessage("Error: " + err));
   });
   return (
-    <div>
-      <h1>FastAPI + React</h1>
-      <p>{ message }</p>
-    </div>
+    Library()
   )
 }
 export default App;
