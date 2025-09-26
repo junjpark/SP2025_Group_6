@@ -33,4 +33,5 @@ __pycache__/
 venv/
 
 #Secrets
-flyway.conf
+flyway.toml
+
