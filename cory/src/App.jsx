@@ -1,18 +1,26 @@
 import { useEffect, useState } from "react";
 
-function App() {
-  const [message, setMessage] = useState("Loading...");
+import { BrowserRouter as Router, Route, Routes} from "react-router-dom"
+import LoginForm from "./Login.jsx"
+import Signup from "./Signup.jsx"
 
-  useEffect(() => {
-    fetch("http://localhost:8000")
-      .then((res) => res.json())
-      .then((data) => setMessage(data.message))
-      .catch((err) => setMessage("Error: " + err));
-  });
+
+
+function App() {
+
+
+
   return (
     <div>
-      <h1>FastAPI + React</h1>
-      <p>{ message }</p>
+      <Router>
+
+
+        <Routes>
+          <Route path = "/login" element = {<LoginForm/>}></Route>
+          <Route path = '/signup' element = {<Signup></Signup>}></Route>
+        </Routes>
+      </Router>
+      
     </div>
   )
 }
