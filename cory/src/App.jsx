@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ProjectView from "./ProjectView";
 
 function App() {
   const [message, setMessage] = useState("Loading...");
@@ -11,6 +12,7 @@ function App() {
   });
   return (
     <div>
+      <ProjectView></ProjectView>
       <h1>FastAPI + React</h1>
       <p>{ message }</p>
     </div>
