@@ -6,6 +6,7 @@ import snoopy from "../../snoopy-dancing.jpg";
 
 export default function Library() {
     const projects = [ //fetch from backend later
+        { id: 0, title: "Create New", isCreate: true },
         { id: 1, title: "Project One", imageUrl: snoopy },
         { id: 2, title: "Project Two", imageUrl: snoopy },
         { id: 3, title: "Project Three", imageUrl: snoopy },
@@ -19,7 +20,8 @@ export default function Library() {
                         key={project.id} 
                         id={project.id} 
                         title={project.title} 
-                        imageUrl={project.imageUrl} 
+                        imageUrl={project.imageUrl}
+                        isCreate={project.isCreate} 
                     />
                 ))}
             </div>
