@@ -31,3 +31,6 @@ __pycache__/
 
 #virtual environments
 venv/
+
+#Secrets
+flyway.conf
