@@ -1,6 +1,15 @@
+import { useRef } from 'react';
+
 function Clip({start, end, onClick}){
+    const clipDiv = useRef(null);
+    
+    function handleClick(e){
+        e.stopPropagation();
+        onClick(start,end, clipDiv.current);
+    }
+
     return (<>
-        <div className="clip" onClick={() => onClick(end)}></div>
+        <div ref={clipDiv} className="clip" onClick={(e) => {handleClick(e)}}></div>
     </>)
 };
 
