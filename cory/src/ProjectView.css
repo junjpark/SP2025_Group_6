@@ -75,10 +75,17 @@ table {
 #projectViewVideoPlayer{
     display: flex;
     align-items: center;
+    justify-content: center;
+    width: 60%;
 }
 
 #projectViewToolbar {
     width: 20%;
+}
+
+#scissorsHolder{
+    background-color: white;
+    width: fit-content;
 }
 
 #videoPlayer{
@@ -87,13 +94,6 @@ table {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-}
-
-#videoPlayerBox{
-    background-color: black;
-    padding: 10px;
-    height: 50%;
-    width: 80%;
 }
 
 #mediaButtons{
@@ -134,4 +134,9 @@ table {
     height: 70%;
     background-color: #000;
     width: 10%;
+    border: 2px solid transparent;
+}
+
+.selected{
+    border: 2px solid #FFFFFF;
 }
