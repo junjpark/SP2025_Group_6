@@ -33,6 +33,7 @@ function setClipTimeStamps(a,b, divToHighlight){
 }
 
 function clip(){
+    setClipTimeStamps(0, 13.346667, null); //TODO: discuss what to do with this
     const videoCurrentTime = videoPlayerRef.current.currentTime;
     let newClipTimings = []
     for(const interval of clipTimings){
@@ -68,7 +69,7 @@ return (
             Clip Info {startClipTimeStamp} , {endClipTimeStamp}
         </div>
     </div>
-    <footer id="projectViewFooter" onClick={()=>setClipTimeStamps(0, 13.346667, )}>
+    <footer id="projectViewFooter" onClick={()=>setClipTimeStamps(0, 13.346667, null)}>
         {clipTimings.map(function(tuple,idx) {
             return (
                 <Clip start={tuple[0]} end={tuple[1]} onClick={(a,b, divToHighlight)=>{setClipTimeStamps(a,b, divToHighlight)}} key={idx}></Clip>
