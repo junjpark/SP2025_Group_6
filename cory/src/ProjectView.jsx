@@ -15,18 +15,18 @@ const videoPlayerRef = useRef(null);
 const [startClipTimeStamp, setStartClipTimeStamp] = useState(0);
 const [endClipTimeStamp, setEndClipTimeStamp] = useState(13.346667);
 const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); //time stamps are of the form [a,b)
-const [selectedClip, setSelectedClip] = useState(null)
+const [selectedClipDiv, setSelectedClipDiv] = useState(null)
 
 function setClipTimeStamps(a,b, divToHighlight){
-    if(selectedClip != null){
-        selectedClip.classList.remove("selected")
+    if(selectedClipDiv != null){
+        selectedClipDiv.classList.remove("selected")
     }
     if((a == startClipTimeStamp && b == endClipTimeStamp) || divToHighlight == null){
         setStartClipTimeStamp(0);
         setEndClipTimeStamp(13.346667);
         return;
     }
-    setSelectedClip(divToHighlight);
+    setSelectedClipDiv(divToHighlight);
     divToHighlight.classList.add("selected")
     setStartClipTimeStamp(a);
     setEndClipTimeStamp(b);
@@ -62,7 +62,7 @@ return (
             
         </div>
         <div id="projectViewVideoPlayer">
-            <CustomVideoPlayer ref={videoPlayerRef}></CustomVideoPlayer>
+            <CustomVideoPlayer ref={videoPlayerRef} start={startClipTimeStamp} end={endClipTimeStamp}></CustomVideoPlayer>
         </div>
         <div id="clipInfo">
             Clip Info {startClipTimeStamp} , {endClipTimeStamp}
