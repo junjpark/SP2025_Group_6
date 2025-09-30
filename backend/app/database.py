@@ -3,9 +3,9 @@ Database connection utilities for PostgreSQL.
 Handles connection pooling and error management.
 """
 
+import os
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import os
 from dotenv import load_dotenv
 
 # Load environment variables from .env file

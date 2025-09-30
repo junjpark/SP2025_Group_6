@@ -3,6 +3,7 @@ FastAPI application with authentication endpoints.
 Handles user registration, login, Google OAuth, and protected routes.
 """
 
+from datetime import timedelta
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,8 +17,8 @@ from .auth import (
     get_user_by_google_id
 )
 from .database import get_db_connection
-from datetime import timedelta
-import json
+
+
 
 # Initialize FastAPI application
 app = FastAPI(
