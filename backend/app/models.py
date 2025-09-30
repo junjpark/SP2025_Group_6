@@ -3,9 +3,8 @@ Pydantic models for authentication and user management.
 These models define the structure of data for API requests and responses.
 """
 
-from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime
+from pydantic import BaseModel
 
 class UserCreate(BaseModel):
     """

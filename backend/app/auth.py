@@ -4,12 +4,14 @@ Includes password hashing, token creation/validation, and user authentication.
 """
 
 from datetime import datetime, timedelta
+import os
 from typing import Optional
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from .database import get_db_connection
-import os
 from dotenv import load_dotenv
+from .database import get_db_connection
+
+
 
 # Load environment variables
 load_dotenv()
