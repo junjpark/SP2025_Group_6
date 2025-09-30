@@ -49,32 +49,7 @@ export default function DashboardPage() {
       </header>
 
       {/* Main content area */}
-      <main className="main-content">
-        {/* User Profile Card */}
-        <div className="profile-card">
-          <h2 className="card-title">Your Profile</h2>
-          <div className="user-details">
-            <div className="detail-item">
-              <div className="detail-label">Display Name</div>
-              <div className="detail-value">{user?.display_name || 'N/A'}</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Email</div>
-              <div className="detail-value">{user?.email || 'N/A'}</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">User ID</div>
-              <div className="detail-value">{user?.user_id || 'N/A'}</div>
-            </div>
-            <div className="detail-item">
-              <div className="detail-label">Authentication</div>
-              <div className="detail-value">
-                {user?.google_id ? 'Google OAuth' : 'Email/Password'}
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+      
     </div>
   );
 }
