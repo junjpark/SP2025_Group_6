@@ -141,10 +141,10 @@ async def signup(user_data: UserCreate):
     except HTTPException:
         # Re-raise HTTP exceptions (like email already exists)
         raise
-    except Exception as error:
-        print(f"Signup error: {error}")
+    except Exception as e:
+        print(f"Signup error: {e}")
         conn.rollback()  # Rollback transaction on error
-        raise HTTPException(status_code=500, detail="Internal server error") from error
+        raise HTTPException(status_code=500, detail="Internal server error") from e
     finally:
         conn.close()
 
@@ -239,10 +239,10 @@ async def google_login(google_user: GoogleUserCreate):
 
             return {"access_token": access_token, "token_type": "bearer"}
 
-    except Exception as error:
-        print(f"Google login error: {error}")
+    except Exception as e:
+        print(f"Google login error: {e}")
         conn.rollback()
-        raise HTTPException(status_code=500, detail="Internal server error") from error
+        raise HTTPException(status_code=500, detail="Internal server error") from e
     finally:
         conn.close()
 
@@ -297,7 +297,7 @@ async def health_check():
                 cur.fetchone()
             conn.close()
             return {"status": "healthy", "database": "connected"}
-        except Exception as error:
-            return {"status": "unhealthy", "database": "disconnected", "error": str(error)}
+        except Exception as e:
+            return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
     else:
         return {"status": "unhealthy", "database": "disconnected"}

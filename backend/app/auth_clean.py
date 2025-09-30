@@ -125,8 +125,8 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
                 "email": user['email'],
                 "display_name": user['display_name']
             }
-    except Exception as error:
-        print(f"Authentication error: {error}")
+    except Exception as e:
+        print(f"Authentication error: {e}")
         return None
     finally:
         if conn:
@@ -158,8 +158,8 @@ def get_user_by_email(email: str) -> Optional[dict]:
             if user:
                 user['user_id'] = user['id']  # Add user_id field for compatibility
             return user
-    except Exception as error:
-        print(f"Get user error: {error}")
+    except Exception as e:
+        print(f"Get user error: {e}")
         return None
     finally:
         if conn:
@@ -191,8 +191,8 @@ def get_user_by_google_id(google_id: str) -> Optional[dict]:
             if user:
                 user['user_id'] = user['id']  # Add user_id field for compatibility
             return user
-    except Exception as error:
-        print(f"Get user by Google ID error: {error}")
+    except Exception as e:
+        print(f"Get user by Google ID error: {e}")
         return None
     finally:
         if conn:
