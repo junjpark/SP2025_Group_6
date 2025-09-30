@@ -40,7 +40,6 @@ jobs:
         node-version: "20"
         cache: 'npm'
         # Point cache to the correct lock file location
-        cache-dependency-path: ./cory/package-lock.json
 
     - name: Install dependencies
       # This command runs inside the 'frontend' folder

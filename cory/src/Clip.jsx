@@ -9,7 +9,13 @@ function Clip({start, end, onClick}){
     }
 
     return (<>
-        <div ref={clipDiv} className="clip" onClick={(e) => {handleClick(e)}}>{start}</div>
+        <button 
+            ref={clipDiv} 
+            className="clip" 
+            onClick={(e) => {handleClick(e)}}
+        >
+            {start}
+        </button>
     </>)
 };
 

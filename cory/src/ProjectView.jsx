@@ -57,9 +57,14 @@ return (
     </nav>
     <div id="projectViewEditor">
         <div id="projectViewToolbar">
-            <div id="scissorsHolder" onClick={clip}>
+            <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                if (e.key == 'Enter' || e.key == ' ') {
+                    e.preventDefault();
+                    clip(e);
+                }
+             }}>
                 <img src="./images/scissors.jpg" alt="Girl in a jacket" width="50" height="60"></img>
-            </div>
+            </button>
             
         </div>
         <div id="projectViewVideoPlayer">
@@ -69,13 +74,13 @@ return (
             Clip Info {startClipTimeStamp} , {endClipTimeStamp}
         </div>
     </div>
-    <footer id="projectViewFooter" onClick={()=>setClipTimeStamps(0, 13.346667, null)}>
+    <button id="projectViewFooter" onClick={()=>setClipTimeStamps(0, 13.346667, null)} onKeyDown={(e)=>{if(e.key === 'Enter'){setClipTimeStamps(0, 13.346667, null);}}}>
         {clipTimings.map(function(tuple,idx) {
             return (
                 <Clip start={tuple[0]} end={tuple[1]} onClick={(a,b, divToHighlight)=>{setClipTimeStamps(a,b, divToHighlight)}} key={idx}></Clip>
             );
         })}
-    </footer>
+    </button>
 </div>
 )
 

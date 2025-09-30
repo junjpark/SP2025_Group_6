@@ -1,9 +1,10 @@
-import React, {useEffect, useState, useRef } from "react";
+import React, {useEffect, useState } from "react";
 import "./CustomVideoPlayer.css"
 
 
 const CustomVideoPlayer = React.forwardRef(({start, end}, ref) => {
-const [videoSource, setVideoSource] = useState("")
+    CustomVideoPlayer.displayName = 'CustomVideoPlayer'
+const [videoSource, ] = useState("")
 const videoBaseDir = "/videos/sample.mp4"
 
 useEffect(()=>{
@@ -18,6 +19,7 @@ useEffect(()=>{
     return () =>{
         videoPlayer.removeEventListener("timeupdate", resetClip);
     };
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [start, end]);
 
 return(
@@ -29,6 +31,7 @@ return(
             ref={ref}
         >
             <source src={videoBaseDir + videoSource} type="video/mp4"></source>
+            <track kind="captions" />
             Not working
         </video>
     </>
