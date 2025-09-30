@@ -143,8 +143,9 @@ export default function LoginPage() {
         {/* Email/Password Login Form */}
         <form onSubmit={handleLogin} className="login-form">
           <div className="input-group">
-            <label className="input-label">Email:</label>
+            <label htmlFor="email-input" className="input-label">Email:</label>
             <input
+              id="email-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -155,9 +156,10 @@ export default function LoginPage() {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Password:</label>
+            <label htmlFor="password-input" className="input-label">Password:</label>
             <div className="password-container">
               <input
+                id="password-input"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -187,7 +189,7 @@ export default function LoginPage() {
         {/* Sign up link */}
         <div className="signup-link">
           <p>
-            Don't have an account?{' '}
+            Don&apos;t have an account?{' '}
             <a href="/signup" className="link">
               Sign up here
             </a>

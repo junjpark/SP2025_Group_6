@@ -99,8 +99,9 @@ export default function SignupPage() {
         {/* Signup Form */}
         <form onSubmit={handleSignup} className="signup-form">
           <div className="input-group">
-            <label className="input-label">Display Name:</label>
+            <label htmlFor="display-name-input" className="input-label">Display Name:</label>
             <input
+              id="display-name-input"
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
@@ -111,8 +112,9 @@ export default function SignupPage() {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Email:</label>
+            <label htmlFor="email-input" className="input-label">Email:</label>
             <input
+              id="email-input"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -123,9 +125,10 @@ export default function SignupPage() {
           </div>
 
           <div className="input-group">
-            <label className="input-label">Password:</label>
+            <label htmlFor="password-input" className="input-label">Password:</label>
             <div className="password-container">
               <input
+                id="password-input"
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

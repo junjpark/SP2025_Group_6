@@ -31,7 +31,7 @@
  * @version 1.0.0
  */
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Create the authentication context
 const AuthContext = createContext();
@@ -68,22 +68,10 @@ export const AuthProvider = ({ children }) => {
   );
 
   /**
-   * Effect to fetch user profile when token is available
-   * Runs on component mount and when token changes
-   */
-  useEffect(() => {
-    if (token) {
-      fetchUserProfile();
-    } else {
-      setLoading(false);
-    }
-  }, [token]);
-
-  /**
    * Fetch user profile from the backend using the stored token
    * Validates the token and updates user state
    */
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:8000/me', {
         headers: {
@@ -112,7 +100,19 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  /**
+   * Effect to fetch user profile when token is available
+   * Runs on component mount and when token changes
+   */
+  useEffect(() => {
+    if (token) {
+      fetchUserProfile();
+    } else {
+      setLoading(false);
+    }
+  }, [token, fetchUserProfile]);
 
   /**
    * Login with email and password
