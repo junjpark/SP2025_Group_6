@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import ProjectView from "./ProjectView";
 
 function App() {
