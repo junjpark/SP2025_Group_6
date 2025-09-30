@@ -48,11 +48,11 @@ def get_db_connection():
         print(f"Successfully connected to database: {database}")
         return conn
 
-    except psycopg2.Error as error:
-        print(f"Database connection error: {error}")
+    except psycopg2.Error as e:
+        print(f"Database connection error: {e}")
         return None
-    except Exception as error:
-        print(f"Unexpected database error: {error}")
+    except Exception as e:
+        print(f"Unexpected database error: {e}")
         return None
 
 
@@ -66,11 +66,11 @@ def test_connection():
         try:
             with conn.cursor() as cur:
                 cur.execute("SELECT 1")
-                cur.fetchone()  # Execute query to test connection
+                cur.fetchone()
                 print("Database connection test successful!")
                 return True
-        except Exception as error:
-            print(f"Database test query failed: {error}")
+        except Exception as e:
+            print(f"Database test query failed: {e}")
             return False
         finally:
             conn.close()
