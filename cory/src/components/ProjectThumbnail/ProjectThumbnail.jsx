@@ -9,9 +9,20 @@ export default function ProjectThumbnail({ id, title, imageUrl, isCreate}) {
         } else {
             // navigate to project view
         }
+        if (isModalOpen) {
+            // ppen modal here
+        }
     }
     const thumbnail = (
-        <div className="project-thumbnail" key={id} onClick={handleClick}>
+        <button 
+            className="project-thumbnail"
+            key={id} onClick={handleClick}
+            aria-label={isCreate ? "Create new project" : `Open ${title}`} 
+            onKeyDown={(e) => {
+                if (e.key === "o") {
+                    handleClick();
+                }
+            }}>
             {isCreate ? (
                 <div className="create-thumbnail">
                     <span className="plus-icon">+</span>
@@ -23,7 +34,7 @@ export default function ProjectThumbnail({ id, title, imageUrl, isCreate}) {
                 </>
                 )}
             <h3 className="project-title">{title}</h3>
-        </div>
+        </button>
     );
     return thumbnail;
 }
