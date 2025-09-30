@@ -25,7 +25,6 @@ return(
         <video
             controls
             width={400}
-            loop
             id="myVideo"
             ref={ref}
         >
