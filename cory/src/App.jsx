@@ -1,10 +1,8 @@
-import ProjectView from "./ProjectView";
+import Library from "./pages/LIbrary/Library";
 
 function App() {
   return (
-    <div>
-      <ProjectView></ProjectView>
-    </div>
+    Library()
   )
 }
 export default App;

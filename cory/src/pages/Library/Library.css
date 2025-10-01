@@ -1,0 +1,13 @@
+.projects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+    gap: 35px;
+    align-items: start;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0;
+}
+
+.library-container {
+  padding: 40px;
+}
