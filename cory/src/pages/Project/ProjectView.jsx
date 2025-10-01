@@ -1,6 +1,6 @@
 import './ProjectView.css'
-import CustomVideoPlayer from "./CustomVideoPlayer";
-import Clip from './Clip';
+import CustomVideoPlayer from "../../components/CustomVideoPlayer";
+import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
 /*TODO:
     When Click clip show info
