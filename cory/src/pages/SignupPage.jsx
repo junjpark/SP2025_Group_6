@@ -1,21 +1,3 @@
-/**
- * SignupPage Component
- * 
- * This component handles user registration with email, password, and display name.
- * It provides a centered signup form with dark theme styling and form validation.
- * 
- * Features:
- * - User registration with email, password, and display name
- * - Form validation and error handling
- * - Password visibility toggle
- * - Password strength requirements
- * - Responsive design with dark theme
- * - Automatic redirection to login after successful signup
- * 
- * @author Cory Authentication System
- * @version 1.0.0
- */
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";

@@ -1,22 +1,3 @@
-/**
- * DashboardPage Component
- * 
- * This component serves as the main dashboard for authenticated users.
- * It displays user information, project management features, and provides
- * navigation options in a dark-themed, centered layout.
- * 
- * Features:
- * - User profile display with centered layout
- * - Project management interface
- * - Feature cards with hover animations
- * - Logout functionality
- * - Responsive design with dark theme
- * - Modern card-based UI
- * 
- * @author Cory Authentication System
- * @version 1.0.0
- */
-
 import { useAuth } from '../contexts/AuthContext';
 import '../styles/DashboardPage.css';
 
