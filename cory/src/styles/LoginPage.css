@@ -1,0 +1,240 @@
+/**
+ * LoginPage Styles
+ * 
+ * This file contains all the styling for the LoginPage component.
+ * It implements a dark theme with centered layout and modern UI elements.
+ * 
+ * Color Scheme:
+ * - Primary Background: #1a1d29 (dark greyish-blue-black)
+ * - Secondary Background: #2d3748 (darker grey)
+ * - Text: #e2e8f0 (light grey)
+ * - Accent: #3b82f6 (blue)
+ * 
+ * @author Cory Authentication System
+ * @version 1.0.0
+ */
+
+/* Page wrapper for full viewport centering */
+.page-wrapper {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #1a1d29;
+}
+
+/* Main login container */
+.login-container {
+  max-width: 400px;
+  width: 100%;
+  padding: 40px 20px;
+  font-family: 'Arial', sans-serif;
+  background-color: #1a1d29;
+  color: #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Login title */
+.login-title {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #e2e8f0;
+  font-size: 32px;
+  font-weight: bold;
+}
+
+/* Error message styling */
+.error-message {
+  color: #fca5a5;
+  background-color: #7f1d1d;
+  border: 1px solid #dc2626;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* Google login container */
+.google-login-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+/* Divider styling */
+.divider {
+  text-align: center;
+  margin: 24px 0;
+  color: #9ca3af;
+  position: relative;
+}
+
+.divider-line {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #374151;
+}
+
+.divider-text {
+  background-color: #1a1d29;
+  padding: 0 20px;
+  position: relative;
+  z-index: 1;
+  font-size: 14px;
+}
+
+/* Form styling */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* Input group container */
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Input labels */
+.input-label {
+  margin-bottom: 8px;
+  font-weight: bold;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+/* Form inputs */
+.form-input {
+  padding: 12px;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: all 0.3s;
+  background-color: #2d3748;
+  color: #e2e8f0;
+}
+
+.form-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Password container */
+.password-container {
+  position: relative;
+}
+
+/* Password input */
+.password-input {
+  padding: 12px 40px 12px 12px;
+  border: 2px solid #374151;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #2d3748;
+  color: #e2e8f0;
+  transition: all 0.3s;
+}
+
+.password-input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Password toggle button */
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #9ca3af;
+  transition: color 0.3s;
+}
+
+.password-toggle:hover {
+  color: #e2e8f0;
+}
+
+/* Submit button */
+.submit-button {
+  width: 100%;
+  padding: 14px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.submit-button:hover:not(:disabled) {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.submit-button:disabled {
+  background-color: #4a5568;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Sign up link */
+.signup-link {
+  text-align: center;
+  margin-top: 24px;
+  color: #9ca3af;
+}
+
+.signup-link .link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s;
+}
+
+.signup-link .link:hover {
+  color: #60a5fa;
+  text-decoration: underline;
+}
+
+/* Loading spinner */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #e2e8f0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 10px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

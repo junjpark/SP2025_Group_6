@@ -1,3 +1,14 @@
+# Core FastAPI dependencies
 fastapi
 uvicorn[standard]
+
+# Database connectivity
 psycopg2-binary
+
+# Authentication and security
+python-jose[cryptography]  # For JWT token handling
+passlib[bcrypt]            # For password hashing with bcrypt
+python-multipart          # For form data handling
+
+# Additional utilities
+python-dotenv             # For environment variable management

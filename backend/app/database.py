@@ -1,0 +1,34 @@
+"""
+Database connection utilities for PostgreSQL.
+Handles connection pooling and error management.
+"""
+
+import os
+import psycopg2
+from psycopg2.extras import RealDictCursor
+from dotenv import load_dotenv
+
+load_dotenv()
+def get_db_connection():
+    """
+    Creates and returns a database connection to PostgreSQL.
+
+    Returns:
+        psycopg2.connection: Database connection object
+        None: If connection fails
+    """
+    try:
+        # Create connection with error handling
+        conn = psycopg2.connect(
+            host=os.environ["DB_HOST"],
+            database=os.environ["DB_NAME"],
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            port=os.environ["DB_PORT"],
+            cursor_factory=RealDictCursor  # Returns results as dictionaries
+        )
+        print("Successfully connected to database")
+        return conn
+    except psycopg2.Error as db_error:
+        print(f"Database connection error: {db_error}")
+        return None
