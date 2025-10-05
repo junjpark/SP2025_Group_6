@@ -2,8 +2,9 @@
 FastAPI application with authentication endpoints.
 Handles user registration, login, Google OAuth, and protected routes.
 """
-
 from datetime import timedelta
+import psycopg2
+
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -141,10 +142,10 @@ async def signup(user_data: UserCreate):
     except HTTPException:
         # Re-raise HTTP exceptions (like email already exists)
         raise
-    except Exception as e:
-        print(f"Signup error: {e}")
+    except Exception as error:
+        print(f"Signup error: {error}")
         conn.rollback()  # Rollback transaction on error
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
 
@@ -239,10 +240,10 @@ async def google_login(google_user: GoogleUserCreate):
 
             return {"access_token": access_token, "token_type": "bearer"}
 
-    except Exception as e:
-        print(f"Google login error: {e}")
+    except Exception as error:
+        print(f"Google login error: {error}")
         conn.rollback()
-        raise HTTPException(status_code=500, detail="Internal server error") from e
+        raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
 
@@ -297,7 +298,7 @@ async def health_check():
                 cur.fetchone()
             conn.close()
             return {"status": "healthy", "database": "connected"}
-        except Exception as e:
-            return {"status": "unhealthy", "database": "disconnected", "error": str(e)}
+        except (psycopg2.Error, ConnectionError, TimeoutError) as error:
+            return {"status": "unhealthy", "database": "disconnected", "error": str(error)}
     else:
         return {"status": "unhealthy", "database": "disconnected"}

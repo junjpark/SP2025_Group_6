@@ -4,6 +4,7 @@ Handles user registration, login, Google OAuth, and protected routes.
 """
 
 from datetime import timedelta
+import psycopg2
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -297,7 +298,7 @@ async def health_check():
                 cur.fetchone()
             conn.close()
             return {"status": "healthy", "database": "connected"}
-        except Exception as error:
+        except psycopg2.OperationalError as error:
             return {"status": "unhealthy", "database": "disconnected", "error": str(error)}
     else:
         return {"status": "unhealthy", "database": "disconnected"}
