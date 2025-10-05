@@ -1,21 +1,3 @@
-/**
- * LoginPage Component
- * 
- * This component handles user authentication through both traditional email/password
- * and Google OAuth. It provides a centered login form with dark theme styling.
- * 
- * Features:
- * - Email/password authentication
- * - Google OAuth integration
- * - Form validation and error handling
- * - Password visibility toggle
- * - Responsive design with dark theme
- * - Automatic redirection after successful login
- * 
- * @author Cory Authentication System
- * @version 1.0.0
- */
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";

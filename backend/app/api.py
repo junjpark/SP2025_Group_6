@@ -49,15 +49,9 @@ security = HTTPBearer()
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
     Dependency to get the current authenticated user from JWT token.
-
-    Args:
-        credentials: HTTP Bearer token from request header
-
-    Returns:
-        dict: User data if token is valid
-
-    Raises:
-        HTTPException: If token is invalid or user not found
+    Args: credentials: HTTP Bearer token from request header
+    Returns: dict: User data if token is valid
+    Raises: HTTPException: If token is invalid or user not found
     """
     token = credentials.credentials
     email = verify_token(token)
@@ -78,14 +72,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
     return user
 
-
-# Root endpoint - basic health check
 @app.get("/", tags=["root"])
 async def read_root():
-    """
-    Root endpoint that returns a simple greeting.
-    Used to verify the API is running.
-    """
     return {"message": "Cory Authentication API is running!"}
 
 
@@ -94,15 +82,9 @@ async def read_root():
 async def signup(user_data: UserCreate):
     """
     Register a new user with email and password.
-
-    Args:
-        user_data: User registration data (email, password, display_name)
-
-    Returns:
-        UserResponse: User data without password
-
-    Raises:
-        HTTPException: If email already exists or database error
+    Args: user_data: User registration data (email, password, display_name)
+    Returns: UserResponse: User data without password
+    Raises: HTTPException: If email already exists or database error
     """
     conn = get_db_connection()
     if not conn:
@@ -155,15 +137,9 @@ async def signup(user_data: UserCreate):
 async def login(user_credentials: UserLogin):
     """
     Authenticate user with email and password.
-
-    Args:
-        user_credentials: Login credentials (email, password)
-
-    Returns:
-        Token: JWT access token and type
-
-    Raises:
-        HTTPException: If credentials are invalid
+    Args: user_credentials: Login credentials (email, password)
+    Returns: Token: JWT access token and type
+    Raises: HTTPException: If credentials are invalid
     """
     # Authenticate user with email and password
     user = authenticate_user(user_credentials.email, user_credentials.password)
@@ -190,15 +166,9 @@ async def login(user_credentials: UserLogin):
 async def google_login(google_user: GoogleUserCreate):
     """
     Authenticate or register user with Google OAuth.
-
-    Args:
-        google_user: Google user data (email, display_name, google_id)
-
-    Returns:
-        Token: JWT access token and type
-
-    Raises:
-        HTTPException: If database error occurs
+    Args: google_user: Google user data (email, display_name, google_id)
+    Returns: Token: JWT access token and type
+    Raises: HTTPException: If database error occurs
     """
     conn = get_db_connection()
     if not conn:
@@ -237,7 +207,6 @@ async def google_login(google_user: GoogleUserCreate):
                 data={"sub": user["email"]},
                 expires_delta=access_token_expires
             )
-
             return {"access_token": access_token, "token_type": "bearer"}
 
     except Exception as error:
@@ -246,7 +215,6 @@ async def google_login(google_user: GoogleUserCreate):
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
-
 
 # Get current user profile endpoint
 @app.get("/me", response_model=UserResponse, tags=["user"])
@@ -271,34 +239,4 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 # Logout endpoint
 @app.post("/logout", tags=["authentication"])
 async def logout():
-    """
-    Logout endpoint (client-side token removal).
-    In a production app, you might want to blacklist the token.
-
-    Returns:
-        dict: Success message
-    """
     return {"message": "Successfully logged out"}
-
-
-# Health check endpoint
-@app.get("/health", tags=["system"])
-async def health_check():
-    """
-    Health check endpoint to verify API and database connectivity.
-
-    Returns:
-        dict: Health status
-    """
-    conn = get_db_connection()
-    if conn:
-        try:
-            with conn.cursor() as cur:
-                cur.execute("SELECT 1")
-                cur.fetchone()
-            conn.close()
-            return {"status": "healthy", "database": "connected"}
-        except (psycopg2.Error, ConnectionError, TimeoutError) as error:
-            return {"status": "unhealthy", "database": "disconnected", "error": str(error)}
-    else:
-        return {"status": "unhealthy", "database": "disconnected"}

@@ -1,36 +1,3 @@
-/**
- * Authentication Context for React Application
- * 
- * This context provides authentication state and methods throughout the app.
- * It manages user login, logout, token storage, and user profile data.
- * 
- * Features:
- * - JWT token management
- * - User profile state
- * - Login/logout functionality
- * - Google OAuth integration
- * - Automatic token validation
- * - Loading states
- */
-
-/**
- * Authentication Context
- * 
- * This file provides authentication state management for the entire application.
- * It uses React Context API to share authentication state and methods across components.
- * 
- * Features:
- * - User authentication state management
- * - JWT token handling and persistence
- * - Login/logout functionality (email/password and Google OAuth)
- * - User profile management
- * - Loading state management
- * - Automatic token validation on app load
- * 
- * @author Cory Authentication System
- * @version 1.0.0
- */
-
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 // Create the authentication context
