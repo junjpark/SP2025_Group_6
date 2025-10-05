@@ -17,7 +17,10 @@ import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import DashboardPage from "./pages/DashboardPage";
+import Library from "./pages/Library/Library"
+import NavBar from "./components/Navbar/Navbar";
+import ProjectView from "./pages/Project/ProjectView";
+
 
 /**
  * Main App Component
@@ -29,9 +32,11 @@ export default function App() {
     // Wrap the entire app with authentication context
     // This provides authentication state and methods to all child components
     <AuthProvider>
+      <NavBar/>
       {/* Set up React Router for navigation */}
       <Router>
         <Routes>
+          
           {/* Public Routes - accessible without authentication */}
           
           {/* Login page - redirects to dashboard if already logged in */}
@@ -53,32 +58,29 @@ export default function App() {
             path="/" 
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Library />
               </ProtectedRoute>
             } 
           />
+          <Route
+            path="/project1"
+            element={<ProjectView/>}
+          />
           
-          {/* Catch-all route - redirect to dashboard for any unknown paths */}
+          {/* Catch-all route - redirect to library for any unknown paths */}
           <Route 
             path="*" 
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Library />
               </ProtectedRoute>
             } 
           />
+
         </Routes>
       </Router>
     </AuthProvider>
   );
 }
 
-// import Library from "./pages/LIbrary/Library";
-
-// function App() {
-//   return (
-//     Library()
-//   )
-// }
-// export default App;
 
