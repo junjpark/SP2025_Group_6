@@ -3,8 +3,6 @@ FastAPI application with authentication endpoints.
 Handles user registration, login, Google OAuth, and protected routes.
 """
 from datetime import timedelta
-import psycopg2
-
 from fastapi import FastAPI, HTTPException, Depends, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -74,8 +72,11 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 @app.get("/", tags=["root"])
 async def read_root():
+    """
+    Root endpoint that returns a simple greeting.
+    Used to verify the API is running.
+    """
     return {"message": "Cory Authentication API is running!"}
-
 
 # User registration endpoint
 @app.post("/signup", response_model=UserResponse, tags=["authentication"])
@@ -239,4 +240,11 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 # Logout endpoint
 @app.post("/logout", tags=["authentication"])
 async def logout():
+    """
+    Logout endpoint (client-side token removal).
+    In a production app, you might want to blacklist the token.
+
+    Returns:
+        dict: Success message
+    """
     return {"message": "Successfully logged out"}
