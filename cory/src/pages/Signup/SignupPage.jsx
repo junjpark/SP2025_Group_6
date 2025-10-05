@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { useAuth } from '../contexts/AuthContext';
-import '../styles/SignupPage.css';
+import { useAuth } from '../../contexts/AuthContext';
+import './SignupPage.css';
 
 export default function SignupPage() {
   const navigate = useNavigate();

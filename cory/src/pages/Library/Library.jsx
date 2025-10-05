@@ -1,13 +1,15 @@
 import React from 'react';
 import ProjectThumbnail from '../../components/ProjectThumbnail/ProjectThumbnail';
 import "./Library.css";
-
+import { useAuth } from '../../contexts/AuthContext';
 import snoopy from "../../snoopy-dancing.jpg";
+import ProjectView from '../Project/ProjectView'
 
 export default function Library() {
+    const { user, logout } = useAuth();
     const projects = [ //fetch from backend later
         { id: 0, title: "Create New", isCreate: true },
-        { id: 1, title: "Project One", imageUrl: snoopy },
+        { id: 1, title: "Project One", imageUrl: snoopy, route: "/project1" },
         { id: 2, title: "Project Two", imageUrl: snoopy },
         { id: 3, title: "Project Three", imageUrl: snoopy },
     ];
@@ -22,9 +24,12 @@ export default function Library() {
                         title={project.title} 
                         imageUrl={project.imageUrl}
                         isCreate={project.isCreate} 
+                        route={project.route}
                     />
                 ))}
             </div>
+            
         </div>
     );
 }
+<ProjectView/>

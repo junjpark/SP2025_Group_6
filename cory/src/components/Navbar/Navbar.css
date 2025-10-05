@@ -1,0 +1,228 @@
+/**
+ * DashboardPage Styles
+ * 
+ * This file contains all the styling for the DashboardPage component.
+ * It implements a dark theme with centered layout and modern card-based UI.
+ * 
+ * Color Scheme:
+ * - Primary Background: #1a1d29 (dark greyish-blue-black)
+ * - Secondary Background: #2d3748 (darker grey)
+ * - Card Background: #374151 (medium grey)
+ * - Text: #e2e8f0 (light grey)
+ * - Accent: #3b82f6 (blue)
+ * 
+ * @author Cory Authentication System
+ * @version 1.0.0
+ */
+
+/* Main dashboard container */
+.dashboard-container {
+    min-height: 100vh;
+    background-color: #1a1d29;
+    font-family: 'Arial', sans-serif;
+    color: #e2e8f0;
+  }
+  
+  /* Dashboard header */
+  .dashboard-header {
+    background-color: #2d3748;
+    padding: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    border-radius: 0 0 12px 12px;
+  }
+  
+  /* Dashboard title */
+  .dashboard-title {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 32px;
+    font-weight: bold;
+  }
+  
+  /* User info section */
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  
+  /* Welcome text */
+  .welcome-text {
+    color: #cbd5e1;
+    font-size: 18px;
+    font-weight: 500;
+  }
+  
+  /* Logout button */
+  .logout-button {
+    padding: 10px 20px;
+    background-color: #dc2626;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .logout-button:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+  
+  /* Main content area */
+  .main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  /* Profile card */
+  .profile-card {
+    background-color: #2d3748;
+    border-radius: 12px;
+    padding: 40px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+    width: 100%;
+    max-width: 800px;
+  }
+  
+  /* Card title */
+  .card-title {
+    margin: 0 0 24px 0;
+    color: #e2e8f0;
+    font-size: 28px;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 12px;
+  }
+  
+  /* User details grid */
+  .user-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+    text-align: center;
+  }
+  
+  /* Detail item */
+  .detail-item {
+    padding: 20px;
+    background-color: #374151;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    transition: all 0.3s;
+  }
+  
+  .detail-item:hover {
+    background-color: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+  
+  /* Detail label */
+  .detail-label {
+    font-weight: bold;
+    color: #9ca3af;
+    margin-bottom: 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Detail value */
+  .detail-value {
+    color: #e2e8f0;
+    font-size: 18px;
+    font-weight: 500;
+    word-break: break-word;
+  }
+  
+  /* Features grid */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 24px;
+    margin-top: 40px;
+  }
+  
+  /* Feature card */
+  .feature-card {
+    background-color: #374151;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: 1px solid #4b5563;
+    transition: all 0.3s;
+    cursor: pointer;
+    text-align: center;
+  }
+  
+  .feature-card:hover {
+    background-color: #4b5563;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 12px rgba(0,0,0,0.15);
+  }
+  
+  /* Feature title */
+  .feature-title {
+    margin: 0 0 15px 0;
+    color: #e2e8f0;
+    font-size: 22px;
+    font-weight: bold;
+  }
+  
+  /* Feature description */
+  .feature-description {
+    color: #cbd5e1;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+  }
+  
+  /* Feature button */
+  .feature-button {
+    background-color: #3b82f6;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .feature-button:hover {
+    background-color: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+  }
+  
+  /* Coming soon button */
+  .coming-soon {
+    background-color: #6b7280;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    cursor: not-allowed;
+    font-size: 14px;
+    font-weight: bold;
+    opacity: 0.7;
+  }
+  
