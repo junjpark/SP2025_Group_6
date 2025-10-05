@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
 import { GoogleLogin } from '@react-oauth/google';
-import { useAuth } from '../contexts/AuthContext';
-import '../styles/LoginPage.css';
+import { useAuth } from '../../contexts/AuthContext';
+import './LoginPage.css';
 
 export default function LoginPage() {
   const navigate = useNavigate();

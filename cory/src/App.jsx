@@ -15,8 +15,8 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import LoginPage from "./pages/Login/LoginPage";
+import SignupPage from "./pages/Signup/SignupPage";
 import Library from "./pages/Library/Library"
 import NavBar from "./components/Navbar/Navbar";
 import ProjectView from "./pages/Project/ProjectView";
@@ -64,7 +64,10 @@ export default function App() {
           />
           <Route
             path="/project1"
-            element={<ProjectView/>}
+            element={ <ProtectedRoute>
+              <ProjectView/>
+              </ProtectedRoute>
+            }
           />
           
           {/* Catch-all route - redirect to library for any unknown paths */}
