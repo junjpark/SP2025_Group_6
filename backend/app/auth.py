@@ -6,6 +6,7 @@ Includes password hashing, token creation/validation, and user authentication.
 from datetime import datetime, timedelta
 import os
 from typing import Optional
+import psycopg2
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import load_dotenv
@@ -125,7 +126,7 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
                 "email": user['email'],
                 "display_name": user['display_name']
             }
-    except Exception as error:
+    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
         print(f"Authentication error: {error}")
         return None
     finally:
@@ -158,7 +159,7 @@ def get_user_by_email(email: str) -> Optional[dict]:
             if user:
                 user['user_id'] = user['id']  # Add user_id field for compatibility
             return user
-    except Exception as error:
+    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
         print(f"Get user error: {error}")
         return None
     finally:
@@ -191,7 +192,7 @@ def get_user_by_google_id(google_id: str) -> Optional[dict]:
             if user:
                 user['user_id'] = user['id']  # Add user_id field for compatibility
             return user
-    except Exception as error:
+    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
         print(f"Get user by Google ID error: {error}")
         return None
     finally:

@@ -29,11 +29,11 @@ def get_db_connection():
     """
     try:
         # Get database configuration from environment variables
-        host = os.getenv("DB_HOST", "localhost")
-        database = os.getenv("DB_NAME", "cory")
-        user = os.getenv("DB_USER", "postgres")
-        password = os.getenv("DB_PASSWORD", "")
-        port = os.getenv("DB_PORT", "5432")
+        host = os.environ["DB_HOST"]
+        database = os.environ["DB_NAME"]
+        user = os.environ["DB_USER"]
+        password = os.environ["DB_PASSWORD"]
+        port = os.environ["DB_PORT"]
 
         # Create connection with error handling
         conn = psycopg2.connect(
@@ -48,13 +48,9 @@ def get_db_connection():
         print(f"Successfully connected to database: {database}")
         return conn
 
-    except psycopg2.Error as error:
+    except psycopg2.DatabaseError as error:
         print(f"Database connection error: {error}")
         return None
-    except Exception as error:
-        print(f"Unexpected database error: {error}")
-        return None
-
 
 def test_connection():
     """
@@ -69,7 +65,7 @@ def test_connection():
                 cur.fetchone()  # Execute query to test connection
                 print("Database connection test successful!")
                 return True
-        except Exception as error:
+        except (psycopg2.OperationalError, psycopg2.DatabaseError) as error:
             print(f"Database test query failed: {error}")
             return False
         finally:
