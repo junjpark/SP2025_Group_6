@@ -4,36 +4,64 @@ import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
 /*TODO:
     When Click clip show info
-    When click clip start looping
-    when click off clip/same clip goes back to global loop
-    manual clipping
     update to abby's file structure
-    look into better controls
 */
 const ProjectView = () => {
 const videoPlayerRef = useRef(null);
-const [startClipTimeStamp, setStartClipTimeStamp] = useState(0);
-const [endClipTimeStamp, setEndClipTimeStamp] = useState(13.346667);
-const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); //time stamps are of the form [a,b)
-const [selectedClipDiv, setSelectedClipDiv] = useState(null)
+//note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
+//time stamps are of the form [a,b)
+const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); 
+const [selectedClipDiv, setSelectedClipDiv] = useState(null);
+const [currentClipId, setCurrentClipId] = useState(0);
+//clipAnnotations are 0-index
+const [clipAnnotations, setClipAnnotations] = useState(["", "note 1", "note 2"]);
 
-function setClipTimeStamps(a,b, divToHighlight){
+function getCurrentStartClipTimeStamp(clipId=currentClipId){
+    if(clipId == 0){
+        return 0;
+    }
+    return clipTimings[clipId-1][0]
+}
+
+function getCurrentEndClipTimeStamp(clipId=currentClipId){
+    if(clipId == 0){
+        return 13.346667;
+    }
+    return clipTimings[clipId-1][1]
+}
+
+function setClipTimeStamps(a,b, idx, divToHighlight){
+    setCurrentClipId(idx+1);
+    const startClipTimeStamp = getCurrentStartClipTimeStamp(currentClipId)
+    const endClipTimeStamp = getCurrentEndClipTimeStamp(currentClipId)
+    console.log(startClipTimeStamp + ", " + endClipTimeStamp)
+    console.log(a + ", " + b)
+    const clipPTag = document.querySelector("#clipInfoGoesHere")
     if(selectedClipDiv != null){
         selectedClipDiv.classList.remove("selected")
     }
     if((a == startClipTimeStamp && b == endClipTimeStamp) || divToHighlight == null){
-        setStartClipTimeStamp(0);
-        setEndClipTimeStamp(13.346667);
+        console.log("same clip selected going back to whole vid")
+        setCurrentClipId(0)
+        clipPTag.classList.add("hidden");
         return;
     }
+    //this means a new clip has been selected
+    clipPTag.classList.remove("hidden");
     setSelectedClipDiv(divToHighlight);
     divToHighlight.classList.add("selected")
-    setStartClipTimeStamp(a);
-    setEndClipTimeStamp(b);
+}
+
+function handleAnnotationChange(clipIdToChange, newMessage){
+    // console.log(newMessage)
+    let newClipAnnotations = [...clipAnnotations]
+    newClipAnnotations[clipIdToChange] = newMessage
+    // console.log(newClipAnnotations)
+    setClipAnnotations(newClipAnnotations)
 }
 
 function clip(){
-    setClipTimeStamps(0, 13.346667, null); //TODO: discuss what to do with this
+    setClipTimeStamps(0, 13.346667, -1, null); //TODO: discuss what to do with this
     const videoCurrentTime = videoPlayerRef.current.currentTime;
     let newClipTimings = []
     for(const interval of clipTimings){
@@ -68,16 +96,17 @@ return (
             
         </div>
         <div id="projectViewVideoPlayer">
-            <CustomVideoPlayer ref={videoPlayerRef} start={startClipTimeStamp} end={endClipTimeStamp}></CustomVideoPlayer>
+            <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
         </div>
         <div id="clipInfo">
-            Clip Info {startClipTimeStamp} , {endClipTimeStamp}
+            <p>Clip Info {getCurrentStartClipTimeStamp()} , {getCurrentEndClipTimeStamp()}</p>
+            <textarea id="clipInfoGoesHere" className='hidden' value={clipAnnotations[currentClipId]} onChange={(e) => handleAnnotationChange(currentClipId, e.target.value)}></textarea>
         </div>
     </div>
-    <button id="projectViewFooter" onClick={()=>setClipTimeStamps(0, 13.346667, null)} onKeyDown={(e)=>{if(e.key === 'Enter'){setClipTimeStamps(0, 13.346667, null);}}}>
+    <button id="projectViewFooter" onClick={()=>setClipTimeStamps(0, 13.346667, -1, null)} onKeyDown={(e)=>{if(e.key === 'Enter'){setClipTimeStamps(0, 13.346667, -1, null);}}}>
         {clipTimings.map(function(tuple,idx) {
             return (
-                <Clip start={tuple[0]} end={tuple[1]} onClick={(a,b, divToHighlight)=>{setClipTimeStamps(a,b, divToHighlight)}} key={idx}></Clip>
+                <Clip start={tuple[0]} end={tuple[1]} clipId={idx} onClick={(a,b,idx,divToHighlight)=>{setClipTimeStamps(a,b,idx,divToHighlight)}} key={idx}></Clip>
             );
         })}
     </button>

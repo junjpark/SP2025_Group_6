@@ -1,11 +1,11 @@
 import { useRef } from 'react';
 
-function Clip({start, end, onClick}){
+function Clip({start, end, clipId, onClick}){
     const clipDiv = useRef(null);
     
     function handleClick(e){
         e.stopPropagation();
-        onClick(start,end, clipDiv.current);
+        onClick(start,end, clipId, clipDiv.current);
     }
 
     return (<>
