@@ -1,8 +1,8 @@
-import React, {useState} from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import "./ProjectThumbnail.css";
 
-export default function ProjectThumbnail({ id, title, imageUrl, isCreate, route, onCreateClick}) {
+export default function ProjectThumbnail({ id, title, imageUrl, isCreate, onCreateClick}) {
     const navigate = useNavigate();
     const handleClick = () => {
         if (isCreate) {

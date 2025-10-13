@@ -9,7 +9,7 @@ export default function Library() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const projects = [ //fetch from backend later
         { id: 0, title: "Create New", isCreate: true },
-        { id: 1, title: "Project One", imageUrl: snoopy, route: "/project1" },
+        { id: 1, title: "Project One", imageUrl: snoopy },
         { id: 2, title: "Project Two", imageUrl: snoopy },
         { id: 3, title: "Project Three", imageUrl: snoopy },
     ];
@@ -33,10 +33,7 @@ export default function Library() {
             {isCreateModalOpen && (
                 <CreateNewModal 
                     isOpen={isCreateModalOpen} 
-                    onClose={() => setIsCreateModalOpen(false)} 
-                    onCreate={(data) => {
-
-                    }}
+                    onClose={() => setIsCreateModalOpen(false)}
                 />
             )}
             

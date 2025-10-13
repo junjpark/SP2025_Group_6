@@ -79,25 +79,41 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
         setVideoFile(null);
     };
 
+    const handleOverlayKeydown = (e) => {
+        if (e.key === "Escape") {
+            onClose();
+        }
+    }
+
     return (
         isOpen ? (
-            <div className="modal-overlay" onClick={onClose}>
-                <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div 
+                className="modal-overlay" 
+                onClick={onClose}
+                onKeyDown={handleOverlayKeydown}
+                tabIndex={0}
+                role="button"
+            >
+                <div 
+                    className="modal-content"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={handleOverlayKeydown}
+                    tabIndex={0}
+                    role="button"
+                >
                     <h2 className="modal-header">New Project</h2>
                     <div className="project-name-section">
-                      <label>Project Name</label>
-                        <div className="project-name-input">
-                            <input 
+                      <label htmlFor="project-name-input">Project Name</label>
+                            <input
                                 type="text"
                                 value={projectName}
                                 onChange={(e) => setProjectName(e.target.value)}
                                 placeholder='Enter project name'
                                 className="name-input"
                             />
-                        </div>
                     </div>
                     <div className="video-upload-section">
-                        <label>Upload Video</label>
+                        <label htmlFor="video-upload">Upload Video</label>
                         {!videoFile ? (
                             <div
                                 onDragEnter={handleDrag}

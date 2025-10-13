@@ -2,7 +2,7 @@ import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+//import { useParams } from 'react-router-dom';
 /*TODO:
     When Click clip show info
     When click clip start looping
@@ -11,7 +11,7 @@ import { useParams } from 'react-router-dom';
     look into better controls
 */
 const ProjectView = () => {
-const { id } = useParams(); 
+//const { id } = useParams(); 
 const videoPlayerRef = useRef(null);
 const [startClipTimeStamp, setStartClipTimeStamp] = useState(0);
 const [endClipTimeStamp, setEndClipTimeStamp] = useState(13.346667);
