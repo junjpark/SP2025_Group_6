@@ -16,6 +16,9 @@ from .auth import (
     get_user_by_google_id
 )
 from .database import get_db_connection
+import os
+import uuid
+import shutil
 
 
 # Initialize FastAPI application
@@ -43,6 +46,7 @@ app.add_middleware(
 # HTTP Bearer token security scheme
 security = HTTPBearer()
 
+os.makedirs("uploads", exist_ok=True)
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """
@@ -270,7 +274,7 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT projectId, title, lastOpened, thumbnail FROM projects WHERE owner_id = %s",
+                "SELECT id, title, last_opened, thumbnail_url FROM projects WHERE user_id = %s",
                 (current_user['user_id'],)
             )
             projects = cur.fetchall()
@@ -278,13 +282,12 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
             return projects
 
     except Exception as error:
-        print(f"Get projects error: {error}")
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
 
 @app.post("/projects", tags=["projects"])
-async def create_project(title: str = Form(...), videoBlob: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+async def create_project(title: str = Form(...), video: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
     """
     Create a new project for the current authenticated user.
 
@@ -297,6 +300,20 @@ async def create_project(title: str = Form(...), videoBlob: UploadFile = File(..
     Raises:
         HTTPException: If database error occurs or file upload fails
     """
+    if not title:
+        raise HTTPException(status_code=400, detail="Project title is required")
+    if video.content_type not in ["video/mp4", "video/avi", "video/mov"]:
+        raise HTTPException(status_code=400, detail="Invalid video format")
+    ext = os.path.splitext(video.filename)[1]
+    uuid_filename = f"{uuid.uuid4().hex}{ext}"
+    upload_path = os.path.join("uploads", uuid_filename)
+
+    try:
+        with open(upload_path, "wb") as buffer:
+            shutil.copyfileobj(video.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Failed to upload video: {e}")
+
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
@@ -304,14 +321,15 @@ async def create_project(title: str = Form(...), videoBlob: UploadFile = File(..
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO projects (title, userId, timeCreated, lastOpened) VALUES (%s, %s, %s, now(), now())",
-                (title, current_user['user_id'],)
+                "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) VALUES (%s, %s, %s, now(), now()) RETURNING id",
+                (title, current_user['user_id'], upload_path)
             )
-
-            #return something?
+            id = cur.fetchone()
+            conn.commit()
+            
+            return id
 
     except Exception as error:
-        print(f"Create project error: {error}")
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()

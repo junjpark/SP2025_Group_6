@@ -34,8 +34,9 @@ export default function Library() {
                 <CreateNewModal 
                     isOpen={isCreateModalOpen} 
                     onClose={() => setIsCreateModalOpen(false)} 
-                    // onCreate={(data) => {
-                    // }
+                    onCreate={(data) => {
+
+                    }}
                 />
             )}
             

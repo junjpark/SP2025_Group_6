@@ -38,7 +38,7 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
         }
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
         if (!projectName) {
             alert("Project name is required.");
             return;
@@ -47,11 +47,32 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
             alert("Please upload a video file.");
             return;
         }
-        //handle create logic here
-        //onCreate({ projectName, videoFile });
-        setProjectName("");
-        setVideoFile(null);
-        //onClose();
+
+        const token = localStorage.getItem('token');
+        
+        const data = new FormData();
+        data.append("title", projectName);
+        data.append("video", videoFile);
+        try {
+            const response = await fetch("http://localhost:8000/projects", {
+                method: "POST",
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: data,
+            });
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status}`);
+            }
+            const result = await response.json();
+            onCreate(result);
+            onClose();
+        } catch (error) {
+            console.error("Error creating project:", error);
+        } finally {
+            setProjectName("");
+            setVideoFile(null);
+        }
     };
 
     const removeVideo = () => {
