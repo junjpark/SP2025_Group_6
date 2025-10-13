@@ -4,8 +4,8 @@ import "./CustomVideoPlayer.css"
 
 const CustomVideoPlayer = React.forwardRef(({start, end}, ref) => {
     CustomVideoPlayer.displayName = 'CustomVideoPlayer'
-const [videoSource, ] = useState("")
-const videoBaseDir = "/videos/sample.mp4"
+const [videoSource, ] = useState("sample.mp4")
+const videoBaseDir = "/videos/"
 
 useEffect(()=>{
     const videoPlayer = ref.current;
