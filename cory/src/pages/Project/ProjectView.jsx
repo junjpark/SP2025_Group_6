@@ -2,7 +2,8 @@ import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
-/*TODO:
+import {useAuth} from "../../contexts/AuthContext"
+ /*TODO:
     When Click clip show info
     update to abby's file structure
 */
@@ -15,6 +16,8 @@ const [selectedClipDiv, setSelectedClipDiv] = useState(null);
 const [currentClipId, setCurrentClipId] = useState(0);
 //clipAnnotations are 0-index
 const [clipAnnotations, setClipAnnotations] = useState(["", "note 1", "note 2"]);
+const {user, logout} = useAuth();
+{console.log(user.display_name)}
 
 function getCurrentStartClipTimeStamp(clipId=currentClipId){
     if(clipId == 0){
@@ -53,10 +56,8 @@ function setClipTimeStamps(a,b, idx, divToHighlight){
 }
 
 function handleAnnotationChange(clipIdToChange, newMessage){
-    // console.log(newMessage)
     let newClipAnnotations = [...clipAnnotations]
     newClipAnnotations[clipIdToChange] = newMessage
-    // console.log(newClipAnnotations)
     setClipAnnotations(newClipAnnotations)
 }
 

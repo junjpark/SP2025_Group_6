@@ -29,60 +29,65 @@ import ProjectView from "./pages/Project/ProjectView";
  */
 export default function App() {
   return (
+    <>
+{/* <NavBar/> */}
+<ProjectView></ProjectView>
+    </>
+    
     // Wrap the entire app with authentication context
     // This provides authentication state and methods to all child components
-    <AuthProvider>
-      <NavBar/>
-      {/* Set up React Router for navigation */}
-      <Router>
-        <Routes>
+    // <AuthProvider>
+    //   <NavBar/>
+    //   {/* Set up React Router for navigation */}
+    //   <Router>
+    //     <Routes>
           
-          {/* Public Routes - accessible without authentication */}
+    //       {/* Public Routes - accessible without authentication */}
           
-          {/* Login page - redirects to dashboard if already logged in */}
-          <Route 
-            path="/login" 
-            element={<LoginPage />} 
-          />
+    //       {/* Login page - redirects to dashboard if already logged in */}
+    //       <Route 
+    //         path="/login" 
+    //         element={<LoginPage />} 
+    //       />
           
-          {/* Signup page - redirects to login after successful registration */}
-          <Route 
-            path="/signup" 
-            element={<SignupPage />} 
-          />
+    //       {/* Signup page - redirects to login after successful registration */}
+    //       <Route 
+    //         path="/signup" 
+    //         element={<SignupPage />} 
+    //       />
           
-          {/* Protected Routes - require authentication */}
+    //       {/* Protected Routes - require authentication */}
           
-          {/* Dashboard - main application interface */}
-          <Route 
-            path="/" 
-            element={
-              <ProtectedRoute>
-                <Library />
-              </ProtectedRoute>
-            } 
-          />
-          <Route
-            path="/project1"
-            element={ <ProtectedRoute>
-              <ProjectView/>
-              </ProtectedRoute>
-            }
-          />
+    //       {/* Dashboard - main application interface */}
+    //       <Route 
+    //         path="/" 
+    //         element={
+    //           <ProtectedRoute>
+    //             <Library />
+    //           </ProtectedRoute>
+    //         } 
+    //       />
+    //       <Route
+    //         path="/project1"
+    //         element={ <ProtectedRoute>
+    //           <ProjectView/>
+    //           </ProtectedRoute>
+    //         }
+    //       />
           
-          {/* Catch-all route - redirect to library for any unknown paths */}
-          <Route 
-            path="*" 
-            element={
-              <ProtectedRoute>
-                <Library />
-              </ProtectedRoute>
-            } 
-          />
+    //       {/* Catch-all route - redirect to library for any unknown paths */}
+    //       <Route 
+    //         path="*" 
+    //         element={
+    //           <ProtectedRoute>
+    //             <Library />
+    //           </ProtectedRoute>
+    //         } 
+    //       />
 
-        </Routes>
-      </Router>
-    </AuthProvider>
+    //     </Routes>
+    //   </Router>
+    // </AuthProvider>
   );
 }
 
