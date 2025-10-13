@@ -78,11 +78,6 @@ function clip(){
 
 return (
 <div id="projectView">
-    <nav id="projectViewNav">
-        <p>
-            Logo Here
-        </p>
-    </nav>
     <div id="projectViewEditor">
         <div id="projectViewToolbar">
             <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
