@@ -2,15 +2,16 @@ import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
 /*TODO:
     When Click clip show info
     When click clip start looping
     when click off clip/same clip goes back to global loop
     manual clipping
-    update to abby's file structure
     look into better controls
 */
 const ProjectView = () => {
+const { id } = useParams(); 
 const videoPlayerRef = useRef(null);
 const [startClipTimeStamp, setStartClipTimeStamp] = useState(0);
 const [endClipTimeStamp, setEndClipTimeStamp] = useState(13.346667);

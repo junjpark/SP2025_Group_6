@@ -3,7 +3,7 @@ FastAPI application with authentication endpoints.
 Handles user registration, login, Google OAuth, and protected routes.
 """
 from datetime import timedelta
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, Form, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from .models import UserCreate, UserLogin, GoogleUserCreate, UserResponse, Token
@@ -248,3 +248,70 @@ async def logout():
         dict: Success message
     """
     return {"message": "Successfully logged out"}
+
+# Get projects for current user
+@app.get("/projects", tags=["projects"])
+async def get_user_projects(current_user: dict = Depends(get_current_user)):
+    """
+    Retrieve all projects associated with the current authenticated user.
+
+    Args:
+        current_user: Current user data from JWT token (dependency injection)
+
+    Returns:
+        list: List of projects belonging to the user
+    Raises:
+        HTTPException: If database error occurs
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT projectId, title, lastOpened, thumbnail FROM projects WHERE owner_id = %s",
+                (current_user['user_id'],)
+            )
+            projects = cur.fetchall()
+
+            return projects
+
+    except Exception as error:
+        print(f"Get projects error: {error}")
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+@app.post("/projects", tags=["projects"])
+async def create_project(title: str = Form(...), videoBlob: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+    """
+    Create a new project for the current authenticated user.
+
+    Args:
+        title: Title of the new project (form data)
+        videoBlob: Uploaded video file (form data)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        idk yet
+    Raises:
+        HTTPException: If database error occurs or file upload fails
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO projects (title, userId, timeCreated, lastOpened) VALUES (%s, %s, %s, now(), now())",
+                (title, current_user['user_id'],)
+            )
+
+            #return something?
+
+    except Exception as error:
+        print(f"Create project error: {error}")
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()

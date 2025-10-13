@@ -2,18 +2,13 @@ import React, {useState} from 'react';
 import { useNavigate } from 'react-router-dom';
 import "./ProjectThumbnail.css";
 
-export default function ProjectThumbnail({ id, title, imageUrl, isCreate, route}) {
-    const [isModalOpen, setIsModalOpen] = useState(false);
+export default function ProjectThumbnail({ id, title, imageUrl, isCreate, route, onCreateClick}) {
     const navigate = useNavigate();
     const handleClick = () => {
         if (isCreate) {
-            setIsModalOpen(true);
-        } else if (route){
-            // navigate to project view
-            navigate(route);
-        }
-        if (isModalOpen) {
-            // ppen modal here
+            onCreateClick();
+        } else if (id) {
+            navigate(`/projects/${id}`);
         }
     }
     const thumbnail = (
