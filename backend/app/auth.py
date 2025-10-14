@@ -4,10 +4,9 @@ Handles password hashing and user authentication for server-side sessions.
 """
 
 from typing import Optional
-import psycopg2
 from passlib.context import CryptContext
 from dotenv import load_dotenv
-from .database import get_db_connection, execute_with_connection
+from .database import execute_with_connection
 
 
 load_dotenv()

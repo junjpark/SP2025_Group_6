@@ -38,17 +38,17 @@ def execute_with_connection(operation_func):
     """
     Helper function to execute database operations with proper connection handling.
     Eliminates duplicate connection setup code.
-    
+
     Args:
         operation_func: Function that takes a cursor and performs database operations
-        
+
     Returns:
         Any: Result from operation_func, or None if connection fails
     """
     conn = get_db_connection()
     if not conn:
         return None
-    
+
     try:
         with conn.cursor() as cur:
             return operation_func(cur)
