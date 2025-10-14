@@ -33,7 +33,7 @@ body {
   min-height: 100vh;
   background-color: #1a1d29;
   color: #e2e8f0;
-  font-family: 'Arial', 'Helvetica', sans-serif;
+  font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
