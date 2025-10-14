@@ -7,7 +7,7 @@ from typing import Optional
 import psycopg2
 from passlib.context import CryptContext
 from dotenv import load_dotenv
-from .database import get_db_connection
+from .database import get_db_connection, execute_with_connection
 
 
 load_dotenv()
@@ -54,31 +54,23 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
     Returns:
         Optional[dict]: User data if authentication successful, None otherwise
     """
-    conn = get_db_connection()
-    if not conn:
-        return None
+    def authenticate_operation(cur):
+        cur.execute(
+            "SELECT id, email, password_hash, display_name FROM users WHERE email = %s",
+            (email,)
+        )
+        user = cur.fetchone()
 
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, email, password_hash, display_name FROM users WHERE email = %s",
-                (email,)
-            )
-            user = cur.fetchone()
+        if not user or not verify_password(password, user['password_hash']):
+            return None
 
-            if not user or not verify_password(password, user['password_hash']):
-                return None
+        return {
+            "user_id": user['id'],
+            "email": user['email'],
+            "display_name": user['display_name']
+        }
 
-            return {
-                "user_id": user['id'],
-                "email": user['email'],
-                "display_name": user['display_name']
-            }
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        return None
-    finally:
-        if conn:
-            conn.close()
+    return execute_with_connection(authenticate_operation)
 
 
 def get_user_by_email(email: str) -> Optional[dict]:
@@ -91,27 +83,17 @@ def get_user_by_email(email: str) -> Optional[dict]:
     Returns:
         Optional[dict]: User data if found, None otherwise
     """
-    conn = get_db_connection()
-    if not conn:
-        print("Database connection failed while fetching user")
-        return None
+    def get_user_operation(cur):
+        cur.execute(
+            "SELECT id, email, display_name, google_id FROM users WHERE email = %s",
+            (email,)
+        )
+        user = cur.fetchone()
+        if user:
+            user['user_id'] = user['id']  # Add user_id field for compatibility
+        return user
 
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, email, display_name, google_id FROM users WHERE email = %s",
-                (email,)
-            )
-            user = cur.fetchone()
-            if user:
-                user['user_id'] = user['id']  # Add user_id field for compatibility
-            return user
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Get user error: {error}")
-        return None
-    finally:
-        if conn:
-            conn.close()
+    return execute_with_connection(get_user_operation)
 
 
 def get_user_by_google_id(google_id: str) -> Optional[dict]:
@@ -124,24 +106,14 @@ def get_user_by_google_id(google_id: str) -> Optional[dict]:
     Returns:
         Optional[dict]: User data if found, None otherwise
     """
-    conn = get_db_connection()
-    if not conn:
-        print("Database connection failed while fetching user by Google ID")
-        return None
+    def get_google_user_operation(cur):
+        cur.execute(
+            "SELECT id, email, display_name, google_id FROM users WHERE google_id = %s",
+            (google_id,)
+        )
+        user = cur.fetchone()
+        if user:
+            user['user_id'] = user['id']  # Add user_id field for compatibility
+        return user
 
-    try:
-        with conn.cursor() as cur:
-            cur.execute(
-                "SELECT id, email, display_name, google_id FROM users WHERE google_id = %s",
-                (google_id,)
-            )
-            user = cur.fetchone()
-            if user:
-                user['user_id'] = user['id']  # Add user_id field for compatibility
-            return user
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Get user by Google ID error: {error}")
-        return None
-    finally:
-        if conn:
-            conn.close()
+    return execute_with_connection(get_google_user_operation)

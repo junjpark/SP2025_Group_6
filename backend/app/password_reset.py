@@ -8,7 +8,7 @@ import secrets
 from datetime import datetime, timedelta
 from typing import Optional
 import psycopg2
-from .database import get_db_connection
+from .database import get_db_connection, execute_with_connection
 from .auth import get_password_hash
 from .email_service import send_password_reset_email, send_password_reset_success_email
 
@@ -34,34 +34,22 @@ def create_password_reset_token(user_id: int, user_email: str, user_name: str) -
     # Calculate expiration time
     expires_at = datetime.utcnow() + timedelta(hours=RESET_TOKEN_EXPIRE_HOURS)
 
-    # Store token in database
-    conn = get_db_connection()
-    if not conn:
-        return None
+    def create_token_operation(cur):
+        # Insert new reset token
+        cur.execute(
+            """INSERT INTO password_reset_tokens (token, user_id, expires_at)
+               VALUES (%s, %s, %s)""",
+            (reset_token, user_id, expires_at)
+        )
+        return reset_token
 
-    try:
-        with conn.cursor() as cur:
-            # Insert new reset token
-            cur.execute(
-                """INSERT INTO password_reset_tokens (token, user_id, expires_at)
-                   VALUES (%s, %s, %s)""",
-                (reset_token, user_id, expires_at)
-            )
-            conn.commit()
-
+    result = execute_with_connection(create_token_operation)
+    if result:
         # Send password reset email
         asyncio.create_task(send_password_reset_email(user_email, user_name, reset_token))
         print(f"Password reset token created for {user_email}: {reset_token}")
-
         return reset_token
-
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Password reset token creation error: {error}")
-        conn.rollback()
-        return None
-    finally:
-        if conn:
-            conn.close()
+    return None
 
 
 def validate_password_reset_token(token: str) -> Optional[dict]:
