@@ -1,149 +1,275 @@
-*{
-    color:white
+/* ===== PROJECT VIEW STYLES ===== */
+
+/* Main Layout */
+#projectView {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-primary);
+  overflow: hidden;
 }
 
-
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
-}
-/* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, 
-footer, header, hgroup, menu, nav, section {
-	display: block;
-}
-body {
-	line-height: 1;
-}
-ol, ul {
-	list-style: none;
-}
-blockquote, q {
-	quotes: none;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
-}
-table {
-	border-collapse: collapse;
-	border-spacing: 0;
+/* ===== EDITOR SECTION ===== */
+#projectViewEditor {
+  flex: 1;
+  display: flex;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-lg);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-elevated) 100%
+  );
+  min-height: 0;
 }
 
-#projectView{
-    width: 100vw;
-    height: 100vh;
-}
-
-#projectView > *{
-    align-content: center;
-}
-
-#projectViewNav{
-    width: 100vw;
-    height: 8vh;
-    background-color: #582f4c;
-}
-
-#projectViewEditor{
-    width: 100vw;
-    height: 75vh;
-    background-color: #1a1d29;
-    display: flex;
-}
-
-#projectViewEditor > *{
-    height: 100%;
-}
-
-#projectViewVideoPlayer{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 60%;
-}
-
+/* ===== TOOLBAR ===== */
 #projectViewToolbar {
-    width: 20%;
+  width: 80px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  box-shadow: var(--shadow-md);
 }
 
-#scissorsHolder{
-    background-color: white;
-    width: fit-content;
+#scissorsHolder {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
+  border: none;
+  border-radius: var(--radius-md);
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
 }
 
-#videoPlayer{
-    width: 60%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+#scissorsHolder:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
 }
 
-#mediaButtons{
+#scissorsHolder:active {
+  transform: translateY(0);
+}
+
+#scissorsHolder:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#scissorsHolder svg {
+  color: white;
+  font-size: 20px;
+}
+
+/* ===== VIDEO PLAYER SECTION ===== */
+#projectViewVideoPlayer {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-xl);
+  position: relative;
+}
+
+#projectViewVideoPlayer p {
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+/* ===== CLIP INFO PANEL ===== */
+#clipInfo {
+  width: 300px;
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+  box-shadow: var(--shadow-md);
+}
+
+#clipInfo > p {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--color-border);
+}
+
+#clipInfoGoesHere {
+  flex: 1;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-md);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  resize: vertical;
+  min-height: 120px;
+  font-family: inherit;
+  transition: border-color var(--transition-base);
+}
+
+#clipInfoGoesHere:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--focus-ring);
+}
+
+/* ===== TIMELINE FOOTER ===== */
+#projectViewFooter {
+  height: 180px;
+  background: var(--color-bg-tertiary);
+  display: flex;
+  gap: var(--spacing-sm);
+  align-items: center;
+  padding: var(--spacing-lg) var(--spacing-xl);
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-top: 2px solid var(--color-border);
+  cursor: default;
+  border: none;
+  width: 100%;
+}
+
+#projectViewFooter::-webkit-scrollbar {
+  height: 8px;
+}
+
+#projectViewFooter::-webkit-scrollbar-track {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+}
+
+#projectViewFooter::-webkit-scrollbar-thumb {
+  background: var(--color-border-light);
+  border-radius: var(--radius-sm);
+}
+
+#projectViewFooter::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ===== CLIP THUMBNAILS ===== */
+.clip {
+  min-width: 140px;
+  height: 120px;
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.clip::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.4) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.clip:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.clip:hover::before {
+  opacity: 1;
+}
+
+.clip.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+  background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+}
+
+/* ===== UTILITY CLASSES ===== */
+.hidden {
+  display: none;
+}
+
+/* ===== MEDIA QUERIES ===== */
+@media (max-width: 1200px) {
+  #projectViewEditor {
+    flex-wrap: wrap;
+  }
+
+  #clipInfo {
     width: 100%;
-    display: flex;
-    gap: 10px;
-    justify-content: center;
+    max-width: 300px;
+  }
 }
 
-.mediaButton{
-    background-color: aliceblue;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: black;
-    width: 25%;
-    height: 5vh;
+@media (max-width: 768px) {
+  #projectViewEditor {
+    padding: var(--spacing-md);
+    gap: var(--spacing-md);
+  }
+
+  #projectViewToolbar {
+    width: 60px;
+    padding: var(--spacing-md);
+  }
+
+  #scissorsHolder {
+    width: 40px;
+    height: 40px;
+  }
+
+  #scissorsHolder svg {
+    font-size: 16px;
+  }
+
+  #clipInfo {
+    display: none;
+  }
+
+  #projectViewFooter {
+    height: 140px;
+    padding: var(--spacing-md);
+  }
+
+  .clip {
+    min-width: 100px;
+    height: 80px;
+  }
 }
 
-#clipInfo{
-    width: 20%;
-}
+@media (max-width: 480px) {
+  #projectViewFooter {
+    height: 120px;
+  }
 
-#projectViewFooter{
-    width: 100vw;
-    height: 17vh;
-    background-color: #582f4c;
-    display: flex;
-    gap: 10px;
-    align-content: center;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 10px;
-}
-
-
-
-.clip{
-    height: 70%;
-    background-color: #000;
-    width: 10%;
-    border: 2px solid transparent;
-}
-
-.selected{
-    border: 2px solid #FFFFFF;
-}
-
-.hidden{
-    visibility: hidden;
+  .clip {
+    min-width: 80px;
+    height: 60px;
+  }
 }
