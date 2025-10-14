@@ -31,7 +31,7 @@ return(
             id="myVideo"
             ref={ref}
             src={url}
-            onError={(e) => console.error('Video error:', e)}
+            onError={(e) => console.error('Video error:', e, 'Video URL:', url)}
         >
             <track kind="captions" />
             Not working

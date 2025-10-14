@@ -9,6 +9,7 @@ import { useParams } from 'react-router-dom';
 const ProjectView = () => {
     const { projectId } = useParams(); //get the project id from the url
     console.log("Project ID from URL:", projectId); 
+    const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
     const [videoUrl, setVideoUrl] = useState(null);
 
@@ -123,7 +124,7 @@ const ProjectView = () => {
             return null;
         }
         try {
-            const response = await fetch(`/projects/${currentProjectId}`, {
+            const response = await fetch(`${API}/projects/${currentProjectId}`, {
                 method: 'GET',
                 // headers: {
                 //     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -131,7 +132,13 @@ const ProjectView = () => {
             });
             console.log("fetching video for project id ", currentProjectId);
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                console.error('Failed to fetch video URL, status:', response.status);
+                return null;
+            }
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.startsWith("video/")) {
+                console.error("server returned non-video content-type:", contentType);
+                return null;
             }
             const blob = await response.blob();
             const url = URL.createObjectURL(blob);

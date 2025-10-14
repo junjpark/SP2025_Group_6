@@ -414,7 +414,7 @@ async def create_project(title: str = Form(...),
         conn.close()
 
 # Get project details by ID
-@app.get("/projects/{project_id}", tags=["projects"])
+@app.get('/projects/{project_id}', tags=["projects"])
 async def get_project(project_id: int#, 
                       #current_user: dict = Depends(get_current_user)
                       ):
