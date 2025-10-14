@@ -128,9 +128,7 @@ const ProjectView = () => {
         try {
             const response = await fetch(`${API}/projects/${currentProjectId}`, {
                 method: 'GET',
-                // headers: {
-                //     'Authorization': `Bearer ${localStorage.getItem('token')}`
-                // }
+                credentials: 'include', //JP: This is the change needed to make auth stuff work for fetching the project by projectid and using auth for current user, just gotta pass credentials along workflow
             });
             console.log("fetching video for project id ", currentProjectId);
             if (!response.ok) {

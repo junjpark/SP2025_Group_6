@@ -363,10 +363,12 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
 
 # Create a new project for the current user
 @app.post("/projects", tags=["projects"])
-async def create_project(title: str = Form(...),
-                         video: UploadFile = File(...)#,
-                         #current_user: dict = Depends(get_current_user)
-                         ):
+async def create_project(
+    title: str = Form(...),
+    video: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user['user_id']
     """
     Create a new project for the current authenticated user.
 
@@ -403,7 +405,7 @@ async def create_project(title: str = Form(...),
                 "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) " \
                 "VALUES (%s, %s, %s, now(), now()) " \
                 "RETURNING id",
-                (title, 1, upload_path)
+                (title, user_id, upload_path)
             )
             id_row = cur.fetchone()
             conn.commit()
@@ -417,9 +419,10 @@ async def create_project(title: str = Form(...),
 
 # Get project details by ID
 @app.get('/projects/{project_id}', tags=["projects"])
-async def get_project(project_id: int#,
-                      #current_user: dict = Depends(get_current_user)
-                      ):
+async def get_project(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Retrieve details of a specific project by its ID for the current authenticated user.
 
@@ -431,6 +434,7 @@ async def get_project(project_id: int#,
     Raises:
         HTTPException: If project not found or database error occurs
     """
+    user_id = current_user['user_id']
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
@@ -439,7 +443,7 @@ async def get_project(project_id: int#,
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
-                (project_id, 1)
+                (project_id, user_id)
             )
             project = cur.fetchone()
 
