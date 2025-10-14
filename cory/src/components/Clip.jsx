@@ -1,11 +1,11 @@
 import { useRef } from 'react';
 
-function Clip({start, end, onClick}){
+function Clip({clipId, onClick}){ //lowkey this component does not need to exist its a f------ button who wrote this
     const clipDiv = useRef(null);
     
     function handleClick(e){
         e.stopPropagation();
-        onClick(start,end, clipDiv.current);
+        onClick(clipId, clipDiv.current);
     }
 
     return (<>
@@ -14,7 +14,7 @@ function Clip({start, end, onClick}){
             className="clip" 
             onClick={(e) => {handleClick(e)}}
         >
-            {start}
+            {clipId}
         </button>
     </>)
 };

@@ -130,6 +130,8 @@ table {
     padding: 10px;
 }
 
+
+
 .clip{
     height: 70%;
     background-color: #000;
@@ -139,4 +141,8 @@ table {
 
 .selected{
     border: 2px solid #FFFFFF;
+}
+
+.hidden{
+    visibility: hidden;
 }
