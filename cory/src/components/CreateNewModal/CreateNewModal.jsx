@@ -65,8 +65,8 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
                 throw new Error(`Server returned ${response.status}`);
             }
             const result = await response.json();
-            onCreate(result);
-            onClose();
+            console.log("Project created:", result);
+            onCreate(result.id);
         } catch (error) {
             console.error("Error creating project:", error);
         } finally {

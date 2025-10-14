@@ -4,6 +4,7 @@ Handles user registration, login, Google OAuth, and protected routes.
 """
 from datetime import timedelta
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, Form, File
+from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from .models import UserCreate, UserLogin, GoogleUserCreate, UserResponse, Token
@@ -254,7 +255,7 @@ async def logout():
     return {"message": "Successfully logged out"}
 
 # Get projects for current user
-@app.get("/projects", tags=["projects"])
+@app.get("/project-list", tags=["project-list"])
 async def get_user_projects(current_user: dict = Depends(get_current_user)):
     """
     Retrieve all projects associated with the current authenticated user.
@@ -286,6 +287,7 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
     finally:
         conn.close()
 
+# Create a new project for the current user
 @app.post("/projects", tags=["projects"])
 async def create_project(title: str = Form(...), 
                          video: UploadFile = File(...)#, 
@@ -327,10 +329,53 @@ async def create_project(title: str = Form(...),
                 "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) VALUES (%s, %s, %s, now(), now()) RETURNING id",
                 (title, 1, upload_path)
             )
-            id = cur.fetchone()
-            conn.commit()
+            id_row = cur.fetchone()
             
-            return id
+            conn.commit()
+            project_id = id_row['id'] if id_row else None
+            return {"id": project_id}
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# Get project details by ID
+@app.get("/projects/{project_id}", tags=["projects"])
+async def get_project(project_id: int#, 
+                      #current_user: dict = Depends(get_current_user)
+                      ):
+    """
+    Retrieve details of a specific project by its ID for the current authenticated user.
+
+    Args:
+        project_id: ID of the project to retrieve (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Project details
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, 1)
+            )
+            project = cur.fetchone()
+
+            if not project:
+                raise HTTPException(status_code=404, detail="Project not found")
+
+            video_path = project['video_url']
+            
+            if not os.path.exists(video_path):
+                raise HTTPException(status_code=404, detail="Video file not found")
+            return FileResponse(video_path)
 
     except Exception as error:
         raise HTTPException(status_code=500, detail="Internal server error") from error

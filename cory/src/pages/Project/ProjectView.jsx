@@ -1,10 +1,17 @@
 import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
+import { useParams } from 'react-router-dom';
 
 const ProjectView = () => {
+    const { projectId } = useParams(); //get the project id from the url
+    console.log("Project ID from URL:", projectId); 
+
+    const [videoUrl, setVideoUrl] = useState(null);
+
+    const [isLoading, setIsLoading] = useState(true);
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -21,6 +28,16 @@ const ProjectView = () => {
 
     const {user} = useAuth(); //this user object tells us what is going on
     {console.log(user.user_id)}
+
+    useEffect(() => {
+        const fetchVideoUrl = async () => {
+            const url = await getVideoUrl(projectId);
+            setVideoUrl(url);
+            setIsLoading(false);
+        };
+
+        fetchVideoUrl();
+    }, [projectId]);
 
     /**
      * This is a getter for the start of the selected time stamp
@@ -100,6 +117,32 @@ const ProjectView = () => {
         setClipTimings(newClipTimings);
     }
 
+    async function getVideoUrl(currentProjectId){
+        if(user == null){
+            return null;
+        }
+        try {
+            const response = await fetch(`/projects/${currentProjectId}`, {
+                method: 'GET',
+                // headers: {
+                //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+                // }
+            });
+            console.log("fetching video for project id ", currentProjectId);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            console.log("Fetched video URL:", url);
+            return url;
+        }
+        catch (error) {
+            console.error('Error fetching video URL:', error);
+            return null;
+        }
+    }
+
     return (
     <div id="projectView">
         <div id="projectViewEditor">
@@ -116,7 +159,11 @@ const ProjectView = () => {
             </div>
 
             <div id="projectViewVideoPlayer">
-                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
+                {isLoading ? (
+                    <p>Loading video...</p>
+                ) : (
+                <CustomVideoPlayer ref={videoPlayerRef} url={videoUrl} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
+                )}
             </div>
 
             <div id="clipInfo">

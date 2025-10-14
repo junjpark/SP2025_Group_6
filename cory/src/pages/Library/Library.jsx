@@ -15,6 +15,15 @@ export default function Library() {
         { id: 2, title: "Project Two", imageUrl: snoopy },
         { id: 3, title: "Project Three", imageUrl: snoopy },
     ];
+
+    const navigateToProject = (id) => {
+        if (!id || id === "undefined") {
+            alert("Project ID is missing or invalid.");
+            return;
+        }
+        navigate(`/projects/${id}`);
+    }
+
     return (
         <div className="library-container">
             <h1>Library</h1>
@@ -36,7 +45,11 @@ export default function Library() {
                 <CreateNewModal 
                     isOpen={isCreateModalOpen} 
                     onClose={() => setIsCreateModalOpen(false)}
-                    onCreate={(data) => {navigate(`/projects/${data}`);}}
+                    onCreate={(id) => {
+                        console.log("Navigating to project:", id);
+                        navigate(`/projects/${id}`);
+                        setIsCreateModalOpen(false);
+                    }}
                 />
             )}
             
