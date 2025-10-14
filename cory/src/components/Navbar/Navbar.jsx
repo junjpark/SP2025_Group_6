@@ -17,9 +17,13 @@ export default function NavBar() {
     <div>
       {/* Header with user info and logout */}
       <header className="dashboard-header">
-        <h1 className="dashboard-title" onClick={handleNavigate}>
+        <button
+          className="dashboard-title"
+          onClick={handleNavigate}
+          aria-label="Go to home page"
+        >
           cory
-        </h1>
+        </button>
         {user && (
           <div className="user-info">
             <span className="welcome-text">Welcome, {user?.display_name}!</span>
