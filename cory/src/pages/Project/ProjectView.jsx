@@ -1,7 +1,7 @@
 import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
 import { useParams } from 'react-router-dom';
 
@@ -14,6 +14,8 @@ const ProjectView = () => {
     const [videoUrl, setVideoUrl] = useState(null);
 
     const [isLoading, setIsLoading] = useState(true);
+
+    const [videoPaused, setVideoPaused] = useState(true);
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -150,12 +152,24 @@ const ProjectView = () => {
             return null;
         }
     }
+    const isButtonDisabled = useMemo(() =>{
+        const videoCurrentTime = videoPlayerRef.current?.currentTime ?? 0;
+        for(const clipTiming of clipTimings){
+            for(const timeStamp of clipTiming){
+                if(videoCurrentTime === timeStamp){
+                    return true;
+                }
+            }
+        }
+        return false;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [videoPaused, clipTimings])
 
     return (
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button disabled={isButtonDisabled()} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
@@ -170,8 +184,9 @@ const ProjectView = () => {
                 {isLoading ? (
                     <p>Loading video...</p>
                 ) : (
-                <CustomVideoPlayer ref={videoPlayerRef} url={videoUrl} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
+                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()} onPause={() => setVideoPaused(true)} onPlay={() => setVideoPaused(false)}></CustomVideoPlayer>
                 )}
+                
             </div>
 
             <div id="clipInfo">

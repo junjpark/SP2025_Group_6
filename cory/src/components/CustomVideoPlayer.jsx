@@ -2,7 +2,7 @@ import React, {useEffect, useState } from "react";
 import "./CustomVideoPlayer.css"
 
 
-const CustomVideoPlayer = React.forwardRef(({url, start, end}, ref) => {
+const CustomVideoPlayer = React.forwardRef(({url, start, end, onPause, onPlay}, ref) => {
     CustomVideoPlayer.displayName = 'CustomVideoPlayer'
 
 console.log("Rendering CustomVideoPlayer with URL:", url, "start:", start, "end:", end);
@@ -32,6 +32,8 @@ return(
             ref={ref}
             src={url}
             onError={(e) => console.error('Video error:', e, 'Video URL:', url)}
+            onPlay={onPlay}
+            onPause={onPause}
         >
             <track kind="captions" />
             Not working
