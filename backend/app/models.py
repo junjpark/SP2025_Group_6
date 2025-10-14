@@ -42,17 +42,43 @@ class UserResponse(BaseModel):
     display_name: str
     google_id: Optional[str] = None  # Only present for Google OAuth users
 
-class Token(BaseModel):
-    """
-    Model for JWT token response.
-    Returned after successful login/signup.
-    """
-    access_token: str
-    token_type: str
 
-class TokenData(BaseModel):
+class SessionResponse(BaseModel):
     """
-    Model for decoded JWT token data.
-    Used internally for token validation.
+    Model for session response data.
+    Returned after successful login/signup with session.
     """
-    email: Optional[str] = None
+    message: str
+    user: UserResponse
+
+class SessionData(BaseModel):
+    """
+    Model for session data stored in database.
+    Used internally for session management.
+    """
+    user_id: int
+    email: str
+    display_name: str
+    google_id: Optional[str] = None
+
+class ForgotPasswordRequest(BaseModel):
+    """
+    Model for forgot password request.
+    Used when user requests password reset.
+    """
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    """
+    Model for password reset request.
+    Used when user submits new password with reset token.
+    """
+    token: str
+    new_password: str
+
+class PasswordResetResponse(BaseModel):
+    """
+    Model for password reset response.
+    Returned after successful password reset.
+    """
+    message: str

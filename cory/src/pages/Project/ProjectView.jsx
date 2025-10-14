@@ -4,6 +4,7 @@ import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
 
+
 const ProjectView = () => {
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player

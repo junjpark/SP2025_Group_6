@@ -20,6 +20,8 @@ import SignupPage from "./pages/Signup/SignupPage";
 import Library from "./pages/Library/Library"
 import NavBar from "./components/Navbar/Navbar";
 import ProjectView from "./pages/Project/ProjectView";
+import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword/ResetPassword";
 
 
 /**
@@ -74,6 +76,14 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route 
+          path="/forgot-password" 
+          element={<ForgotPassword />} />
+
+          <Route 
+          path="/reset-password" 
+          element={<ResetPassword />} />
           
           {/* Catch-all route - redirect to library for any unknown paths */}
           <Route 

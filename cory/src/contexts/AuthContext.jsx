@@ -22,6 +22,7 @@ export const useAuth = () => {
  * 
  * Wraps the application and provides authentication state and methods
  * to all child components through React Context.
+ * Uses server-side sessions with HTTP-only cookies.
  * 
  * @param {Object} props - Component props
  * @param {React.ReactNode} props.children - Child components
@@ -30,19 +31,18 @@ export const AuthProvider = ({ children }) => {
   // State management
   const [user, setUser] = useState(null);           // Current user data
   const [loading, setLoading] = useState(true);     // Loading state for auth operations
-  const [token, setToken] = useState(               // JWT token from localStorage
-    localStorage.getItem('token')
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(false); // Authentication status
 
   /**
-   * Fetch user profile from the backend using the stored token
-   * Validates the token and updates user state
+   * Fetch user profile from the backend using server-side session
+   * Validates the session and updates user state
    */
   const fetchUserProfile = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:8000/me', {
+        method: 'GET',
+        credentials: 'include', // Include cookies in the request
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -50,36 +50,35 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
+        setIsAuthenticated(true);
         console.log('User profile loaded:', userData);
-      } else {
-        // Token is invalid or expired
-        console.log('Token validation failed, logging out');
-        localStorage.removeItem('token');
-        setToken(null);
+      } else if (response.status === 401) {
+        // No valid session - this is normal when not logged in
         setUser(null);
+        setIsAuthenticated(false);
+      } else {
+        // Other error - log it
+        console.error('Unexpected error fetching user profile:', response.status);
+        setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
-      // Network error - remove invalid token
-      localStorage.removeItem('token');
-      setToken(null);
+      console.error('Network error fetching user profile:', error);
+      // Network error - clear user state
       setUser(null);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, []);
 
   /**
-   * Effect to fetch user profile when token is available
-   * Runs on component mount and when token changes
+   * Effect to fetch user profile on component mount
+   * Checks for existing session on app startup
    */
   useEffect(() => {
-    if (token) {
-      fetchUserProfile();
-    } else {
-      setLoading(false);
-    }
-  }, [token, fetchUserProfile]);
+    fetchUserProfile();
+  }, [fetchUserProfile]);
 
   /**
    * Login with email and password
@@ -94,6 +93,7 @@ export const AuthProvider = ({ children }) => {
       
       const response = await fetch('http://localhost:8000/login', {
         method: 'POST',
+        credentials: 'include', // Include cookies in the request
         headers: {
           'Content-Type': 'application/json',
         },
@@ -103,12 +103,9 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         
-        // Store token in localStorage and state
-        localStorage.setItem('token', data.access_token);
-        setToken(data.access_token);
-        
-        // Wait for user profile to be fetched
-        await fetchUserProfile();
+        // Update user state with the returned user data
+        setUser(data.user);
+        setIsAuthenticated(true);
         
         console.log('Login successful');
         return { success: true };
@@ -137,6 +134,7 @@ export const AuthProvider = ({ children }) => {
       
       const response = await fetch('http://localhost:8000/google-login', {
         method: 'POST',
+        credentials: 'include', // Include cookies in the request
         headers: {
           'Content-Type': 'application/json',
         },
@@ -150,12 +148,9 @@ export const AuthProvider = ({ children }) => {
       if (response.ok) {
         const data = await response.json();
         
-        // Store token in localStorage and state
-        localStorage.setItem('token', data.access_token);
-        setToken(data.access_token);
-        
-        // Wait for user profile to be fetched
-        await fetchUserProfile();
+        // Update user state with the returned user data
+        setUser(data.user);
+        setIsAuthenticated(true);
         
         console.log('Google login successful');
         return { success: true };
@@ -214,37 +209,44 @@ export const AuthProvider = ({ children }) => {
 
   /**
    * Logout the current user
-   * Clears token and user data from state and localStorage
+   * Calls the server to destroy the session and clears local state
    */
-  const logout = () => {
-    console.log('Logging out user');
-    localStorage.removeItem('token');
-    setToken(null);
-    setUser(null);
-  };
-
-  /**
-   * Check if user is authenticated
-   * 
-   * @returns {boolean} True if user is logged in, false otherwise
-   */
-  const isAuthenticated = () => {
-    return !!user && !!token;
+  const logout = async () => {
+    try {
+      console.log('Logging out user');
+      
+      // Call server logout endpoint to destroy session
+      await fetch('http://localhost:8000/logout', {
+        method: 'POST',
+        credentials: 'include', // Include cookies in the request
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      // Clear local state
+      setUser(null);
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Clear local state even if server call fails
+      setUser(null);
+      setIsAuthenticated(false);
+    }
   };
 
   // Context value object
   const value = {
     // State
     user,           // Current user data
-    token,          // JWT token
     loading,        // Loading state
+    isAuthenticated, // Authentication status
     
     // Methods
     login,          // Email/password login
     googleLogin,    // Google OAuth login
     signup,         // User registration
     logout,         // User logout
-    isAuthenticated, // Check auth status
   };
 
   return (
