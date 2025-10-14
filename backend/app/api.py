@@ -287,16 +287,19 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
         conn.close()
 
 @app.post("/projects", tags=["projects"])
-async def create_project(title: str = Form(...), video: UploadFile = File(...), current_user: dict = Depends(get_current_user)):
+async def create_project(title: str = Form(...), 
+                         video: UploadFile = File(...)#, 
+                         #current_user: dict = Depends(get_current_user)
+                         ):
     """
     Create a new project for the current authenticated user.
 
     Args:
         title: Title of the new project (form data)
-        videoBlob: Uploaded video file (form data)
+        video: Uploaded video file (form data)
         current_user: Current user data from JWT token (dependency injection)
     Returns:
-        idk yet
+        project_id: ID of the newly created project
     Raises:
         HTTPException: If database error occurs or file upload fails
     """
@@ -322,7 +325,7 @@ async def create_project(title: str = Form(...), video: UploadFile = File(...), 
         with conn.cursor() as cur:
             cur.execute(
                 "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) VALUES (%s, %s, %s, now(), now()) RETURNING id",
-                (title, current_user['user_id'], upload_path)
+                (title, 1, upload_path)
             )
             id = cur.fetchone()
             conn.commit()

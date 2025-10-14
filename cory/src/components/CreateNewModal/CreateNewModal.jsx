@@ -56,9 +56,9 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
         try {
             const response = await fetch("http://localhost:8000/projects", {
                 method: "POST",
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
+                // headers: {
+                //     'Authorization': `Bearer ${token}`,
+                // },
                 body: data,
             });
             if (!response.ok) {

@@ -4,9 +4,11 @@ import "./Library.css";
 import snoopy from "../../snoopy-dancing.jpg";
 import ProjectView from '../Project/ProjectView'
 import CreateNewModal from '../../components/CreateNewModal/CreateNewModal';
+import { useNavigate } from 'react-router-dom';
 
 export default function Library() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const navigate = useNavigate();
     const projects = [ //fetch from backend later
         { id: 0, title: "Create New", isCreate: true },
         { id: 1, title: "Project One", imageUrl: snoopy },
@@ -34,6 +36,7 @@ export default function Library() {
                 <CreateNewModal 
                     isOpen={isCreateModalOpen} 
                     onClose={() => setIsCreateModalOpen(false)}
+                    onCreate={(data) => {navigate(`/projects/${data}`);}}
                 />
             )}
             
