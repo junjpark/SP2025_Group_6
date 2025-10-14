@@ -1,11 +1,13 @@
 import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
 
 
 const ProjectView = () => {
+
+    const [videoPaused, setVideoPaused] = useState(true);
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -101,11 +103,24 @@ const ProjectView = () => {
         setClipTimings(newClipTimings);
     }
 
+    const isButtonDisabled = useMemo(() =>{
+        const videoCurrentTime = videoPlayerRef.current?.currentTime ?? 0;
+        for(const clipTiming of clipTimings){
+            for(const timeStamp of clipTiming){
+                if(videoCurrentTime === timeStamp){
+                    return true;
+                }
+            }
+        }
+        return false;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [videoPaused, clipTimings])
+
     return (
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button disabled={isButtonDisabled()} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
@@ -117,7 +132,7 @@ const ProjectView = () => {
             </div>
 
             <div id="projectViewVideoPlayer">
-                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
+                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()} onPause={() => setVideoPaused(true)} onPlay={() => setVideoPaused(false)}></CustomVideoPlayer>
             </div>
 
             <div id="clipInfo">
