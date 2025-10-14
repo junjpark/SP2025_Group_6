@@ -56,7 +56,7 @@ src/
 ### Authentication
 - Email/password authentication
 - Google OAuth integration
-- JWT token management
+- Server-side session management
 - Automatic token validation
 - Protected routes
 

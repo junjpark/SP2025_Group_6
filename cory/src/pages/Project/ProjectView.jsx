@@ -2,14 +2,7 @@ import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
-/*TODO:
-    When Click clip show info
-    When click clip start looping
-    when click off clip/same clip goes back to global loop
-    manual clipping
-    update to abby's file structure
-    look into better controls
-*/
+// Project view component for video annotation
 const ProjectView = () => {
 const videoPlayerRef = useRef(null);
 const [startClipTimeStamp, setStartClipTimeStamp] = useState(0);
@@ -33,7 +26,7 @@ function setClipTimeStamps(a,b, divToHighlight){
 }
 
 function clip(){
-    setClipTimeStamps(0, 13.346667, null); //TODO: discuss what to do with this
+    setClipTimeStamps(0, 13.346667, null); // Reset to full video
     const videoCurrentTime = videoPlayerRef.current.currentTime;
     let newClipTimings = []
     for(const interval of clipTimings){

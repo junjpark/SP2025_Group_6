@@ -6,10 +6,15 @@ uvicorn[standard]
 psycopg2-binary
 
 # Authentication and security
-python-jose[cryptography]  # For JWT token handling
 bcrypt==4.0.1              # For password hashing with bcrypt
 passlib==1.7.4
 python-multipart          # For form data handling
 
 # Additional utilities
 python-dotenv             # For environment variable management
+
+# Email functionality
+fastapi-mail==1.4.1      # For sending emails
+jinja2==3.1.2            # For email templates
+
+# Session management using database storage

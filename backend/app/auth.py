@@ -1,24 +1,16 @@
 """
-Authentication utilities for JWT token handling and password management.
-Includes password hashing, token creation/validation, and user authentication.
+Authentication utilities for password management and user authentication.
+Handles password hashing and user authentication for server-side sessions.
 """
 
-from datetime import datetime, timedelta
-import os
 from typing import Optional
 import psycopg2
-from jose import JWTError, jwt
 from passlib.context import CryptContext
 from dotenv import load_dotenv
 from .database import get_db_connection
 
 
 load_dotenv()
-
-# JWT Configuration
-SECRET_KEY = os.environ["SECRET_KEY"]
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -49,45 +41,6 @@ def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
-    """
-    Create a JWT access token.
-
-    Args:
-        data: The data to encode in the token
-        expires_delta: Token expiration time (defaults to 15 minutes)
-
-    Returns:
-        str: The encoded JWT token
-    """
-    to_encode = data.copy()
-    if expires_delta:
-        expire = datetime.utcnow() + expires_delta
-    else:
-        expire = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
-
-
-def verify_token(token: str) -> Optional[str]:
-    """
-    Verify and decode a JWT token.
-
-    Args:
-        token: The JWT token to verify
-
-    Returns:
-        Optional[str]: The email from the token if valid, None otherwise
-    """
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email: str = payload.get("sub")
-        if email is None:
-            return None
-        return email
-    except JWTError:
-        return None
 
 
 def authenticate_user(email: str, password: str) -> Optional[dict]:
@@ -103,7 +56,6 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
     """
     conn = get_db_connection()
     if not conn:
-        print("Database connection failed during authentication")
         return None
 
     try:
@@ -115,7 +67,6 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
             user = cur.fetchone()
 
             if not user or not verify_password(password, user['password_hash']):
-                print(f"Authentication failed for email: {email}")
                 return None
 
             return {
@@ -124,7 +75,6 @@ def authenticate_user(email: str, password: str) -> Optional[dict]:
                 "display_name": user['display_name']
             }
     except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Authentication error: {error}")
         return None
     finally:
         if conn:
