@@ -1,11 +1,11 @@
-import React, {useEffect, useState } from "react";
+import React, {useEffect} from "react";
 import "./CustomVideoPlayer.css"
 
 
-const CustomVideoPlayer = React.forwardRef(({start, end}, ref) => {
+const CustomVideoPlayer = React.forwardRef(({url, start, end, onPause, onPlay}, ref) => {
     CustomVideoPlayer.displayName = 'CustomVideoPlayer'
-const [videoSource, ] = useState("sample.mp4")
-const videoBaseDir = "/videos/"
+
+console.log("Rendering CustomVideoPlayer with URL:", url, "start:", start, "end:", end);
 
 useEffect(()=>{
     const videoPlayer = ref.current;
@@ -24,17 +24,20 @@ useEffect(()=>{
 
 return(
     <>
-        {/* Just a video and a sorce with a fall back*/}
+        {/* Just a video and a source with a fall back*/}
         <video
             controls
             width={400}
             id="myVideo"
             ref={ref}
+            src={url}
+            onError={(e) => console.error('Video error:', e, 'Video URL:', url)}
+            onPlay={onPlay}
+            onPause={onPause}
         >
-            <source src={videoBaseDir + videoSource} type="video/mp4"></source>
             <track kind="captions" />
             Not working
-        </video>
+        </video> 
     </>
 )
 

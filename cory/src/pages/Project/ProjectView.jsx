@@ -1,11 +1,21 @@
 import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
+import { useParams } from 'react-router-dom';
 
 
 const ProjectView = () => {
+    const { projectId } = useParams(); //get the project id from the url
+    console.log("Project ID from URL:", projectId); 
+    const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
+    const [videoUrl, setVideoUrl] = useState(null);
+
+    const [isLoading, setIsLoading] = useState(true);
+
+    const [videoPaused, setVideoPaused] = useState(true);
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -22,6 +32,16 @@ const ProjectView = () => {
 
     const {user} = useAuth(); //this user object tells us what is going on
     {console.log(user.user_id)}
+
+    useEffect(() => {
+        const fetchVideoUrl = async () => {
+            const url = await getVideoUrl(projectId);
+            setVideoUrl(url);
+            setIsLoading(false);
+        };
+
+        fetchVideoUrl();
+    }, [projectId]);
 
     /**
      * This is a getter for the start of the selected time stamp
@@ -101,11 +121,55 @@ const ProjectView = () => {
         setClipTimings(newClipTimings);
     }
 
+    async function getVideoUrl(currentProjectId){
+        if(user == null){
+            return null;
+        }
+        try {
+            const response = await fetch(`${API}/projects/${currentProjectId}`, {
+                method: 'GET',
+                // headers: {
+                //     'Authorization': `Bearer ${localStorage.getItem('token')}`
+                // }
+            });
+            console.log("fetching video for project id ", currentProjectId);
+            if (!response.ok) {
+                console.error('Failed to fetch video URL, status:', response.status);
+                return null;
+            }
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.startsWith("video/")) {
+                console.error("server returned non-video content-type:", contentType);
+                return null;
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            console.log("Fetched video URL:", url);
+            return url;
+        }
+        catch (error) {
+            console.error('Error fetching video URL:', error);
+            return null;
+        }
+    }
+    const isButtonDisabled = useMemo(() =>{
+        const videoCurrentTime = videoPlayerRef.current?.currentTime ?? 0;
+        for(const clipTiming of clipTimings){
+            for(const timeStamp of clipTiming){
+                if(videoCurrentTime === timeStamp){
+                    return true;
+                }
+            }
+        }
+        return false;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [videoPaused, clipTimings])
+
     return (
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button disabled={isButtonDisabled} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
@@ -117,7 +181,12 @@ const ProjectView = () => {
             </div>
 
             <div id="projectViewVideoPlayer">
-                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
+                {isLoading ? (
+                    <p>Loading video...</p>
+                ) : (
+                <CustomVideoPlayer ref={videoPlayerRef} url={videoUrl} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()} onPause={() => setVideoPaused(true)} onPlay={() => setVideoPaused(false)}></CustomVideoPlayer>
+                )}
+                
             </div>
 
             <div id="clipInfo">

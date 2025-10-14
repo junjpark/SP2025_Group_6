@@ -14,6 +14,7 @@ backend/.env.development
 backend/.env.test
 backend/.env.production
 backend/.env.staging
+backend/uploads
 
 # Frontend Environment (already covered by cory/.gitignore)
 cory/.env

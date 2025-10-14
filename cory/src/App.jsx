@@ -70,7 +70,7 @@ export default function App() {
             } 
           />
           <Route
-            path="/project1"
+            path="/projects/:projectId"
             element={ <ProtectedRoute>
               <ProjectView/>
               </ProtectedRoute>
