@@ -441,6 +441,7 @@ async def get_project(
 
     try:
         with conn.cursor() as cur:
+            # Query for the project owned by the current user (single-step authorization)
             cur.execute(
                 "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
                 (project_id, user_id)
@@ -448,13 +449,19 @@ async def get_project(
             project = cur.fetchone()
 
             if not project:
+                # Either project doesn't exist or doesn't belong to the user
                 raise HTTPException(status_code=404, detail="Project not found")
 
             video_path = project['video_url']
             if not os.path.exists(video_path):
                 raise HTTPException(status_code=404, detail="Video file not found")
+
+            # Serve the file only after ownership and existence checks pass
             return FileResponse(video_path)
 
+    except HTTPException:
+        # Re-raise HTTPExceptions so FastAPI returns the intended status code
+        raise
     except Exception as error:
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:

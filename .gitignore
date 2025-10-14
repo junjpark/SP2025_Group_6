@@ -180,3 +180,6 @@ venv.bak/
 *.p12
 *.pfx
 secrets/
+
+#Pose Estimation
+backend/model
