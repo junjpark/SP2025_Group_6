@@ -1,7 +1,7 @@
 import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
 
 
@@ -103,7 +103,7 @@ const ProjectView = () => {
         setClipTimings(newClipTimings);
     }
 
-    function isButtonDisabled(){
+    const isButtonDisabled = useMemo(() =>{
         const videoCurrentTime = videoPlayerRef.current?.currentTime ?? 0;
         for(const clipTiming of clipTimings){
             for(const timeStamp of clipTiming){
@@ -113,8 +113,8 @@ const ProjectView = () => {
             }
         }
         return false;
-    }
-
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [videoPaused, clipTimings])
 
     return (
     <div id="projectView">
