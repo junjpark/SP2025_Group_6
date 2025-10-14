@@ -29,6 +29,11 @@ import ProjectView from "./pages/Project/ProjectView";
  */
 export default function App() {
   return (
+//     <>
+// <NavBar/>
+// <ProjectView></ProjectView>
+//     </>
+    
     // Wrap the entire app with authentication context
     // This provides authentication state and methods to all child components
     <AuthProvider>
