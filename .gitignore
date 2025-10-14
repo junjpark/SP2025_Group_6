@@ -183,3 +183,8 @@ secrets/
 
 #Pose Estimation
 backend/model
+# Generated pose landmarks and processing markers
+*.landmarks.json
+*.landmarks.json.processing
+*.landmarks.json.error
+backend/uploads/*.landmarks.json*
