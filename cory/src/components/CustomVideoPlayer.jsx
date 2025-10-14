@@ -2,7 +2,7 @@ import React, {useEffect, useState } from "react";
 import "./CustomVideoPlayer.css"
 
 
-const CustomVideoPlayer = React.forwardRef(({start, end}, ref) => {
+const CustomVideoPlayer = React.forwardRef(({start, end, onPause, onPlay}, ref) => {
     CustomVideoPlayer.displayName = 'CustomVideoPlayer'
 const [videoSource, ] = useState("sample.mp4")
 const videoBaseDir = "/videos/"
@@ -30,6 +30,8 @@ return(
             width={400}
             id="myVideo"
             ref={ref}
+            onPlay={onPlay}
+            onPause={onPause}
         >
             <source src={videoBaseDir + videoSource} type="video/mp4"></source>
             <track kind="captions" />

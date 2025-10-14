@@ -7,6 +7,8 @@ import {useAuth} from "../../contexts/AuthContext"
 
 const ProjectView = () => {
 
+    const [videoPaused, setVideoPaused] = useState(true);
+
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
     //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
@@ -101,11 +103,24 @@ const ProjectView = () => {
         setClipTimings(newClipTimings);
     }
 
+    function isButtonDisabled(){
+        const videoCurrentTime = videoPlayerRef.current?.currentTime ?? 0;
+        for(const clipTiming of clipTimings){
+            for(const timeStamp of clipTiming){
+                if(videoCurrentTime === timeStamp){
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+
     return (
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button disabled={isButtonDisabled()} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
@@ -117,7 +132,7 @@ const ProjectView = () => {
             </div>
 
             <div id="projectViewVideoPlayer">
-                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()}></CustomVideoPlayer>
+                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()} onPause={() => setVideoPaused(true)} onPlay={() => setVideoPaused(false)}></CustomVideoPlayer>
             </div>
 
             <div id="clipInfo">
