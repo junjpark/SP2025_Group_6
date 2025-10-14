@@ -49,13 +49,14 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
         }
 
         //const token = localStorage.getItem('token');
-        
+
         const data = new FormData();
         data.append("title", projectName);
         data.append("video", videoFile);
         try {
-            const response = await fetch("http://localhost:8000/projects", {
+            const response = await fetch(`/api/projects`, {
                 method: "POST",
+                credentials: 'include', // include session cookie so backend can set user_id
                 // headers: {
                 //     'Authorization': `Bearer ${token}`,
                 // },
@@ -87,14 +88,14 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
 
     return (
         isOpen ? (
-            <div 
-                className="modal-overlay" 
+            <div
+                className="modal-overlay"
                 onClick={onClose}
                 onKeyDown={handleOverlayKeydown}
                 tabIndex={0}
                 role="button"
             >
-                <div 
+                <div
                     className="modal-content"
                     onClick={(e) => e.stopPropagation()}
                     onKeyDown={handleOverlayKeydown}
@@ -103,14 +104,14 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
                 >
                     <h2 className="modal-header">New Project</h2>
                     <div className="project-name-section">
-                      <label htmlFor="project-name-input">Project Name</label>
-                            <input
-                                type="text"
-                                value={projectName}
-                                onChange={(e) => setProjectName(e.target.value)}
-                                placeholder='Enter project name'
-                                className="name-input"
-                            />
+                        <label htmlFor="project-name-input">Project Name</label>
+                        <input
+                            type="text"
+                            value={projectName}
+                            onChange={(e) => setProjectName(e.target.value)}
+                            placeholder='Enter project name'
+                            className="name-input"
+                        />
                     </div>
                     <div className="video-upload-section">
                         <label htmlFor="video-upload">Upload Video</label>
@@ -139,7 +140,7 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
                         ) : (
                             <div className="video-info">
                                 <p>{videoFile.name}</p>
-                                <p>{(videoFile.size / (1024*1024)).toFixed(2)} MB</p>
+                                <p>{(videoFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                                 <button onClick={removeVideo} className="remove-video-button">Remove</button>
                             </div>
                         )}

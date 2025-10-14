@@ -31,68 +31,68 @@ import ResetPassword from "./pages/ResetPassword/ResetPassword";
  */
 export default function App() {
   return (
-//     <>
-// <NavBar/>
-// <ProjectView></ProjectView>
-//     </>
-    
+    //     <>
+    // <NavBar/>
+    // <ProjectView></ProjectView>
+    //     </>
+
     // Wrap the entire app with authentication context
     // This provides authentication state and methods to all child components
     <AuthProvider>
       {/* Set up React Router for navigation */}
       <Router>
-        <NavBar/>
+        <NavBar />
         <Routes>
-          
+
           {/* Public Routes - accessible without authentication */}
-          
+
           {/* Login page - redirects to dashboard if already logged in */}
-          <Route 
-            path="/login" 
-            element={<LoginPage />} 
+          <Route
+            path="/login"
+            element={<LoginPage />}
           />
-          
+
           {/* Signup page - redirects to login after successful registration */}
-          <Route 
-            path="/signup" 
-            element={<SignupPage />} 
+          <Route
+            path="/signup"
+            element={<SignupPage />}
           />
-          
+
           {/* Protected Routes - require authentication */}
-          
+
           {/* Dashboard - main application interface */}
-          <Route 
-            path="/" 
+          <Route
+            path="/"
             element={
               <ProtectedRoute>
                 <Library />
-              </ProtectedRoute>
-            } 
-          />
-          <Route
-            path="/projects/:projectId"
-            element={ <ProtectedRoute>
-              <ProjectView/>
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/projects/:projectId"
+            element={<ProtectedRoute>
+              <ProjectView />
+            </ProtectedRoute>
+            }
+          />
 
-          <Route 
-          path="/forgot-password" 
-          element={<ForgotPassword />} />
+          <Route
+            path="/forgot-password"
+            element={<ForgotPassword />} />
 
-          <Route 
-          path="/reset-password" 
-          element={<ResetPassword />} />
-          
+          <Route
+            path="/reset-password"
+            element={<ResetPassword />} />
+
           {/* Catch-all route - redirect to library for any unknown paths */}
-          <Route 
-            path="*" 
+          <Route
+            path="*"
             element={
               <ProtectedRoute>
                 <Library />
               </ProtectedRoute>
-            } 
+            }
           />
 
         </Routes>

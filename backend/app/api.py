@@ -35,6 +35,13 @@ from .password_reset import (
 )
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
+import os
+import json
+from .pose_estimation import process_video_for_landmarks
+import threading
+from fastapi.responses import JSONResponse
+import logging
+from fastapi import Body
 
 
 # Initialize FastAPI application
@@ -43,6 +50,17 @@ app = FastAPI(
     description="Authentication API for the Cory video annotation application",
     version="1.0.0"
 )
+
+# Logger for this module
+logger = logging.getLogger(__name__)
+import time
+START_TIME = time.time()
+PROCESS_UUID = uuid.uuid4().hex
+
+
+@app.on_event("startup")
+def _log_startup():
+    logger.info("API startup: pid=%s start_time=%s uuid=%s", os.getpid(), START_TIME, PROCESS_UUID)
 
 # CORS middleware configuration
 # This allows the React frontend to communicate with the backend
@@ -149,7 +167,7 @@ async def signup(user_data: UserCreate):
         # Re-raise HTTP exceptions (like email already exists)
         raise
     except Exception as error:
-        print(f"Signup error: {error}")
+        logger.exception("Signup error")
         conn.rollback()  # Rollback transaction on error
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
@@ -276,7 +294,7 @@ async def google_login(google_user: GoogleUserCreate, response: Response):
             )
 
     except Exception as error:
-        print(f"Google login error: {error}")
+        logger.exception("Google login error")
         conn.rollback()
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
@@ -363,10 +381,12 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
 
 # Create a new project for the current user
 @app.post("/projects", tags=["projects"])
-async def create_project(title: str = Form(...),
-                         video: UploadFile = File(...)#,
-                         #current_user: dict = Depends(get_current_user)
-                         ):
+async def create_project(
+    title: str = Form(...),
+    video: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
+    user_id = current_user['user_id']
     """
     Create a new project for the current authenticated user.
 
@@ -403,11 +423,63 @@ async def create_project(title: str = Form(...),
                 "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) " \
                 "VALUES (%s, %s, %s, now(), now()) " \
                 "RETURNING id",
-                (title, 1, upload_path)
+                (title, user_id, upload_path)
             )
             id_row = cur.fetchone()
             conn.commit()
             project_id = id_row['id'] if id_row else None
+            # Start background pose estimation to generate landmarks JSON
+            try:
+                landmarks_path = upload_path + '.landmarks.json'
+                processing_marker = landmarks_path + '.processing'
+                error_marker = landmarks_path + '.error'
+
+                # Create a processing marker immediately so clients see the project is being processed
+                try:
+                    os.makedirs(os.path.dirname(landmarks_path) or '.', exist_ok=True)
+                    with open(processing_marker, 'w', encoding='utf-8') as pm:
+                        pm.write('processing')
+                except Exception:
+                    logger.exception("Failed to write processing marker for %s", landmarks_path)
+
+                # Run the processor in a background thread. Wrap it so we guarantee an error marker
+                # is written if the worker crashes before creating one itself.
+                try:
+                    def _run_processor(in_path, out_path):
+                        try:
+                            process_video_for_landmarks(in_path, out_path)
+                        except Exception:
+                            import traceback
+                            tb = traceback.format_exc()
+                            # Ensure an error marker exists so the landmarks endpoint can show the error
+                            try:
+                                with open(error_marker, 'w', encoding='utf-8') as ef:
+                                    ef.write(tb)
+                            except Exception:
+                                logger.exception("Failed to write error marker in thread for %s", out_path)
+                            logger.exception("Pose processing thread failed for %s", out_path)
+
+                    thread = threading.Thread(target=_run_processor, args=(upload_path, landmarks_path), daemon=True)
+                    thread.start()
+                    logger.debug("Started pose processing for project %s -> %s", project_id, landmarks_path)
+                except Exception:
+                    logger.exception("Failed to start pose processing for project %s", project_id)
+                    # If we can't start the thread, write an error marker and remove the processing marker
+                    try:
+                        import traceback
+                        tb = traceback.format_exc()
+                        with open(error_marker, 'w', encoding='utf-8') as ef:
+                            ef.write(tb)
+                    except Exception:
+                        logger.exception("Failed to write error marker after thread start failure for %s", landmarks_path)
+                    try:
+                        if os.path.exists(processing_marker):
+                            os.remove(processing_marker)
+                    except Exception:
+                        logger.exception("Failed to remove processing marker after failed thread start for %s", landmarks_path)
+            except Exception as e:
+                logger.exception("Failed to start pose processing")
+
             return {"id": project_id}
 
     except Exception as error:
@@ -417,9 +489,10 @@ async def create_project(title: str = Form(...),
 
 # Get project details by ID
 @app.get('/projects/{project_id}', tags=["projects"])
-async def get_project(project_id: int#,
-                      #current_user: dict = Depends(get_current_user)
-                      ):
+async def get_project(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Retrieve details of a specific project by its ID for the current authenticated user.
 
@@ -431,6 +504,51 @@ async def get_project(project_id: int#,
     Raises:
         HTTPException: If project not found or database error occurs
     """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # Query for the project owned by the current user (single-step authorization)
+            cur.execute(
+                "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            project = cur.fetchone()
+
+            if not project:
+                # Either project doesn't exist or doesn't belong to the user
+                raise HTTPException(status_code=404, detail="Project not found")
+
+            video_path = project['video_url']
+            if not os.path.exists(video_path):
+                raise HTTPException(status_code=404, detail="Video file not found")
+
+            # Serve the file only after ownership and existence checks pass
+            return FileResponse(video_path)
+
+    except HTTPException:
+        # Re-raise HTTPExceptions so FastAPI returns the intended status code
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+
+@app.get('/projects/{project_id}/landmarks', tags=["projects"])
+async def get_project_landmarks(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
+    202 Accepted if processing/not yet available, or 404 if project not found/unauthorized.
+    """
+    user_id = current_user['user_id']
+
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
@@ -438,21 +556,42 @@ async def get_project(project_id: int#,
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
-                (project_id, 1)
+                "SELECT video_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
             )
             project = cur.fetchone()
-
             if not project:
                 raise HTTPException(status_code=404, detail="Project not found")
 
             video_path = project['video_url']
-            if not os.path.exists(video_path):
-                raise HTTPException(status_code=404, detail="Video file not found")
-            return FileResponse(video_path)
+            landmarks_path = video_path + '.landmarks.json'
+            processing_marker = landmarks_path + '.processing'
+            error_marker = landmarks_path + '.error'
 
-    except Exception as error:
-        raise HTTPException(status_code=500, detail="Internal server error") from error
+            # If there's an error marker, return 500 with the error contents (development helper)
+            if os.path.exists(error_marker):
+                try:
+                    with open(error_marker, 'r', encoding='utf-8') as ef:
+                        err_text = ef.read()
+                except Exception:
+                    err_text = 'Failed to read error marker'
+                # Return 500 with details to aid debugging (safe in dev)
+                return JSONResponse(status_code=500, content={"status": "error", "error": err_text})
+
+            # If processing marker exists or output doesn't yet exist, return 202
+            if os.path.exists(processing_marker) or not os.path.exists(landmarks_path):
+                return JSONResponse(status_code=202, content={"status": "processing"})
+
+            # Return the landmarks JSON
+            with open(landmarks_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            return data
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error serving landmarks")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
     finally:
         conn.close()
 
@@ -495,11 +634,11 @@ async def forgot_password(request: ForgotPasswordRequest):
         )
 
         if reset_token:
-            print(f"Password reset token created for {request.email}")
+            logger.info("Password reset token created for %s", request.email)
         else:
-            print(f"Failed to create password reset token for {request.email}")
+            logger.warning("Failed to create password reset token for %s", request.email)
     else:
-        print(f"Password reset requested for non-existent email: {request.email}")
+        logger.warning("Password reset requested for non-existent email: %s", request.email)
 
     # Always return success for security (don't reveal if email exists)
     return {"message": "If an account with that email exists, a password reset link has been sent."}
