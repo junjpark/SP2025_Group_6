@@ -66,7 +66,7 @@ export default function LoginPage() {
     try {
       setError("");
 
-      // Decode Google JWT token
+      // Handle Google OAuth response
       const base64Url = credentialResponse.credential.split('.')[1];
       const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
       const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
@@ -167,6 +167,13 @@ export default function LoginPage() {
             {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
+        
+        {/* Forgot password link */}
+        <div className="forgot-password-link">
+          <a href="/forgot-password" className="link">
+            Forgot your password?
+          </a>
+        </div>
         
         {/* Sign up link */}
         <div className="signup-link">

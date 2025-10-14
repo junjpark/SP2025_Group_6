@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
 import { useParams } from 'react-router-dom';
 
+
 const ProjectView = () => {
     const { projectId } = useParams(); //get the project id from the url
     console.log("Project ID from URL:", projectId); 

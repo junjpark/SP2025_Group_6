@@ -1,3 +1,4 @@
+flyway.conf
 # Environment Variables - NEVER COMMIT THESE!
 .env
 .env.local

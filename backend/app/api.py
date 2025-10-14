@@ -1,21 +1,35 @@
 """
 FastAPI application with authentication endpoints.
-Handles user registration, login, Google OAuth, and protected routes.
+Handles user registration, login, Google OAuth, and protected routes using server-side sessions.
 """
 from datetime import timedelta
-from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, Form, File
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, Form, File, Request, Response
 from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
-from .models import UserCreate, UserLogin, GoogleUserCreate, UserResponse, Token
+from .models import (
+    UserCreate, UserLogin, GoogleUserCreate, UserResponse, SessionResponse, SessionData,
+    ForgotPasswordRequest, ResetPasswordRequest, PasswordResetResponse
+)
 from .auth import (
     authenticate_user,
-    create_access_token,
-    verify_token,
     get_password_hash,
     get_user_by_email,
     get_user_by_google_id
 )
+from .session import (
+    create_session,
+    validate_session,
+    destroy_session,
+    cleanup_expired_sessions
+)
+from .password_reset import (
+    create_password_reset_token,
+    validate_password_reset_token,
+    reset_user_password,
+    cleanup_expired_reset_tokens
+)
+from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
 import os
 import uuid
@@ -44,36 +58,39 @@ app.add_middleware(
     allow_headers=["*"],     # Allow all headers
 )
 
-# HTTP Bearer token security scheme
-security = HTTPBearer()
+# Add session management middleware
+app.add_middleware(SessionMiddleware, cleanup_interval=3600)  # Cleanup every hour
 
 os.makedirs("uploads", exist_ok=True)
+# Add logging middleware (optional, for development)
+app.add_middleware(LoggingMiddleware)
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    """
-    Dependency to get the current authenticated user from JWT token.
-    Args: credentials: HTTP Bearer token from request header
-    Returns: dict: User data if token is valid
-    Raises: HTTPException: If token is invalid or user not found
-    """
-    token = credentials.credentials
-    email = verify_token(token)
 
-    if email is None:
+def get_current_user(request: Request):
+    """
+    Dependency to get the current authenticated user from session cookie.
+    Args: request: FastAPI request object
+    Returns: dict: User data if session is valid
+    Raises: HTTPException: If session is invalid or user not found
+    """
+    # Get session token from cookie
+    session_token = request.cookies.get("cory_session")
+
+    if not session_token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="No session found"
         )
 
-    user = get_user_by_email(email)
-    if user is None:
+    # Validate session
+    user_data = validate_session(session_token)
+    if not user_data:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
+            detail="Invalid or expired session"
         )
 
-    return user
+    return user_data
 
 @app.get("/", tags=["root"])
 async def read_root():
@@ -139,12 +156,12 @@ async def signup(user_data: UserCreate):
 
 
 # User login endpoint
-@app.post("/login", response_model=Token, tags=["authentication"])
-async def login(user_credentials: UserLogin):
+@app.post("/login", response_model=SessionResponse, tags=["authentication"])
+async def login(user_credentials: UserLogin, response: Response):
     """
-    Authenticate user with email and password.
+    Authenticate user with email and password and create session.
     Args: user_credentials: Login credentials (email, password)
-    Returns: Token: JWT access token and type
+    Returns: SessionResponse: Success message and user data
     Raises: HTTPException: If credentials are invalid
     """
     # Authenticate user with email and password
@@ -153,27 +170,46 @@ async def login(user_credentials: UserLogin):
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect email or password",
-            headers={"WWW-Authenticate": "Bearer"},
+            detail="Incorrect email or password"
         )
 
-    # Create JWT token with 30-minute expiration
-    access_token_expires = timedelta(minutes=30)
-    access_token = create_access_token(
-        data={"sub": user["email"]},
-        expires_delta=access_token_expires
+    # Create session data
+    session_data = SessionData(
+        user_id=user["user_id"],
+        email=user["email"],
+        display_name=user["display_name"]
     )
 
-    return {"access_token": access_token, "token_type": "bearer"}
+    # Create session
+    session_token = create_session(user["user_id"], session_data.dict())
+
+    # Set HTTP-only cookie
+    response.set_cookie(
+        key="cory_session",
+        value=session_token,
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax",
+        max_age=24 * 60 * 60  # 24 hours
+    )
+
+    return SessionResponse(
+        message="Login successful",
+        user=UserResponse(
+            user_id=user["user_id"],
+            email=user["email"],
+            display_name=user["display_name"]
+        )
+    )
 
 
 # Google OAuth login endpoint
-@app.post("/google-login", response_model=Token, tags=["authentication"])
-async def google_login(google_user: GoogleUserCreate):
+@app.post("/google-login", response_model=SessionResponse, tags=["authentication"])
+async def google_login(google_user: GoogleUserCreate, response: Response):
     """
-    Authenticate or register user with Google OAuth.
+    Authenticate or register user with Google OAuth and create session.
     Args: google_user: Google user data (email, display_name, google_id)
-    Returns: Token: JWT access token and type
+    Returns: SessionResponse: Success message and user data
     Raises: HTTPException: If database error occurs
     """
     conn = get_db_connection()
@@ -207,13 +243,36 @@ async def google_login(google_user: GoogleUserCreate):
                     user = cur.fetchone()
                     conn.commit()
 
-            # Create JWT token
-            access_token_expires = timedelta(minutes=30)
-            access_token = create_access_token(
-                data={"sub": user["email"]},
-                expires_delta=access_token_expires
+            # Create session data
+            session_data = SessionData(
+                user_id=user["user_id"],
+                email=user["email"],
+                display_name=user["display_name"],
+                google_id=user.get("google_id")
             )
-            return {"access_token": access_token, "token_type": "bearer"}
+
+            # Create session
+            session_token = create_session(user["user_id"], session_data.dict())
+
+            # Set HTTP-only cookie
+            response.set_cookie(
+                key="cory_session",
+                value=session_token,
+                httponly=True,
+                secure=False,  # Set to True in production with HTTPS
+                samesite="lax",
+                max_age=24 * 60 * 60  # 24 hours
+            )
+
+            return SessionResponse(
+                message="Google login successful",
+                user=UserResponse(
+                    user_id=user["user_id"],
+                    email=user["email"],
+                    display_name=user["display_name"],
+                    google_id=user.get("google_id")
+                )
+            )
 
     except Exception as error:
         print(f"Google login error: {error}")
@@ -229,7 +288,7 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
     Get the current authenticated user's profile.
 
     Args:
-        current_user: Current user data from JWT token (dependency injection)
+        current_user: Current user data from session (dependency injection)
 
     Returns:
         UserResponse: Current user's profile data
@@ -244,14 +303,28 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
 
 # Logout endpoint
 @app.post("/logout", tags=["authentication"])
-async def logout():
+async def logout(request: Request, response: Response):
     """
-    Logout endpoint (client-side token removal).
-    In a production app, you might want to blacklist the token.
+    Logout endpoint that destroys the server-side session.
 
     Returns:
         dict: Success message
     """
+    # Get session token from cookie
+    session_token = request.cookies.get("cory_session")
+
+    if session_token:
+        # Destroy the session
+        destroy_session(session_token)
+
+    # Clear the cookie
+    response.delete_cookie(
+        key="cory_session",
+        httponly=True,
+        secure=False,  # Set to True in production with HTTPS
+        samesite="lax"
+    )
+
     return {"message": "Successfully logged out"}
 
 # Get projects for current user
@@ -381,3 +454,132 @@ async def get_project(project_id: int#,
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
+
+# Session cleanup endpoint (for maintenance)
+@app.post("/cleanup-sessions", tags=["maintenance"])
+async def cleanup_sessions():
+    """
+    Clean up expired sessions from the database.
+    This endpoint can be called periodically for maintenance.
+
+    Returns:
+        dict: Number of sessions cleaned up
+    """
+    cleaned_count = cleanup_expired_sessions()
+    return {"message": f"Cleaned up {cleaned_count} expired sessions"}
+
+
+# Password reset endpoints
+@app.post("/forgot-password", tags=["password-reset"])
+async def forgot_password(request: ForgotPasswordRequest):
+    """
+    Request a password reset email.
+    Sends a password reset email to the user if the email exists.
+
+    Args:
+        request: Forgot password request with email
+
+    Returns:
+        dict: Success message (always returns success for security)
+    """
+    # Get user by email
+    user = get_user_by_email(request.email)
+
+    if user:
+        # Create password reset token
+        reset_token = create_password_reset_token(
+            user['user_id'],
+            user['email'],
+            user['display_name']
+        )
+
+        if reset_token:
+            print(f"Password reset token created for {request.email}")
+        else:
+            print(f"Failed to create password reset token for {request.email}")
+    else:
+        print(f"Password reset requested for non-existent email: {request.email}")
+
+    # Always return success for security (don't reveal if email exists)
+    return {"message": "If an account with that email exists, a password reset link has been sent."}
+
+
+@app.post("/reset-password", response_model=PasswordResetResponse, tags=["password-reset"])
+async def reset_password(request: ResetPasswordRequest):
+    """
+    Reset user password using a valid reset token.
+
+    Args:
+        request: Reset password request with token and new password
+
+    Returns:
+        PasswordResetResponse: Success message
+
+    Raises:
+        HTTPException: If token is invalid or password reset fails
+    """
+    # Validate the reset token
+    user_data = validate_password_reset_token(request.token)
+
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+
+    # Reset the password
+    success = reset_user_password(request.token, request.new_password)
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to reset password"
+        )
+
+    return PasswordResetResponse(
+        message="Password has been reset successfully. You can now log in with your new password."
+    )
+
+
+@app.get("/validate-reset-token/{token}", tags=["password-reset"])
+async def validate_reset_token(token: str):
+    """
+    Validate a password reset token.
+    Used by the frontend to check if a reset token is valid.
+
+    Args:
+        token: The reset token to validate
+
+    Returns:
+        dict: Token validation result
+
+    Raises:
+        HTTPException: If token is invalid
+    """
+    user_data = validate_password_reset_token(token)
+
+    if not user_data:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token"
+        )
+
+    return {
+        "valid": True,
+        "email": user_data['email'],
+        "display_name": user_data['display_name']
+    }
+
+
+# Password reset cleanup endpoint (for maintenance)
+@app.post("/cleanup-reset-tokens", tags=["maintenance"])
+async def cleanup_reset_tokens():
+    """
+    Clean up expired password reset tokens from the database.
+    This endpoint can be called periodically for maintenance.
+
+    Returns:
+        dict: Number of tokens cleaned up
+    """
+    cleaned_count = cleanup_expired_reset_tokens()
+    return {"message": f"Cleaned up {cleaned_count} expired reset tokens"}
