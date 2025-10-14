@@ -169,7 +169,7 @@ const ProjectView = () => {
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button disabled={isButtonDisabled()} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button disabled={isButtonDisabled} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
@@ -184,7 +184,7 @@ const ProjectView = () => {
                 {isLoading ? (
                     <p>Loading video...</p>
                 ) : (
-                <CustomVideoPlayer ref={videoPlayerRef} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()} onPause={() => setVideoPaused(true)} onPlay={() => setVideoPaused(false)}></CustomVideoPlayer>
+                <CustomVideoPlayer ref={videoPlayerRef} url={videoUrl} start={getCurrentStartClipTimeStamp()} end={getCurrentEndClipTimeStamp()} onPause={() => setVideoPaused(true)} onPlay={() => setVideoPaused(false)}></CustomVideoPlayer>
                 )}
                 
             </div>

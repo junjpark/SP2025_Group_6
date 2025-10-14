@@ -16,13 +16,13 @@ export default function Library() {
         { id: 3, title: "Project Three", imageUrl: snoopy },
     ];
 
-    const navigateToProject = (id) => {
-        if (!id || id === "undefined") {
-            alert("Project ID is missing or invalid.");
-            return;
-        }
-        navigate(`/projects/${id}`);
-    }
+    // const navigateToProject = (id) => {
+    //     if (!id || id === "undefined") {
+    //         alert("Project ID is missing or invalid.");
+    //         return;
+    //     }
+    //     navigate(`/projects/${id}`);
+    // }
 
     return (
         <div className="library-container">
@@ -35,7 +35,6 @@ export default function Library() {
                         title={project.title} 
                         imageUrl={project.imageUrl}
                         isCreate={project.isCreate} 
-                        route={project.route}
                         onCreateClick={() => setIsCreateModalOpen(true)}
                     />
                 ))}

@@ -48,7 +48,7 @@ export default function CreateNewModal({ isOpen, onClose, onCreate }) {
             return;
         }
 
-        const token = localStorage.getItem('token');
+        //const token = localStorage.getItem('token');
         
         const data = new FormData();
         data.append("title", projectName);
