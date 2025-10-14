@@ -1,4 +1,4 @@
-import './ProjectView.css'
+import "./ProjectView.css";
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from '../../components/Clip';
 import { useEffect, useRef, useState, useMemo } from 'react';
@@ -17,20 +17,24 @@ const ProjectView = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isProcessingLandmarks, setIsProcessingLandmarks] = useState(false);
 
-    const [videoPaused, setVideoPaused] = useState(true);
+  const [videoPaused, setVideoPaused] = useState(true);
 
-    const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
+  const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
     //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
     //time stamps are of the form [a,b)
     const [clipTimings, setClipTimings] = useState([[0, 5], [5, 13.346667]]);
 
-    const [selectedClipDiv, setSelectedClipDiv] = useState(null); //this propably can be reworked to not exist
+  const [selectedClipDiv, setSelectedClipDiv] = useState(null); //this propably can be reworked to not exist
 
-    const [currentClipId, setCurrentClipId] = useState(0); //this is the current clip selected
+  const [currentClipId, setCurrentClipId] = useState(0); //this is the current clip selected
 
-    //clipAnnotations are 0-index
-    const [clipAnnotations, setClipAnnotations] = useState(["", "note 1", "note 2"]); //this is not how clipAnnotations should work TODO: FIX
+  //clipAnnotations are 0-index
+  const [clipAnnotations, setClipAnnotations] = useState([
+    "",
+    "note 1",
+    "note 2",
+  ]); //this is not how clipAnnotations should work TODO: FIX
 
     const { user } = useAuth(); //this user object tells us what is going on
     { console.log(user.user_id) }
@@ -113,6 +117,8 @@ const ProjectView = () => {
         }
         return clipTimings[clipId - 1][0]
     }
+    return clipTimings[clipId - 1][0];
+  }
 
     /**
      * This is a getter for the end of the selected time stamp
@@ -125,6 +131,8 @@ const ProjectView = () => {
         }
         return clipTimings[clipId - 1][1]
     }
+    return clipTimings[clipId - 1][1];
+  }
 
     /**
      * This allows the user to select a clip
@@ -160,6 +168,12 @@ const ProjectView = () => {
         newClipAnnotations[clipIdToChange] = newMessage //and changes the one value we need
         setClipAnnotations(newClipAnnotations)
     }
+    //this means a new clip has been selected
+    setCurrentClipId(idx + 1); //set the currentClipId to the new value
+    clipPTag.classList.remove("hidden"); //show the annotation
+    setSelectedClipDiv(divToHighlight); //update the state
+    divToHighlight.classList.add("selected"); //add some highlighting to that clip
+  }
 
     /**
      * This allows the user to cut the current clip in half here
@@ -179,6 +193,9 @@ const ProjectView = () => {
         // console.log(newClipTimings)
         setClipTimings(newClipTimings);
     }
+    // console.log(newClipTimings)
+    setClipTimings(newClipTimings);
+  }
 
     async function getVideoUrl(currentProjectId) {
         if (user == null) {
@@ -247,9 +264,11 @@ const ProjectView = () => {
                 }
             }
         }
-        return false;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [videoPaused, clipTimings])
+      }
+    }
+    return false;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoPaused, clipTimings]);
 
     return (
         <div id="projectView">
@@ -296,6 +315,46 @@ const ProjectView = () => {
         </div>
     )
 
+        <div id="clipInfo">
+          <p>
+            Clip Info {getCurrentStartClipTimeStamp()} ,{" "}
+            {getCurrentEndClipTimeStamp()}
+          </p>
+          <textarea
+            id="clipInfoGoesHere"
+            className="hidden"
+            value={clipAnnotations[currentClipId]}
+            onChange={(e) =>
+              handleAnnotationChange(currentClipId, e.target.value)
+            }
+          ></textarea>
+        </div>
+      </div>
+      {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
+      <button
+        id="projectViewFooter"
+        onClick={() => selectClip(-1, null)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            selectClip(-1, null);
+          }
+        }}
+      >
+        {clipTimings.map(function (tuple, idx) {
+          //maps all the clip timings to be their own clips
+          return (
+            <Clip
+              clipId={idx}
+              onClick={(idx, divToHighlight) => {
+                selectClip(idx, divToHighlight);
+              }}
+              key={idx}
+            ></Clip>
+          );
+        })}
+      </button>
+    </div>
+  );
 };
 
 export default ProjectView;
