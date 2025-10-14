@@ -51,7 +51,9 @@ def execute_with_connection(operation_func):
 
     try:
         with conn.cursor() as cur:
-            return operation_func(cur)
+            result = operation_func(cur)
+            conn.commit()
+            return result
     except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
         print(f"Database operation error: {error}")
         conn.rollback()

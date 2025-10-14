@@ -65,37 +65,27 @@ def validate_password_reset_token(token: str) -> Optional[dict]:
     if not token:
         return None
 
-    conn = get_db_connection()
-    if not conn:
-        return None
+    def validate_token_operation(cur):
+        # Get token data
+        cur.execute(
+            """SELECT prt.user_id, prt.expires_at, prt.used, u.email, u.display_name
+               FROM password_reset_tokens prt
+               JOIN users u ON prt.user_id = u.id
+               WHERE prt.token = %s AND prt.expires_at > %s AND prt.used = FALSE""",
+            (token, datetime.utcnow())
+        )
+        token_data = cur.fetchone()
 
-    try:
-        with conn.cursor() as cur:
-            # Get token data
-            cur.execute(
-                """SELECT prt.user_id, prt.expires_at, prt.used, u.email, u.display_name
-                   FROM password_reset_tokens prt
-                   JOIN users u ON prt.user_id = u.id
-                   WHERE prt.token = %s AND prt.expires_at > %s AND prt.used = FALSE""",
-                (token, datetime.utcnow())
-            )
-            token_data = cur.fetchone()
+        if not token_data:
+            return None
 
-            if not token_data:
-                return None
+        return {
+            "user_id": token_data['user_id'],
+            "email": token_data['email'],
+            "display_name": token_data['display_name']
+        }
 
-            return {
-                "user_id": token_data['user_id'],
-                "email": token_data['email'],
-                "display_name": token_data['display_name']
-            }
-
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Password reset token validation error: {error}")
-        return None
-    finally:
-        if conn:
-            conn.close()
+    return execute_with_connection(validate_token_operation)
 
 
 def reset_user_password(token: str, new_password: str) -> bool:
@@ -112,50 +102,39 @@ def reset_user_password(token: str, new_password: str) -> bool:
     if not token or not new_password:
         return False
 
-    conn = get_db_connection()
-    if not conn:
-        return False
+    def reset_password_operation(cur):
+        # Validate token and get user data
+        user_data = validate_password_reset_token(token)
+        if not user_data:
+            return False
 
-    try:
-        with conn.cursor() as cur:
-            # Validate token and get user data
-            user_data = validate_password_reset_token(token)
-            if not user_data:
-                return False
+        # Hash the new password
+        hashed_password = get_password_hash(new_password)
 
-            # Hash the new password
-            hashed_password = get_password_hash(new_password)
+        # Update user password
+        cur.execute(
+            "UPDATE users SET password_hash = %s WHERE id = %s",
+            (hashed_password, user_data['user_id'])
+        )
 
-            # Update user password
-            cur.execute(
-                "UPDATE users SET password_hash = %s WHERE id = %s",
-                (hashed_password, user_data['user_id'])
-            )
+        # Mark token as used
+        cur.execute(
+            "UPDATE password_reset_tokens SET used = TRUE WHERE token = %s",
+            (token,)
+        )
 
-            # Mark token as used
-            cur.execute(
-                "UPDATE password_reset_tokens SET used = TRUE WHERE token = %s",
-                (token,)
-            )
+        return user_data
 
-            conn.commit()
-
+    result = execute_with_connection(reset_password_operation)
+    if result:
         # Send success email
         asyncio.create_task(send_password_reset_success_email(
-            user_data['email'],
-            user_data['display_name']
+            result['email'],
+            result['display_name']
         ))
-        print(f"Password reset successful for {user_data['email']}")
-
+        print(f"Password reset successful for {result['email']}")
         return True
-
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Password reset error: {error}")
-        conn.rollback()
-        return False
-    finally:
-        if conn:
-            conn.close()
+    return False
 
 
 def cleanup_expired_reset_tokens() -> int:
@@ -165,25 +144,13 @@ def cleanup_expired_reset_tokens() -> int:
     Returns:
         int: Number of tokens cleaned up
     """
-    conn = get_db_connection()
-    if not conn:
-        return 0
+    def cleanup_operation(cur):
+        # Delete expired or used tokens
+        cur.execute(
+            "DELETE FROM password_reset_tokens WHERE expires_at <= %s OR used = TRUE",
+            (datetime.utcnow(),)
+        )
+        return cur.rowcount
 
-    try:
-        with conn.cursor() as cur:
-            # Delete expired or used tokens
-            cur.execute(
-                "DELETE FROM password_reset_tokens WHERE expires_at <= %s OR used = TRUE",
-                (datetime.utcnow(),)
-            )
-            conn.commit()
-
-            return cur.rowcount
-
-    except (psycopg2.DatabaseError, psycopg2.OperationalError) as error:
-        print(f"Password reset token cleanup error: {error}")
-        conn.rollback()
-        return 0
-    finally:
-        if conn:
-            conn.close()
+    result = execute_with_connection(cleanup_operation)
+    return result if result is not None else 0
