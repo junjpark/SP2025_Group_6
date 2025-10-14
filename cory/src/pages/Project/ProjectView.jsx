@@ -19,7 +19,7 @@ const ProjectView = () => {
     //clipAnnotations are 0-index
     const [clipAnnotations, setClipAnnotations] = useState(["", "note 1", "note 2"]); //this is not how clipAnnotations should work TODO: FIX
 
-    const {user, logout} = useAuth(); //this user object tells us what is going on
+    const {user} = useAuth(); //this user object tells us what is going on
     {console.log(user.user_id)}
 
     /**
