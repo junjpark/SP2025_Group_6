@@ -39,9 +39,9 @@ export default function App() {
     // Wrap the entire app with authentication context
     // This provides authentication state and methods to all child components
     <AuthProvider>
-      <NavBar/>
       {/* Set up React Router for navigation */}
       <Router>
+        <NavBar/>
         <Routes>
           
           {/* Public Routes - accessible without authentication */}
