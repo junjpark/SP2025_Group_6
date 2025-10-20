@@ -9,6 +9,8 @@ const ProjectView = () => {
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
+    const [isMirrored, setIsMirrored] = useState(false);
+
     //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
     //time stamps are of the form [a,b)
     const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); 
@@ -124,6 +126,17 @@ const ProjectView = () => {
         setClipTimings(newClipTimings);
     }
 
+    function mirror(){
+        const isCurrentlyMirrored = isMirrored;
+        setIsMirrored(!isCurrentlyMirrored)
+        const videoRef = videoPlayerRef.current
+        if(isCurrentlyMirrored){
+            videoRef.classList.remove("mirrored")
+        } else{
+            videoRef.classList.add("mirrored")
+        }
+    }
+
     return (
     <div id="projectView">
         <div id="projectViewEditor">
@@ -135,6 +148,14 @@ const ProjectView = () => {
                     }
                 }}>
                     <img src="./images/scissors.jpg" alt="cut icon" width="50" height="60"></img>
+                </button>
+                <button id="mirrorHolder" onClick={mirror} onKeyDown={(e) => {
+                    if (e.key == 'Enter' || e.key == ' ') {
+                        e.preventDefault();
+                        mirror(e);
+                    }
+                }}>
+                    <img src="./images/mirror.png" alt="mirror icon" width="50" height="60"></img>
                 </button>
                 
             </div>

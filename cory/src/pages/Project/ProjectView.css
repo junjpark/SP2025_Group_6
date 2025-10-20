@@ -51,6 +51,17 @@ table {
     height: 100vh;
 }
 
+#projectViewToolbar{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+#projectViewToolbar button{
+    height: fit-content;
+    width: fit-content;
+}
+
 #projectView > *{
     align-content: center;
 }
@@ -133,6 +144,14 @@ table {
 .disabled{
     opacity: 0.5;
   cursor: not-allowed;
+}
+
+.mirrored {
+    transform: scaleX(-1);
+  }
+  
+.mirrored::-webkit-media-controls-enclosure {
+    transform: scaleX(-1);
 }
 
 .clip{
