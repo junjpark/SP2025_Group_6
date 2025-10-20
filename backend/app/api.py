@@ -564,28 +564,19 @@ async def get_project_landmarks(
                 raise HTTPException(status_code=404, detail="Project not found")
 
             video_path = project['video_url']
-            landmarks_path = video_path + '.landmarks.json'
-            processing_marker = landmarks_path + '.processing'
-            error_marker = landmarks_path + '.error'
-
-            # If there's an error marker, return 500 with the error contents (development helper)
-            if os.path.exists(error_marker):
-                try:
-                    with open(error_marker, 'r', encoding='utf-8') as ef:
-                        err_text = ef.read()
-                except Exception:
-                    err_text = 'Failed to read error marker'
-                # Return 500 with details to aid debugging (safe in dev)
-                return JSONResponse(status_code=500, content={"status": "error", "error": err_text})
-
-            # If processing marker exists or output doesn't yet exist, return 202
-            if os.path.exists(processing_marker) or not os.path.exists(landmarks_path):
-                return JSONResponse(status_code=202, content={"status": "processing"})
-
-            # Return the landmarks JSON
-            with open(landmarks_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            return data
+            if not os.path.exists(video_path):
+                raise HTTPException(status_code=404, detail="Video file not found")
+            
+            try:
+                landmarks_data = process_video_for_landmarks(video_path, sample_rate=1)
+                return landmarks_data
+            except FileNotFoundError as e:
+                raise HTTPException(status_code=404, detail="Video file not found") from e
+            except RuntimeError as e:
+                raise HTTPException(status_code=500, detail="Error processing video for landmarks") from e
+            except Exception as e:
+                logger.exception("Unexpected error processing landmarks for project %s", project_id)
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
     except HTTPException:
         raise
