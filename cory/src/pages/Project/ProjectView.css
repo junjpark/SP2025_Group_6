@@ -130,7 +130,10 @@ table {
     padding: 10px;
 }
 
-
+.disabled{
+    opacity: 0.5;
+  cursor: not-allowed;
+}
 
 .clip{
     height: 70%;

@@ -9,6 +9,8 @@ const ProjectView = () => {
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
+    const [clipButtonDisabled, setClipButtonDisabled] = useState(false);
+
     //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
     //time stamps are of the form [a,b)
     const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); 
@@ -82,11 +84,33 @@ const ProjectView = () => {
         setClipAnnotations(newClipAnnotations)
     }
 
+
+    function clipCanBeMade(){
+        const videoCurrentTime = videoPlayerRef.current.currentTime;
+        for(const interval of clipTimings){
+            if(videoCurrentTime == interval[0]){
+                return false;
+            }
+        }
+        return clipTimings[clipTimings.length-1] != videoCurrentTime
+    }
     /**
      * This allows the user to cut the current clip in half here
      */
     function clip(){
-        selectClip(-1, null); //TODO: discuss what to do with this currently unselects both clips
+        const videoRef = videoPlayerRef.current;
+        if(!clipCanBeMade()){ //if the clip would be invalid then don't clip it
+            if(videoRef.paused){
+                let scissorsButton = document.querySelector("#scissorsHolder")
+                scissorsButton.classList.add("disabled");
+                videoRef.addEventListener('play', () => {
+                    scissorsButton.classList.remove("disabled");
+                    videoRef.removeEventListener('play', handleVideoPlay);
+                });
+            }
+            return;
+        }
+        selectClip(-1, null);
         const videoCurrentTime = videoPlayerRef.current.currentTime;
         let newClipTimings = []
         for(const interval of clipTimings){ //we need to rebuild the clipTimings array
@@ -105,13 +129,13 @@ const ProjectView = () => {
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button disabled={clipButtonDisabled} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
                     }
                 }}>
-                    <img src="./images/scissors.jpg" alt="Girl in a jacket" width="50" height="60"></img>
+                    <img src="./images/scissors.jpg" alt="cut icon" width="50" height="60"></img>
                 </button>
                 
             </div>
