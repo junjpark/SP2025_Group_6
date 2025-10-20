@@ -9,8 +9,6 @@ const ProjectView = () => {
 
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
-    const [clipButtonDisabled, setClipButtonDisabled] = useState(false);
-
     //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
     //time stamps are of the form [a,b)
     const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); 
@@ -97,6 +95,8 @@ const ProjectView = () => {
     /**
      * This allows the user to cut the current clip in half here
      */
+
+
     function clip(){
         const videoRef = videoPlayerRef.current;
         if(!clipCanBeMade()){ //if the clip would be invalid then don't clip it
@@ -105,8 +105,7 @@ const ProjectView = () => {
                 scissorsButton.classList.add("disabled");
                 videoRef.addEventListener('play', () => {
                     scissorsButton.classList.remove("disabled");
-                    videoRef.removeEventListener('play', handleVideoPlay);
-                });
+                }, {'once' : true});
             }
             return;
         }
@@ -129,7 +128,7 @@ const ProjectView = () => {
     <div id="projectView">
         <div id="projectViewEditor">
             <div id="projectViewToolbar">
-                <button disabled={clipButtonDisabled} id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
+                <button id="scissorsHolder" onClick={clip} onKeyDown={(e) => {
                     if (e.key == 'Enter' || e.key == ' ') {
                         e.preventDefault();
                         clip(e);
