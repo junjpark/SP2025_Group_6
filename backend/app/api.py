@@ -6,6 +6,8 @@ Handles user registration, login, Google OAuth, and protected routes using serve
 import os
 import uuid
 import shutil
+import logging
+import time
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
@@ -35,13 +37,7 @@ from .password_reset import (
 )
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
-import os
-import json
 from .pose_estimation import process_video_for_landmarks
-import threading
-from fastapi.responses import JSONResponse
-import logging
-from fastapi import Body
 
 
 # Initialize FastAPI application
@@ -53,7 +49,6 @@ app = FastAPI(
 
 # Logger for this module
 logger = logging.getLogger(__name__)
-import time
 START_TIME = time.time()
 PROCESS_UUID = uuid.uuid4().hex
 
@@ -386,7 +381,6 @@ async def create_project(
     video: UploadFile = File(...),
     current_user: dict = Depends(get_current_user)
 ):
-    user_id = current_user['user_id']
     """
     Create a new project for the current authenticated user.
 
@@ -399,11 +393,13 @@ async def create_project(
     Raises:
         HTTPException: If database error occurs or file upload fails
     """
+    user_id = current_user['user_id']
     if not title:
         raise HTTPException(status_code=400, detail="Project title is required")
     if video.content_type not in ["video/mp4", "video/avi", "video/mov"]:
         raise HTTPException(status_code=400, detail="Invalid video format")
     ext = os.path.splitext(video.filename)[1]
+    # create unique filename
     uuid_filename = f"{uuid.uuid4().hex}{ext}"
     upload_path = os.path.join("uploads", uuid_filename)
 
@@ -428,57 +424,6 @@ async def create_project(
             id_row = cur.fetchone()
             conn.commit()
             project_id = id_row['id'] if id_row else None
-            # Start background pose estimation to generate landmarks JSON
-            try:
-                landmarks_path = upload_path + '.landmarks.json'
-                processing_marker = landmarks_path + '.processing'
-                error_marker = landmarks_path + '.error'
-
-                # Create a processing marker immediately so clients see the project is being processed
-                try:
-                    os.makedirs(os.path.dirname(landmarks_path) or '.', exist_ok=True)
-                    with open(processing_marker, 'w', encoding='utf-8') as pm:
-                        pm.write('processing')
-                except Exception:
-                    logger.exception("Failed to write processing marker for %s", landmarks_path)
-
-                # Run the processor in a background thread. Wrap it so we guarantee an error marker
-                # is written if the worker crashes before creating one itself.
-                try:
-                    def _run_processor(in_path, out_path):
-                        try:
-                            process_video_for_landmarks(in_path, out_path)
-                        except Exception:
-                            import traceback
-                            tb = traceback.format_exc()
-                            # Ensure an error marker exists so the landmarks endpoint can show the error
-                            try:
-                                with open(error_marker, 'w', encoding='utf-8') as ef:
-                                    ef.write(tb)
-                            except Exception:
-                                logger.exception("Failed to write error marker in thread for %s", out_path)
-                            logger.exception("Pose processing thread failed for %s", out_path)
-
-                    thread = threading.Thread(target=_run_processor, args=(upload_path, landmarks_path), daemon=True)
-                    thread.start()
-                    logger.debug("Started pose processing for project %s -> %s", project_id, landmarks_path)
-                except Exception:
-                    logger.exception("Failed to start pose processing for project %s", project_id)
-                    # If we can't start the thread, write an error marker and remove the processing marker
-                    try:
-                        import traceback
-                        tb = traceback.format_exc()
-                        with open(error_marker, 'w', encoding='utf-8') as ef:
-                            ef.write(tb)
-                    except Exception:
-                        logger.exception("Failed to write error marker after thread start failure for %s", landmarks_path)
-                    try:
-                        if os.path.exists(processing_marker):
-                            os.remove(processing_marker)
-                    except Exception:
-                        logger.exception("Failed to remove processing marker after failed thread start for %s", landmarks_path)
-            except Exception as e:
-                logger.exception("Failed to start pose processing")
 
             return {"id": project_id}
 
@@ -566,14 +511,14 @@ async def get_project_landmarks(
             video_path = project['video_url']
             if not os.path.exists(video_path):
                 raise HTTPException(status_code=404, detail="Video file not found")
-            
             try:
-                landmarks_data = process_video_for_landmarks(video_path, sample_rate=1)
+                landmarks_data = process_video_for_landmarks(video_path, video_sample_rate=1)
                 return landmarks_data
             except FileNotFoundError as e:
                 raise HTTPException(status_code=404, detail="Video file not found") from e
             except RuntimeError as e:
-                raise HTTPException(status_code=500, detail="Error processing video for landmarks") from e
+                raise HTTPException(status_code=500,
+                                    detail="Error processing video for landmarks") from e
             except Exception as e:
                 logger.exception("Unexpected error processing landmarks for project %s", project_id)
                 raise HTTPException(status_code=500, detail="Internal server error") from e
