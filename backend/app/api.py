@@ -6,6 +6,8 @@ Handles user registration, login, Google OAuth, and protected routes using serve
 import os
 import uuid
 import shutil
+import logging
+import time
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
@@ -35,6 +37,7 @@ from .password_reset import (
 )
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
+from .pose_estimation import process_video_for_landmarks
 
 
 # Initialize FastAPI application
@@ -43,6 +46,16 @@ app = FastAPI(
     description="Authentication API for the Cory video annotation application",
     version="1.0.0"
 )
+
+# Logger for this module
+logger = logging.getLogger(__name__)
+START_TIME = time.time()
+PROCESS_UUID = uuid.uuid4().hex
+
+
+@app.on_event("startup")
+def _log_startup():
+    logger.info("API startup: pid=%s start_time=%s uuid=%s", os.getpid(), START_TIME, PROCESS_UUID)
 
 # CORS middleware configuration
 # This allows the React frontend to communicate with the backend
@@ -149,7 +162,7 @@ async def signup(user_data: UserCreate):
         # Re-raise HTTP exceptions (like email already exists)
         raise
     except Exception as error:
-        print(f"Signup error: {error}")
+        logger.exception("Signup error")
         conn.rollback()  # Rollback transaction on error
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
@@ -276,7 +289,7 @@ async def google_login(google_user: GoogleUserCreate, response: Response):
             )
 
     except Exception as error:
-        print(f"Google login error: {error}")
+        logger.exception("Google login error")
         conn.rollback()
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
@@ -363,10 +376,11 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
 
 # Create a new project for the current user
 @app.post("/projects", tags=["projects"])
-async def create_project(title: str = Form(...),
-                         video: UploadFile = File(...)#,
-                         #current_user: dict = Depends(get_current_user)
-                         ):
+async def create_project(
+    title: str = Form(...),
+    video: UploadFile = File(...),
+    current_user: dict = Depends(get_current_user)
+):
     """
     Create a new project for the current authenticated user.
 
@@ -379,11 +393,13 @@ async def create_project(title: str = Form(...),
     Raises:
         HTTPException: If database error occurs or file upload fails
     """
+    user_id = current_user['user_id']
     if not title:
         raise HTTPException(status_code=400, detail="Project title is required")
     if video.content_type not in ["video/mp4", "video/avi", "video/mov"]:
         raise HTTPException(status_code=400, detail="Invalid video format")
     ext = os.path.splitext(video.filename)[1]
+    # create unique filename
     uuid_filename = f"{uuid.uuid4().hex}{ext}"
     upload_path = os.path.join("uploads", uuid_filename)
 
@@ -403,11 +419,12 @@ async def create_project(title: str = Form(...),
                 "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) " \
                 "VALUES (%s, %s, %s, now(), now()) " \
                 "RETURNING id",
-                (title, 1, upload_path)
+                (title, user_id, upload_path)
             )
             id_row = cur.fetchone()
             conn.commit()
             project_id = id_row['id'] if id_row else None
+
             return {"id": project_id}
 
     except Exception as error:
@@ -417,9 +434,10 @@ async def create_project(title: str = Form(...),
 
 # Get project details by ID
 @app.get('/projects/{project_id}', tags=["projects"])
-async def get_project(project_id: int#,
-                      #current_user: dict = Depends(get_current_user)
-                      ):
+async def get_project(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
     """
     Retrieve details of a specific project by its ID for the current authenticated user.
 
@@ -431,6 +449,51 @@ async def get_project(project_id: int#,
     Raises:
         HTTPException: If project not found or database error occurs
     """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # Query for the project owned by the current user (single-step authorization)
+            cur.execute(
+                "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            project = cur.fetchone()
+
+            if not project:
+                # Either project doesn't exist or doesn't belong to the user
+                raise HTTPException(status_code=404, detail="Project not found")
+
+            video_path = project['video_url']
+            if not os.path.exists(video_path):
+                raise HTTPException(status_code=404, detail="Video file not found")
+
+            # Serve the file only after ownership and existence checks pass
+            return FileResponse(video_path)
+
+    except HTTPException:
+        # Re-raise HTTPExceptions so FastAPI returns the intended status code
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+
+@app.get('/projects/{project_id}/landmarks', tags=["projects"])
+async def get_project_landmarks(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
+    202 Accepted if processing/not yet available, or 404 if project not found/unauthorized.
+    """
+    user_id = current_user['user_id']
+
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
@@ -438,21 +501,33 @@ async def get_project(project_id: int#,
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
-                (project_id, 1)
+                "SELECT video_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
             )
             project = cur.fetchone()
-
             if not project:
                 raise HTTPException(status_code=404, detail="Project not found")
 
             video_path = project['video_url']
             if not os.path.exists(video_path):
                 raise HTTPException(status_code=404, detail="Video file not found")
-            return FileResponse(video_path)
+            try:
+                landmarks_data = process_video_for_landmarks(video_path, video_sample_rate=1)
+                return landmarks_data
+            except FileNotFoundError as e:
+                raise HTTPException(status_code=404, detail="Video file not found") from e
+            except RuntimeError as e:
+                raise HTTPException(status_code=500,
+                                    detail="Error processing video for landmarks") from e
+            except Exception as e:
+                logger.exception("Unexpected error processing landmarks for project %s", project_id)
+                raise HTTPException(status_code=500, detail="Internal server error") from e
 
-    except Exception as error:
-        raise HTTPException(status_code=500, detail="Internal server error") from error
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Error serving landmarks")
+        raise HTTPException(status_code=500, detail="Internal server error") from e
     finally:
         conn.close()
 
@@ -495,11 +570,11 @@ async def forgot_password(request: ForgotPasswordRequest):
         )
 
         if reset_token:
-            print(f"Password reset token created for {request.email}")
+            logger.info("Password reset token created for %s", request.email)
         else:
-            print(f"Failed to create password reset token for {request.email}")
+            logger.warning("Failed to create password reset token for %s", request.email)
     else:
-        print(f"Password reset requested for non-existent email: {request.email}")
+        logger.warning("Password reset requested for non-existent email: %s", request.email)
 
     # Always return success for security (don't reveal if email exists)
     return {"message": "If an account with that email exists, a password reset link has been sent."}

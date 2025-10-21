@@ -1,228 +1,199 @@
 /**
- * DashboardPage Styles
+ * NavBar Component Styles
  * 
- * This file contains all the styling for the DashboardPage component.
- * It implements a dark theme with centered layout and modern card-based UI.
- * 
- * Color Scheme:
- * - Primary Background: #1a1d29 (dark greyish-blue-black)
- * - Secondary Background: #2d3748 (darker grey)
- * - Card Background: #374151 (medium grey)
- * - Text: #e2e8f0 (light grey)
- * - Accent: #3b82f6 (blue)
+ * This file contains styling for the navigation bar component.
+ * Features a modern dark theme with purple accents and smooth animations.
  * 
  * @author Cory Authentication System
- * @version 1.0.0
+ * @version 2.0.0
  */
 
-/* Main dashboard container */
-.dashboard-container {
-    min-height: 100vh;
-    background-color: #1a1d29;
-    font-family: 'Arial', sans-serif;
-    color: #e2e8f0;
+/* ===== NAVBAR HEADER ===== */
+.dashboard-header {
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-secondary) 100%
+  );
+  padding: var(--spacing-lg) var(--spacing-xl);
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(8px);
+  animation: slideInFromTop 0.3s ease-out;
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
   }
-  
-  /* Dashboard header */
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== LOGO/TITLE ===== */
+.dashboard-title {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all var(--transition-base);
+  letter-spacing: -0.5px;
+  user-select: none;
+}
+
+.dashboard-title:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.2);
+}
+
+.dashboard-title:active {
+  transform: translateY(0);
+}
+
+/* ===== USER INFO SECTION ===== */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+/* Welcome Text */
+.welcome-text {
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+/* ===== LOGOUT BUTTON ===== */
+.logout-button {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.logout-button::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.2) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.logout-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.5);
+}
+
+.logout-button:hover::before {
+  opacity: 1;
+}
+
+.logout-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
+}
+
+.logout-button:focus-visible {
+  outline: 2px solid #dc2626;
+  outline-offset: 2px;
+}
+
+/* ===== RESPONSIVE DESIGN ===== */
+@media (max-width: 768px) {
   .dashboard-header {
-    background-color: #2d3748;
-    padding: 24px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 40px;
-    border-radius: 0 0 12px 12px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    flex-wrap: wrap;
+    gap: var(--spacing-md);
   }
-  
-  /* Dashboard title */
+
   .dashboard-title {
-    margin: 0;
-    color: #e2e8f0;
-    font-size: 32px;
-    font-weight: bold;
+    font-size: 1.5rem;
   }
-  
-  /* User info section */
+
   .user-info {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
-  
-  /* Welcome text */
-  .welcome-text {
-    color: #cbd5e1;
-    font-size: 18px;
-    font-weight: 500;
-  }
-  
-  /* Logout button */
-  .logout-button {
-    padding: 10px 20px;
-    background-color: #dc2626;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: all 0.3s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .logout-button:hover {
-    background-color: #b91c1c;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-  }
-  
-  /* Main content area */
-  .main-content {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  /* Profile card */
-  .profile-card {
-    background-color: #2d3748;
-    border-radius: 12px;
-    padding: 40px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    margin-bottom: 30px;
+    gap: var(--spacing-md);
     width: 100%;
-    max-width: 800px;
+    justify-content: space-between;
   }
-  
-  /* Card title */
-  .card-title {
-    margin: 0 0 24px 0;
-    color: #e2e8f0;
-    font-size: 28px;
-    font-weight: bold;
-    text-align: center;
-    border-bottom: 2px solid #3b82f6;
-    padding-bottom: 12px;
+
+  .welcome-text {
+    font-size: 0.875rem;
   }
-  
-  /* User details grid */
-  .user-details {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 24px;
-    margin-bottom: 40px;
-    text-align: center;
+
+  .logout-button {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.75rem;
   }
-  
-  /* Detail item */
-  .detail-item {
-    padding: 20px;
-    background-color: #374151;
-    border-radius: 8px;
-    border: 1px solid #4b5563;
-    transition: all 0.3s;
+}
+
+@media (max-width: 480px) {
+  .dashboard-header {
+    padding: var(--spacing-md);
   }
-  
-  .detail-item:hover {
-    background-color: #4b5563;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+
+  .dashboard-title {
+    font-size: 1.25rem;
   }
-  
-  /* Detail label */
-  .detail-label {
-    font-weight: bold;
-    color: #9ca3af;
-    margin-bottom: 8px;
-    font-size: 14px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+
+  .welcome-text {
+    font-size: 0.75rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
   }
-  
-  /* Detail value */
-  .detail-value {
-    color: #e2e8f0;
-    font-size: 18px;
-    font-weight: 500;
-    word-break: break-word;
-  }
-  
-  /* Features grid */
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 24px;
-    margin-top: 40px;
-  }
-  
-  /* Feature card */
-  .feature-card {
-    background-color: #374151;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    border: 1px solid #4b5563;
-    transition: all 0.3s;
-    cursor: pointer;
-    text-align: center;
-  }
-  
-  .feature-card:hover {
-    background-color: #4b5563;
-    transform: translateY(-4px);
-    box-shadow: 0 8px 12px rgba(0,0,0,0.15);
-  }
-  
-  /* Feature title */
-  .feature-title {
-    margin: 0 0 15px 0;
-    color: #e2e8f0;
-    font-size: 22px;
-    font-weight: bold;
-  }
-  
-  /* Feature description */
-  .feature-description {
-    color: #cbd5e1;
-    font-size: 16px;
-    line-height: 1.6;
-    margin-bottom: 15px;
-  }
-  
-  /* Feature button */
-  .feature-button {
-    background-color: #3b82f6;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: all 0.3s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .feature-button:hover {
-    background-color: #2563eb;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-  }
-  
-  /* Coming soon button */
-  .coming-soon {
-    background-color: #6b7280;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    padding: 12px 24px;
-    cursor: not-allowed;
-    font-size: 14px;
-    font-weight: bold;
-    opacity: 0.7;
-  }
-  
+}
+
+/* ===== LOADING STATE ===== */
+.user-info-skeleton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+.skeleton-text {
+  width: 120px;
+  height: 20px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.skeleton-button {
+  width: 80px;
+  height: 36px;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

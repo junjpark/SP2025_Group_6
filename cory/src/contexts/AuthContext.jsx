@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
    */
   const fetchUserProfile = useCallback(async () => {
     try {
-      const response = await fetch('http://localhost:8000/me', {
+  const response = await fetch('/api/me', {
         method: 'GET',
         credentials: 'include', // Include cookies in the request
         headers: {
@@ -91,7 +91,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:8000/login', {
+  const response = await fetch('/api/login', {
         method: 'POST',
         credentials: 'include', // Include cookies in the request
         headers: {
@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:8000/google-login', {
+  const response = await fetch('/api/google-login', {
         method: 'POST',
         credentials: 'include', // Include cookies in the request
         headers: {
@@ -179,7 +179,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      const response = await fetch('http://localhost:8000/signup', {
+  const response = await fetch('/api/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -216,7 +216,7 @@ export const AuthProvider = ({ children }) => {
       console.log('Logging out user');
       
       // Call server logout endpoint to destroy session
-      await fetch('http://localhost:8000/logout', {
+  await fetch('/api/logout', {
         method: 'POST',
         credentials: 'include', // Include cookies in the request
         headers: {
