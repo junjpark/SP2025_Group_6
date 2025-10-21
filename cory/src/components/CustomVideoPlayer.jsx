@@ -21,7 +21,7 @@ const POSE_CONNECTIONS = [
 
 const CustomVideoPlayer = React.forwardRef(
   (
-    { url, start = 0, end = Infinity, onPause, onPlay, landmarks = [] },
+    { url, start = 0, end = Infinity, landmarks = [] },
     ref
   ) => {
     CustomVideoPlayer.displayName = "CustomVideoPlayer";
@@ -50,11 +50,7 @@ const CustomVideoPlayer = React.forwardRef(
       };
 
       // ensure video starts at the requested start time
-      try {
-        video.currentTime = start;
-      } catch (e) {
-        /* ignore if not ready */
-      }
+      video.currentTime = start;
       video.addEventListener("timeupdate", resetClip);
 
       return () => {
@@ -238,8 +234,6 @@ const CustomVideoPlayer = React.forwardRef(
           ref={ref}
           src={url}
           onError={(e) => console.error("Video error:", e, "Video URL:", url)}
-          onPlay={onPlay}
-          onPause={onPause}
           style={{ display: "block" }}
         >
           <track kind="captions" />

@@ -1,14 +1,14 @@
 import "./ProjectView.css";
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from "../../components/Clip";
-import { useEffect, useRef, useState, useMemo } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 
 const ProjectView = () => {
   const { projectId } = useParams(); //get the project id from the url
   console.log("Project ID from URL:", projectId);
-  const API = import.meta.env.VITE_API_URL || "";
+//   const API = import.meta.env.VITE_API_URL || "";
 
   const [videoUrl, setVideoUrl] = useState(null);
   const [landmarks, setLandmarks] = useState(null);
@@ -16,7 +16,7 @@ const ProjectView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingLandmarks, setIsProcessingLandmarks] = useState(false);
 
-  const [videoPaused, setVideoPaused] = useState(true);
+//   const [videoPaused, setVideoPaused] = useState(true);
 
   const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -96,7 +96,7 @@ const ProjectView = () => {
       if (!lm) {
         // Landmarks failed or timed out; keep the UI in a safe state and do not open the project
         setLandmarks(null);
-        setVideoUrl(null);
+        // setVideoUrl(null);
         setIsLoading(false);
         return;
       }
@@ -115,6 +115,7 @@ const ProjectView = () => {
     return () => {
       cancelled = true;
     };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   /**
@@ -235,48 +236,12 @@ const ProjectView = () => {
     }
   }
 
-  async function fetchLandmarks(currentProjectId) {
-    try {
-      const res = await fetch(`/api/projects/${currentProjectId}/landmarks`, {
-        method: "GET",
-        credentials: "include",
-      });
-      if (res.status === 202) {
-        console.log("Landmarks processing, try again later");
-        setLandmarks(null);
-        return;
-      }
-      if (!res.ok) {
-        console.error("Failed to fetch landmarks, status:", res.status);
-        setLandmarks(null);
-        return;
-      }
-      const data = await res.json();
-      setLandmarks(data);
-    } catch (err) {
-      console.error("Error fetching landmarks:", err);
-      setLandmarks(null);
-    }
-  }
-  const isButtonDisabled = useMemo(() => {
-    const videoCurrentTime = videoPlayerRef.current?.currentTime ?? 0;
-    for (const clipTiming of clipTimings) {
-      for (const timeStamp of clipTiming) {
-        if (videoCurrentTime === timeStamp) {
-          return true;
-        }
-      }
-    }
-    return false;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoPaused, clipTimings]);
 
   return (
     <div id="projectView">
       <div id="projectViewEditor">
         <div id="projectViewToolbar">
           <button
-            disabled={isButtonDisabled}
             id="scissorsHolder"
             onClick={clip}
             onKeyDown={(e) => {
@@ -287,7 +252,7 @@ const ProjectView = () => {
             }}
           >
             <img
-              src="./images/scissors.jpg"
+              src="/images/scissors.jpg"
               alt="Girl in a jacket"
               width="50"
               height="60"
@@ -311,8 +276,6 @@ const ProjectView = () => {
               url={videoUrl}
               start={getCurrentStartClipTimeStamp()}
               end={getCurrentEndClipTimeStamp()}
-              onPause={() => setVideoPaused(true)}
-              onPlay={() => setVideoPaused(false)}
               landmarks={landmarks}
             ></CustomVideoPlayer>
           )}
