@@ -8,6 +8,7 @@ import uuid
 import shutil
 import logging
 import time
+import cv2
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
@@ -38,6 +39,7 @@ from .password_reset import (
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
 from .pose_estimation import process_video_for_landmarks
+# pylint: disable=no-member
 
 
 # Initialize FastAPI application
@@ -367,9 +369,50 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
             )
             projects = cur.fetchall()
 
+            # replace stored thumbnail_url with a backend endpoint that serves the image file
+            for p in projects:
+                thumbnail = p.get('thumbnail_url')
+                if thumbnail:
+                    p['thumbnail_endpoint'] = f"api/projects/{p['id']}/thumbnail"
+                else:
+                    p['thumbnail_endpoint'] = None
+
             return projects
 
     except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+
+@app.get("/projects/{project_id}/thumbnail", tags=["projects"])
+async def get_project_thumbnail(project_id: int, current_user: dict = Depends(get_current_user)):
+    """
+    Serve the thumbnail image file for a project. The frontend should GET this URL to receive
+    the image.
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT thumbnail_url, user_id FROM projects" \
+            "WHERE id = %s AND user_id = %s",
+                        (project_id, current_user['user_id']))
+            row = cur.fetchone()
+            if not row:
+                raise HTTPException(status_code=404, detail="Project not found")
+
+            thumbnail_path = row.get('thumbnail_url')
+            if not thumbnail_path or not os.path.exists(thumbnail_path):
+                raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+            return FileResponse(thumbnail_path)
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.exception("Error serving thumbnail for project %s", project_id)
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
@@ -393,46 +436,61 @@ async def create_project(
     Raises:
         HTTPException: If database error occurs or file upload fails
     """
-    user_id = current_user['user_id']
     if not title:
         raise HTTPException(status_code=400, detail="Project title is required")
     if video.content_type not in ["video/mp4", "video/avi", "video/mov"]:
         raise HTTPException(status_code=400, detail="Invalid video format")
-    ext = os.path.splitext(video.filename)[1]
     # create unique filename
-    uuid_filename = f"{uuid.uuid4().hex}{ext}"
-    upload_path = os.path.join("uploads", uuid_filename)
+    uuid_name = uuid.uuid4().hex
+    # create upload path from file name and file extension
+    video_upload_path = os.path.join("uploads", f"{uuid_name}{os.path.splitext(video.filename)[1]}")
+    thumbnail_upload_path = os.path.join("uploads", f"{uuid_name}_thumbnail.jpg")
 
     try:
-        with open(upload_path, "wb") as buffer:
+        with open(video_upload_path, "wb") as buffer:
             shutil.copyfileobj(video.file, buffer)
     except Exception as e:
         raise HTTPException(status_code=500, detail='Failed to upload video: {e}') from e
+    try:
+        capture = cv2.VideoCapture(video_upload_path)
+        success, frame = capture.read()
+        capture.release()
+
+        if not success:
+            raise HTTPException(status_code=500, detail="Failed to extract thumbnail from video")
+        cv2.imwrite(thumbnail_upload_path, frame)
+
+    except Exception as e:
+        raise HTTPException(status_code=500,
+                            detail='Failed to process video for thumbnail: {e}') from e
 
     conn = get_db_connection()
     if not conn:
+        if os.path.exists(video_upload_path):
+            os.remove(video_upload_path)
+        if os.path.exists(thumbnail_upload_path):
+            os.remove(thumbnail_upload_path)
         raise HTTPException(status_code=500, detail="Database connection failed")
 
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO projects (title, user_id, video_url, created_at, last_opened) " \
-                "VALUES (%s, %s, %s, now(), now()) " \
+                "INSERT INTO projects (title, user_id, video_url, thumbnail_url, created_at," \
+                "last_opened) VALUES (%s, %s, %s, %s, now(), now()) " \
                 "RETURNING id",
-                (title, user_id, upload_path)
+                (title, current_user['user_id'], video_upload_path, thumbnail_upload_path)
             )
             id_row = cur.fetchone()
             conn.commit()
-            project_id = id_row['id'] if id_row else None
 
-            return {"id": project_id}
+            return {"id": id_row['id'] if id_row else None}
 
     except Exception as error:
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
 
-# Get project details by ID
+# Get video path by project ID
 @app.get('/projects/{project_id}', tags=["projects"])
 async def get_project(
     project_id: int,
@@ -481,6 +539,44 @@ async def get_project(
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
         conn.close()
+
+# Delete project by ID
+@app.get('/projects/{project_id}/delete', tags=["projects"])
+async def delete_project(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Delete a specific project by its ID for the current authenticated user.
+
+    Args:
+        project_id: ID of the project to retrieve (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Project details
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # delete the project owned by the current user (single-step authorization)
+            cur.execute(
+                "DELETE FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+    except HTTPException:
+        # Re-raise HTTPExceptions so FastAPI returns the intended status code
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
 
 
 @app.get('/projects/{project_id}/landmarks', tags=["projects"])
