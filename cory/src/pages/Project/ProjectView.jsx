@@ -1,6 +1,7 @@
 import "./ProjectView.css";
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import Clip from "../../components/Clip";
+import LearningMode from "../../components/LearningMode";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
@@ -30,6 +31,9 @@ const ProjectView = () => {
   const [selectedClipDiv, setSelectedClipDiv] = useState(null); //this propably can be reworked to not exist
 
   const [currentClipId, setCurrentClipId] = useState(0); //this is the current clip selected
+
+  // Learning mode state - Controls full-screen learning experience
+  const [isLearningMode, setIsLearningMode] = useState(false);
 
   //clipAnnotations are 0-index
   const [clipAnnotations, setClipAnnotations] = useState([
@@ -200,6 +204,28 @@ const ProjectView = () => {
     setClipTimings(newClipTimings);
   }
 
+  /**
+   * Enter learning mode for the currently selected clip
+   */
+  function handleEnterLearningMode() {
+    if (currentClipId === 0) {
+      alert("Please select a clip first to enter learning mode");
+      return;
+    }
+    setIsLearningMode(true);
+  }
+
+  /**
+   * Exit learning mode
+   */
+  function exitLearningMode() {
+    setIsLearningMode(false);
+    // Reset video to start of clip
+    if (videoPlayerRef.current) {
+      videoPlayerRef.current.currentTime = getCurrentStartClipTimeStamp();
+    }
+  }
+
   async function getVideoUrl(currentProjectId) {
     if (user == null) {
       return null;
@@ -238,87 +264,110 @@ const ProjectView = () => {
 
 
   return (
-    <div id="projectView">
-      <div id="projectViewEditor">
-        <div id="projectViewToolbar">
+    <div id="projectView" className={isLearningMode ? "learning-mode-active" : ""}>
+      {!isLearningMode && (
+        <>
+          <div id="projectViewEditor">
+            <div id="projectViewToolbar">
+              <button
+                id="scissorsHolder"
+                onClick={clip}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter" || e.key == " ") {
+                    e.preventDefault();
+                    clip(e);
+                  }
+                }}
+              >
+                <img
+                  src="/images/scissors.jpg"
+                  alt="Girl in a jacket"
+                  width="50"
+                  height="60"
+                ></img>
+              </button>
+              <button
+                id="learningModeBtn"
+                onClick={handleEnterLearningMode}
+                disabled={currentClipId === 0}
+                title={currentClipId === 0 ? "Select a clip first" : "Enter Learning Mode"}
+              >
+                🎓
+              </button>
+            </div>
+
+            <div id="projectViewVideoPlayer">
+              {isLoading ? (
+                isProcessingLandmarks ? (
+                  <p>
+                    Processing landmarks — this may take a minute. The project will
+                    open once processing finishes.
+                  </p>
+                ) : (
+                  <p>Loading video...</p>
+                )
+              ) : (
+                <CustomVideoPlayer
+                  ref={videoPlayerRef}
+                  url={videoUrl}
+                  start={getCurrentStartClipTimeStamp()}
+                  end={getCurrentEndClipTimeStamp()}
+                  landmarks={landmarks}
+                ></CustomVideoPlayer>
+              )}
+            </div>
+
+            <div id="clipInfo">
+              <p>
+                Clip Info {getCurrentStartClipTimeStamp()} ,{" "}
+                {getCurrentEndClipTimeStamp()}
+              </p>
+              <textarea
+                id="clipInfoGoesHere"
+                className="hidden"
+                value={clipAnnotations[currentClipId]}
+                onChange={(e) =>
+                  handleAnnotationChange(currentClipId, e.target.value)
+                }
+              ></textarea>
+            </div>
+          </div>
+          {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
           <button
-            id="scissorsHolder"
-            onClick={clip}
+            id="projectViewFooter"
+            onClick={() => selectClip(-1, null)}
             onKeyDown={(e) => {
-              if (e.key == "Enter" || e.key == " ") {
-                e.preventDefault();
-                clip(e);
+              if (e.key === "Enter") {
+                selectClip(-1, null);
               }
             }}
           >
-            <img
-              src="/images/scissors.jpg"
-              alt="Girl in a jacket"
-              width="50"
-              height="60"
-            ></img>
+            {clipTimings.map(function (tuple, idx) {
+              //maps all the clip timings to be their own clips
+              return (
+                <Clip
+                  clipId={idx}
+                  onClick={(idx, divToHighlight) => {
+                    selectClip(idx, divToHighlight);
+                  }}
+                  key={idx}
+                ></Clip>
+              );
+            })}
           </button>
-        </div>
+        </>
+      )}
 
-        <div id="projectViewVideoPlayer">
-          {isLoading ? (
-            isProcessingLandmarks ? (
-              <p>
-                Processing landmarks — this may take a minute. The project will
-                open once processing finishes.
-              </p>
-            ) : (
-              <p>Loading video...</p>
-            )
-          ) : (
-            <CustomVideoPlayer
-              ref={videoPlayerRef}
-              url={videoUrl}
-              start={getCurrentStartClipTimeStamp()}
-              end={getCurrentEndClipTimeStamp()}
-              landmarks={landmarks}
-            ></CustomVideoPlayer>
-          )}
-        </div>
-
-        <div id="clipInfo">
-          <p>
-            Clip Info {getCurrentStartClipTimeStamp()} ,{" "}
-            {getCurrentEndClipTimeStamp()}
-          </p>
-          <textarea
-            id="clipInfoGoesHere"
-            className="hidden"
-            value={clipAnnotations[currentClipId]}
-            onChange={(e) =>
-              handleAnnotationChange(currentClipId, e.target.value)
-            }
-          ></textarea>
-        </div>
-      </div>
-      {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
-      <button
-        id="projectViewFooter"
-        onClick={() => selectClip(-1, null)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            selectClip(-1, null);
-          }
-        }}
-      >
-        {clipTimings.map(function (tuple, idx) {
-          //maps all the clip timings to be their own clips
-          return (
-            <Clip
-              clipId={idx}
-              onClick={(idx, divToHighlight) => {
-                selectClip(idx, divToHighlight);
-              }}
-              key={idx}
-            ></Clip>
-          );
-        })}
-      </button>
+      {/* Learning Mode Component - Full-screen practice with webcam */}
+      {isLearningMode && (
+        <LearningMode
+          videoUrl={videoUrl}
+          startTime={getCurrentStartClipTimeStamp()}
+          endTime={getCurrentEndClipTimeStamp()}
+          landmarks={landmarks}
+          onExit={exitLearningMode}
+        />
+      )}
     </div>
   );
 };
