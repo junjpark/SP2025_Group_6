@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY requirements.txt .
 
-RUN apt-get update && apt-get install -y libgl1
+RUN apt-get update && apt-get install -y libgl1 ffmpeg
 
 RUN pip install -r requirements.txt

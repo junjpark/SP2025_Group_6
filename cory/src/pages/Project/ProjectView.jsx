@@ -8,7 +8,7 @@ import { useParams, useNavigate } from "react-router-dom";
 const ProjectView = () => {
   const { projectId } = useParams(); //get the project id from the url
   console.log("Project ID from URL:", projectId);
-//   const API = import.meta.env.VITE_API_URL || "";
+  //   const API = import.meta.env.VITE_API_URL || "";
 
   const [videoUrl, setVideoUrl] = useState(null);
   const [landmarks, setLandmarks] = useState(null);
@@ -16,7 +16,7 @@ const ProjectView = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessingLandmarks, setIsProcessingLandmarks] = useState(false);
 
-//   const [videoPaused, setVideoPaused] = useState(true);
+  //   const [videoPaused, setVideoPaused] = useState(true);
 
   const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -103,8 +103,8 @@ const ProjectView = () => {
 
       setLandmarks(lm);
 
-      // Now fetch the video blob and allow the player to mount
-      const url = await getVideoUrl(projectId);
+      // Now fetch the annotated video blob and allow the player to mount
+      const url = await getAnnotatedVideoUrl(projectId);
       if (cancelled) return;
       setVideoUrl(url);
       setIsLoading(false);
@@ -115,7 +115,7 @@ const ProjectView = () => {
     return () => {
       cancelled = true;
     };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   /**
@@ -200,16 +200,16 @@ const ProjectView = () => {
     setClipTimings(newClipTimings);
   }
 
-  async function getVideoUrl(currentProjectId) {
+  async function getAnnotatedVideoUrl(currentProjectId) {
     if (user == null) {
       return null;
     }
     try {
-      const response = await fetch(`/api/projects/${currentProjectId}`, {
+      const response = await fetch(`/api/projects/${currentProjectId}/video-with-landmarks`, {
         method: "GET",
         credentials: "include", //JP: This is the change needed to make auth stuff work for fetching the project by projectid and using auth for current user, just gotta pass credentials along workflow
       });
-      console.log("fetching video for project id ", currentProjectId);
+      console.log("fetching annotated video for project id ", currentProjectId);
       if (response.status === 403) {
         console.warn(
           "Access forbidden: project does not belong to current user. Redirecting to library."
@@ -218,7 +218,7 @@ const ProjectView = () => {
         return null;
       }
       if (!response.ok) {
-        console.error("Failed to fetch video URL, status:", response.status);
+        console.error("Failed to fetch annotated video URL, status:", response.status);
         return null;
       }
       const contentType = response.headers.get("content-type") || "";
@@ -228,10 +228,10 @@ const ProjectView = () => {
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      console.log("Fetched video URL:", url);
+      console.log("Fetched annotated video URL:", url);
       return url;
     } catch (error) {
-      console.error("Error fetching video URL:", error);
+      console.error("Error fetching annotated video URL:", error);
       return null;
     }
   }
