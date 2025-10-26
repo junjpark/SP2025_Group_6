@@ -292,7 +292,7 @@ const ProjectView = () => {
                 disabled={currentClipId === 0}
                 title={currentClipId === 0 ? "Select a clip first" : "Enter Learning Mode"}
               >
-                🎓
+                Learning Mode
               </button>
             </div>
 

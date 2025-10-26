@@ -84,25 +84,28 @@
 #learningModeBtn {
   background: linear-gradient(
     135deg,
-    #10b981 0%,
-    #059669 100%
+    #8b5cf6 0%,
+    #7c3aed 100%
   );
   border: none;
   border-radius: var(--radius-md);
-  width: 48px;
+  width: auto;
   height: 48px;
+  padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-base);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-  font-size: 20px;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 #learningModeBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
 }
 
 #learningModeBtn:disabled {
