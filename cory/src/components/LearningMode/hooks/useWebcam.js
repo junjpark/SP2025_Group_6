@@ -5,6 +5,7 @@ export const useWebcam = () => {
   const webcamPipRef = useRef(null);
   const [webcamStream, setWebcamStream] = useState(null);
   const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const [webcamAspectRatio, setWebcamAspectRatio] = useState(null);
 
   // Initialize webcam
   useEffect(() => {
@@ -45,6 +46,15 @@ export const useWebcam = () => {
     if (webcamPipRef.current && webcamPipRef.current.srcObject !== webcamStream) {
       webcamPipRef.current.srcObject = webcamStream;
     }
+    // Derive aspect ratio from the first video track settings if available
+    const [videoTrack] = webcamStream.getVideoTracks();
+    if (videoTrack) {
+      const settings = videoTrack.getSettings ? videoTrack.getSettings() : {};
+      const { width, height } = settings;
+      if (width && height && height !== 0) {
+        setWebcamAspectRatio(width / height);
+      }
+    }
     // It's intentional to depend on .current so reassignment after remount triggers this effect
   }, [webcamStream, webcamMainRef.current, webcamPipRef.current]);
 
@@ -70,6 +80,7 @@ export const useWebcam = () => {
           el.play().catch(() => {});
         }
       }
-    }, [webcamStream])
+    }, [webcamStream]),
+    webcamAspectRatio
   };
 };

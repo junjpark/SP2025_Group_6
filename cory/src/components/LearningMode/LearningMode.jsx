@@ -19,7 +19,7 @@ const LearningMode = ({
   onExit 
 }) => {
   const videoPlayerRef = useRef(null);
-  const { webcamMainRef, webcamPipRef, isWebcamActive, attachWebcamMain, attachWebcamPip } = useWebcam();
+  const { webcamMainRef, webcamPipRef, isWebcamActive, attachWebcamMain, attachWebcamPip, webcamAspectRatio } = useWebcam();
   const {
     viewMode,
     isSwitched,
@@ -46,7 +46,8 @@ const LearningMode = ({
       videoUrl,
       startTime,
       endTime,
-      landmarks
+      landmarks,
+      webcamAspectRatio
     };
 
     switch (viewMode) {

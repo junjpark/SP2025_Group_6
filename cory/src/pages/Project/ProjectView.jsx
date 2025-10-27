@@ -5,6 +5,7 @@ import LearningMode from "../../components/LearningMode";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
+import { FiScissors } from "react-icons/fi";
 
 const ProjectView = () => {
   const { projectId } = useParams(); //get the project id from the url
@@ -279,12 +280,7 @@ const ProjectView = () => {
                   }
                 }}
               >
-                <img
-                  src="/images/scissors.jpg"
-                  alt="Girl in a jacket"
-                  width="50"
-                  height="60"
-                ></img>
+                <FiScissors />
               </button>
               <button
                 id="learningModeBtn"

@@ -30,7 +30,7 @@ const ControlButtons = ({
       </button>
 
       <button 
-        className={`switch-video-btn ${viewMode === 'sidebyside' ? 'sidebyside-switch' : viewMode === 'full' ? 'full-switch' : ''}`}
+        className="switch-video-btn"
         onClick={toggleVideoSwitch}
         title={getTitle()}
       >

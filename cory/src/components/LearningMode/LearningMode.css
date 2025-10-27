@@ -70,51 +70,54 @@
   top: 20px;
   right: 190px;
   z-index: 1001;
-  background: transparent;
-  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
   color: white;
-  width: 100px;
-  height: 100px;
+  width: 40px;
+  height: 40px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
 }
 
 .view-mode-btn:hover {
   transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .view-mode-btn.active {
   transform: scale(1.2);
+  border-color: rgba(255, 255, 255, 0.85);
 }
 
 .view-mode-btn img {
   filter: brightness(0) invert(1); /* Makes SVG white */
-  width: 80px;
-  height: 80px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
-  /* Crop options */
-  object-position: center; /* Center the visible part */
-  /* Alternative: clip-path: inset(10% 10% 10% 10%); */
+  object-position: center;
 }
 
 /* Position individual view mode buttons */
 .view-mode-btn:nth-child(3) {
-  right: 190px; /* PIP button */
+  right: 160px; /* PIP button */
 }
 
 .view-mode-btn:nth-child(4) {
-  right: 300px; /* Overlay button */
+  right: 210px; /* Overlay button */
 }
 
 .view-mode-btn:nth-child(5) {
-  right: 410px; /* Side-by-Side button */
+  right: 260px; /* Side-by-Side button */
 }
 
 .view-mode-btn:nth-child(6) {
-  right: 520px; /* Full button */
+  right: 310px; /* Full button */
 }
 
 /* Main Video Area */
@@ -208,6 +211,31 @@
   height: 100%;
   object-fit: cover;
   transform: scaleX(-1); /* Mirror the webcam */
+}
+
+/* PIP resize handle */
+.pip-resize-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 6px;
+  top: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  cursor: nwse-resize;
+  z-index: 1003;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+.pip-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid #4b5563;
+  border-top: 2px solid #4b5563;
 }
 
 /* Dance video PIP */
@@ -357,29 +385,29 @@
   }
   
   .view-mode-btn {
-    width: 80px;
-    height: 80px;
+    width: 32px;
+    height: 32px;
   }
   
   .view-mode-btn img {
-    width: 60px;
-    height: 60px;
+    width: 28px;
+    height: 28px;
   }
   
   .view-mode-btn:nth-child(3) {
-    right: 140px; /* PIP button */
+    right: 130px; /* PIP button */
   }
   
   .view-mode-btn:nth-child(4) {
-    right: 230px; /* Overlay button */
+    right: 170px; /* Overlay button */
   }
   
   .view-mode-btn:nth-child(5) {
-    right: 320px; /* Side-by-Side button */
+    right: 210px; /* Side-by-Side button */
   }
   
   .view-mode-btn:nth-child(6) {
-    right: 410px; /* Full button */
+    right: 250px; /* Full button */
   }
   
   .exit-learning-btn {
@@ -500,19 +528,7 @@
   object-fit: contain !important;
 }
 
-/* Side-by-side switch button styling */
-.switch-video-btn.sidebyside-switch {
-  background: rgba(139, 92, 246, 0.8);
-  border-color: rgba(255, 255, 255, 0.8);
-  animation: pulse 2s infinite;
-}
-
-/* Full mode switch button styling */
-.switch-video-btn.full-switch {
-  background: rgba(139, 92, 246, 0.8);
-  border-color: rgba(255, 255, 255, 0.8);
-  animation: pulse 2s infinite;
-}
+/* Remove mode-specific switch styles; keep a consistent look */
 
 @keyframes pulse {
   0% {
