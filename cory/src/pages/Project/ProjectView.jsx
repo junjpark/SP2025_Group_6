@@ -263,6 +263,26 @@ const ProjectView = () => {
     }
   }
 
+  // Enter Learning Mode when the user makes the player fullscreen
+  useEffect(() => {
+    const onFsChange = () => {
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      const playerContainer = document.getElementById("projectViewVideoPlayer");
+      const isPlayerFullscreen = !!(fsEl && playerContainer && playerContainer.contains(fsEl));
+
+      if (isPlayerFullscreen && !isLearningMode) {
+        setIsLearningMode(true);
+      }
+    };
+
+    document.addEventListener("fullscreenchange", onFsChange);
+    document.addEventListener("webkitfullscreenchange", onFsChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onFsChange);
+      document.removeEventListener("webkitfullscreenchange", onFsChange);
+    };
+  }, [isLearningMode]);
+
 
   return (
     <div id="projectView" className={isLearningMode ? "learning-mode-active" : ""}>
