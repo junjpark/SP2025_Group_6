@@ -259,14 +259,14 @@ async def google_login(google_user: GoogleUserCreate, response: Response):
 
             # Create session data
             session_data = SessionData(
-                user_id=user["user_id"],
+                user_id=user["id"],
                 email=user["email"],
                 display_name=user["display_name"],
                 google_id=user.get("google_id")
             )
 
             # Create session
-            session_token = create_session(user["user_id"], session_data.dict())
+            session_token = create_session(user["id"], session_data.dict())
 
             # Set HTTP-only cookie
             response.set_cookie(
@@ -281,7 +281,7 @@ async def google_login(google_user: GoogleUserCreate, response: Response):
             return SessionResponse(
                 message="Google login successful",
                 user=UserResponse(
-                    user_id=user["user_id"],
+                    user_id=user["id"],
                     email=user["email"],
                     display_name=user["display_name"],
                     google_id=user.get("google_id")
@@ -308,7 +308,7 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
         UserResponse: Current user's profile data
     """
     return UserResponse(
-        user_id=current_user['user_id'],
+        user_id=current_user['id'],
         email=current_user['email'],
         display_name=current_user['display_name'],
         google_id=current_user.get('google_id')
@@ -564,7 +564,7 @@ async def forgot_password(request: ForgotPasswordRequest):
     if user:
         # Create password reset token
         reset_token = create_password_reset_token(
-            user['user_id'],
+            user['id'],
             user['email'],
             user['display_name']
         )

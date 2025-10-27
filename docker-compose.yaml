@@ -1,31 +1,52 @@
 services:
   db:
     image: docker.io/postgres:latest
-    container_name: cory-v1
+    container_name: cory-beta-db
     environment:
-      - POSTGRES_USER= julesebags
-      - POSTGRES_PASSWORD= jules_password
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB={POSTGRES_DB}
+
+  flyway:
+    image: flyway/flyway:10
+    container_name: cory-beta-flyway
+    depends_on:
+      db:
+        condition: service_started
+    volumes:
+      - ./sql:/flyway/sql
+      - ./flyway.conf:/flyway/conf/flyway.conf
+    command: migrate
+
   backend:
     build:
       context: ./backend
       dockerfile: ./docker/Dockerfile
-    container_name: cory-v1-backend
-    command: python main.py 
+    container_name: cory_beta_backend
+    command: python main.py
     volumes:
-      - ./backend:/app 
+      - ./backend:/app
     ports:
-      - "8000:8000" 
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
     depends_on:
       - db
+
   frontend:
     build:
       context: ./cory
       dockerfile: ./docker/Dockerfile
-    container_name: cory-v1-frontend
+    container_name: cory_beta_frontend
     command: npm run dev
     volumes:
       - ./cory:/app
-    ports:
-      - "5173:5173"
+      - /app/node_modules
+    environment:
+      - VITE_PROXY_TARGET=${VITE_PROXY_TARGET}
+    env_file:
+      - ./cory/.env.local
     depends_on:
       - backend
+    ports:
+      - "5173:5173" # first port is the host port, second port is the container port

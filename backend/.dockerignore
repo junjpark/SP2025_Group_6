@@ -1,6 +1,7 @@
 venv/
+uploads/
 .env
 __pycache__/
-uploads
-.env.local
-node_modules/
+*.pyc
+.git
+.gitignore
