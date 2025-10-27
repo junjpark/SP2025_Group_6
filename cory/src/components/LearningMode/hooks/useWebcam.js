@@ -1,0 +1,87 @@
+import { useEffect, useState, useRef, useCallback } from 'react';
+
+export const useWebcam = () => {
+  const webcamMainRef = useRef(null);
+  const webcamPipRef = useRef(null);
+  const [webcamStream, setWebcamStream] = useState(null);
+  const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const [webcamAspectRatio, setWebcamAspectRatio] = useState(null);
+
+  // Initialize webcam
+  useEffect(() => {
+    let createdStream = null;
+    const initWebcam = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: { 
+            width: { ideal: 640 },
+            height: { ideal: 480 }
+          },
+          audio: false 
+        });
+        createdStream = stream;
+        setWebcamStream(stream);
+        setIsWebcamActive(true);
+      } catch (error) {
+        console.error('Error accessing webcam:', error);
+        // Continue without webcam if permission denied
+      }
+    };
+
+    initWebcam();
+
+    // Cleanup webcam stream on unmount only
+    return () => {
+      if (createdStream) {
+        createdStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Assign stream to video elements; re-run when DOM nodes change
+  useEffect(() => {
+    if (!webcamStream) return;
+
+    if (webcamMainRef.current && webcamMainRef.current.srcObject !== webcamStream) {
+      webcamMainRef.current.srcObject = webcamStream;
+    }
+    if (webcamPipRef.current && webcamPipRef.current.srcObject !== webcamStream) {
+      webcamPipRef.current.srcObject = webcamStream;
+    }
+    // Derive aspect ratio from the first video track settings if available
+    const [videoTrack] = webcamStream.getVideoTracks();
+    if (videoTrack) {
+      const settings = videoTrack.getSettings ? videoTrack.getSettings() : {};
+      const { width, height } = settings;
+      if (width && height && height !== 0) {
+        setWebcamAspectRatio(width / height);
+      }
+    }
+  }, [webcamStream]);
+
+  return { 
+    webcamMainRef, 
+    webcamPipRef, 
+    isWebcamActive,
+    webcamStream,
+    attachWebcamMain: useCallback((el) => {
+      webcamMainRef.current = el;
+      if (el && webcamStream) {
+        el.srcObject = webcamStream;
+        if (typeof el.play === 'function') {
+          el.play().catch(() => {});
+        }
+      }
+    }, [webcamStream]),
+    attachWebcamPip: useCallback((el) => {
+      webcamPipRef.current = el;
+      if (el && webcamStream) {
+        el.srcObject = webcamStream;
+        if (typeof el.play === 'function') {
+          el.play().catch(() => {});
+        }
+      }
+    }, [webcamStream]),
+    webcamAspectRatio
+  };
+};
