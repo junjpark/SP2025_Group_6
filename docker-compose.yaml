@@ -1,0 +1,31 @@
+services:
+  db:
+    image: docker.io/postgres:latest
+    container_name: cory-v1
+    environment:
+      - POSTGRES_USER= julesebags
+      - POSTGRES_PASSWORD= jules_password
+  backend:
+    build:
+      context: ./backend
+      dockerfile: ./docker/Dockerfile
+    container_name: cory-v1-backend
+    command: python main.py 
+    volumes:
+      - ./backend:/app 
+    ports:
+      - "8000:8000" 
+    depends_on:
+      - db
+  frontend:
+    build:
+      context: ./cory
+      dockerfile: ./docker/Dockerfile
+    container_name: cory-v1-frontend
+    command: npm run dev
+    volumes:
+      - ./cory:/app
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend

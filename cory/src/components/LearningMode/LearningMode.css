@@ -47,9 +47,9 @@
   background: rgba(0, 0, 0, 0.7);
   border: 2px solid rgba(255, 255, 255, 0.3);
   color: white;
-  width: 70px;
+  width: 40px;
   height: 40px;
-  border-radius: 20px;
+  border-radius: 50%;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -70,30 +70,34 @@
   top: 20px;
   right: 190px;
   z-index: 1001;
-  background: rgba(0, 0, 0, 0.7);
-  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: transparent;
+  border: none;
   color: white;
-  width: 80px;
-  height: 40px;
-  border-radius: 20px;
+  width: 100px;
+  height: 100px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
   transition: all 0.2s;
 }
 
 .view-mode-btn:hover {
-  background: rgba(139, 92, 246, 0.8);
-  border-color: rgba(255, 255, 255, 0.8);
   transform: scale(1.1);
 }
 
 .view-mode-btn.active {
-  background: rgba(139, 92, 246, 0.8);
-  border-color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.2);
+}
+
+.view-mode-btn img {
+  filter: brightness(0) invert(1); /* Makes SVG white */
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  /* Crop options */
+  object-position: center; /* Center the visible part */
+  /* Alternative: clip-path: inset(10% 10% 10% 10%); */
 }
 
 /* Position individual view mode buttons */
@@ -102,15 +106,15 @@
 }
 
 .view-mode-btn:nth-child(4) {
-  right: 280px; /* Overlay button */
+  right: 300px; /* Overlay button */
 }
 
 .view-mode-btn:nth-child(5) {
-  right: 370px; /* Side-by-Side button */
+  right: 410px; /* Side-by-Side button */
 }
 
 .view-mode-btn:nth-child(6) {
-  right: 460px; /* Full button */
+  right: 520px; /* Full button */
 }
 
 /* Main Video Area */
@@ -347,15 +351,19 @@
   
   .switch-video-btn {
     right: 80px;
-    width: 60px;
+    width: 35px;
     height: 35px;
     font-size: 12px;
   }
   
   .view-mode-btn {
+    width: 80px;
+    height: 80px;
+  }
+  
+  .view-mode-btn img {
     width: 60px;
-    height: 35px;
-    font-size: 10px;
+    height: 60px;
   }
   
   .view-mode-btn:nth-child(3) {
@@ -363,15 +371,15 @@
   }
   
   .view-mode-btn:nth-child(4) {
-    right: 210px; /* Overlay button */
+    right: 230px; /* Overlay button */
   }
   
   .view-mode-btn:nth-child(5) {
-    right: 280px; /* Side-by-Side button */
+    right: 320px; /* Side-by-Side button */
   }
   
   .view-mode-btn:nth-child(6) {
-    right: 350px; /* Full button */
+    right: 410px; /* Full button */
   }
   
   .exit-learning-btn {
