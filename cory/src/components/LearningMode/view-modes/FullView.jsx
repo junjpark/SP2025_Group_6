@@ -3,7 +3,6 @@ import CustomVideoPlayer from '../../CustomVideoPlayer';
 
 const FullView = ({
   videoPlayerRef,
-  webcamMainRef,
   attachWebcamMain,
   isSwitched,
   videoUrl,

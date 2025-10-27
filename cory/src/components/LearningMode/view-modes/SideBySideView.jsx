@@ -3,11 +3,8 @@ import CustomVideoPlayer from '../../CustomVideoPlayer';
 
 const SideBySideView = ({
   videoPlayerRef,
-  webcamMainRef,
-  webcamPipRef,
   attachWebcamMain,
   isSwitched,
-  isWebcamActive,
   videoUrl,
   startTime,
   endTime,
@@ -16,7 +13,6 @@ const SideBySideView = ({
   return (
     <div className="sidebyside-mode">
       <div className={`sidebyside-left ${isSwitched ? 'dance-side' : 'webcam-side'}`}>
-        <div className="video-label">{isSwitched ? 'Dance Video' : 'Webcam'}</div>
         {isSwitched ? (
           <CustomVideoPlayer
             ref={videoPlayerRef}
@@ -45,7 +41,6 @@ const SideBySideView = ({
       </div>
       
       <div className={`sidebyside-right ${isSwitched ? 'webcam-side' : 'dance-side'}`}>
-        <div className="video-label">{isSwitched ? 'Webcam' : 'Dance Video'}</div>
         {isSwitched ? (
           <video
             ref={attachWebcamMain}

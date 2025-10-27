@@ -5,7 +5,6 @@ import { VIEW_MODE_CONFIG } from '../constants/viewModes';
 
 const ControlButtons = ({
   viewMode,
-  isSwitched,
   toggleVideoSwitch,
   setViewModePip,
   setViewModeOverlay,
@@ -33,6 +32,7 @@ const ControlButtons = ({
         className="switch-video-btn"
         onClick={toggleVideoSwitch}
         title={getTitle()}
+        aria-label={getTitle()}
       >
         <MdSwapHoriz size={18} />
       </button>

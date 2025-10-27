@@ -1,5 +1,4 @@
 import React, { useRef } from 'react';
-import CustomVideoPlayer from '../CustomVideoPlayer';
 import { useWebcam } from './hooks/useWebcam';
 import { useViewMode } from './hooks/useViewMode';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';

@@ -34,8 +34,8 @@
 }
 
 .exit-learning-btn:hover {
-  background: rgba(255, 0, 0, 0.8);
-  border-color: rgba(255, 255, 255, 0.8);
+  background: rgba(127, 29, 29, 0.9); /* deeper red */
+  border-color: rgba(255, 255, 255, 0.85);
   transform: scale(1.1);
 }
 

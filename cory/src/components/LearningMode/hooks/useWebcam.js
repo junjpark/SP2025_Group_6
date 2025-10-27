@@ -9,6 +9,7 @@ export const useWebcam = () => {
 
   // Initialize webcam
   useEffect(() => {
+    let createdStream = null;
     const initWebcam = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -18,6 +19,7 @@ export const useWebcam = () => {
           },
           audio: false 
         });
+        createdStream = stream;
         setWebcamStream(stream);
         setIsWebcamActive(true);
       } catch (error) {
@@ -28,10 +30,10 @@ export const useWebcam = () => {
 
     initWebcam();
 
-    // Cleanup webcam stream on unmount
+    // Cleanup webcam stream on unmount only
     return () => {
-      if (webcamStream) {
-        webcamStream.getTracks().forEach(track => track.stop());
+      if (createdStream) {
+        createdStream.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -55,8 +57,7 @@ export const useWebcam = () => {
         setWebcamAspectRatio(width / height);
       }
     }
-    // It's intentional to depend on .current so reassignment after remount triggers this effect
-  }, [webcamStream, webcamMainRef.current, webcamPipRef.current]);
+  }, [webcamStream]);
 
   return { 
     webcamMainRef, 

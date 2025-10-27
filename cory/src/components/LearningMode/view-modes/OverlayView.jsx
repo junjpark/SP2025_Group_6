@@ -3,10 +3,7 @@ import CustomVideoPlayer from '../../CustomVideoPlayer';
 
 const OverlayView = ({
   videoPlayerRef,
-  webcamMainRef,
-  webcamPipRef,
   attachWebcamMain,
-  isSwitched,
   overlayOpacity,
   setTransparency,
   videoUrl,
@@ -52,8 +49,9 @@ const OverlayView = ({
         className="transparency-slider"
         title="Use ↑/↓ arrow keys for quick adjustment"
       >
-        <label>Overlay Transparency</label>
+        <label htmlFor="overlay-transparency">Overlay Transparency</label>
         <input
+          id="overlay-transparency"
           type="range"
           min="0.1"
           max="1"

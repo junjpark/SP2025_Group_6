@@ -3,8 +3,6 @@ import CustomVideoPlayer from '../../CustomVideoPlayer';
 
 const PipView = ({
   videoPlayerRef,
-  webcamMainRef,
-  webcamPipRef,
   attachWebcamMain,
   attachWebcamPip,
   isSwitched,
@@ -19,6 +17,7 @@ const PipView = ({
   const [pipSize, setPipSize] = useState({ width: 300, height: 200 });
   const resizeStateRef = useRef({ isResizing: false, startX: 0, startY: 0, startW: 300, startH: 200 });
   const [aspectRatio, setAspectRatio] = useState(4 / 3);
+  const aspectRatioRef = useRef(aspectRatio);
   const aspectInitializedRef = useRef(false);
 
   useEffect(() => {
@@ -29,11 +28,12 @@ const PipView = ({
       const maxW = Math.min(window.innerWidth, 960);
       const maxH = Math.min(window.innerHeight, 720);
       const minH = 120;
-      const minW = Math.max(160, Math.round(minH * aspectRatio));
+      const currentAspect = aspectRatioRef.current;
+      const minW = Math.max(160, Math.round(minH * currentAspect));
 
       const startW = resizeStateRef.current.startW;
       const startH = resizeStateRef.current.startH;
-      const aspect = aspectRatio || (startW / startH);
+      const aspect = currentAspect || (startW / startH);
 
       // Proportional scaling based on dominant normalized delta; top-left handle, bottom-right anchored
       const normDx = dx / startW;
@@ -75,6 +75,11 @@ const PipView = ({
       window.removeEventListener('mouseup', onMouseUp);
     };
   }, []);
+
+  // Keep the aspect ratio value available to the mousemove handler without re-binding listeners
+  useEffect(() => {
+    aspectRatioRef.current = aspectRatio;
+  }, [aspectRatio]);
 
   const onResizeMouseDown = (e) => {
     e.preventDefault();
@@ -157,8 +162,16 @@ const PipView = ({
           )}
           <div
             className="pip-resize-handle"
+            role="button"
+            tabIndex={0}
             onMouseDown={onResizeMouseDown}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+              }
+            }}
             title="Drag to resize"
+            aria-label="Resize picture-in-picture window"
           />
         </div>
       )}
