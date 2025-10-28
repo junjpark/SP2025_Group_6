@@ -8,8 +8,8 @@ import uuid
 import shutil
 import logging
 import time
-import cv2
 from pathlib import Path
+import cv2
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
@@ -40,6 +40,7 @@ from .password_reset import (
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
 from .pose_estimation import process_video_for_landmarks, render_landmarks_video
+# pylint: disable=no-member
 
 
 # Initialize FastAPI application
