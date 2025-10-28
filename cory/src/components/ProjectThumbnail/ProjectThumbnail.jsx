@@ -86,14 +86,14 @@ export default function ProjectThumbnail({
         onDelete(id);
         console.log("Project deleted:", id);
       } catch (error) {
-        console.error("Error deleting project:", id);
+        console.error("Error deleting project:", id, error);
       } finally {
         setShowMenu(false);
       }
     }
   };
 
-  const handleRenameProject = async (e) => {
+  const handleRenameProject = async () => {
     try {
       const response = await fetch(`/api/projects/${id}/rename`, {
         method: "POST",
@@ -106,7 +106,7 @@ export default function ProjectThumbnail({
       onRename(titleValue);
       console.log("Project renamed:", id);
     } catch (error) {
-      console.error("Error renaming project:", id);
+      console.error("Error renaming project:", id, error);
     } finally {
       setShowMenu(false);
     }
@@ -138,18 +138,53 @@ export default function ProjectThumbnail({
         {!isCreate && (
           <span
             className="three-dots"
+            role="button"
             onClick={handleDotsClick}
             tabIndex={0}
             aria-label="Project options"
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                handleDotsClick(e);
+              }
+            }}
           >
             &#8230;
           </span>
         )}
       </div>
       {showMenu && (
-        <div className="project-menu" onClick={handleCloseMenu}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <button onClick={handleDeleteProject}>Delete Project </button>
+        <div
+          className="project-menu"
+          onClick={handleCloseMenu}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "e") {
+              handleCloseMenu();
+            }
+          }}
+        >
+          <div
+            className="modal-content"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "e") {
+                e.stopPropagation();
+              }
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={handleDeleteProject}
+              onKeyDown={(e) => {
+                if (e.key === "d") {
+                  handleDeleteProject(e);
+                }
+              }}
+            >
+              Delete Project{" "}
+            </button>
             <p>Rename Project:</p>
             <input
               type="text"
