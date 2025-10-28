@@ -1,19 +1,21 @@
 import './ProjectView.css'
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
-import Clip from '../../components/Clip';
 import { useRef, useState } from 'react';
 import {useAuth} from "../../contexts/AuthContext"
 
+let nextClipId = 3;
 
 const ProjectView = () => {
+    const MAX_ROW = 4;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const isInRow = (row) => {return ([_index, clip]) => clip.row == row};
     const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
     const [isMirrored, setIsMirrored] = useState(false);
 
     //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
     //time stamps are of the form [a,b)
-    const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); 
 
     const [clips, setClips] = useState(new Map([
         [0, {'row': 0, 'start': 0, 'end':100}],
@@ -26,11 +28,13 @@ const ProjectView = () => {
     const [currentClipId, setCurrentClipId] = useState();
     const [currentClipBeingDraggedId, setCurrentClipBeingDraggedId] = useState("xx"); //be of the form "1l" or "2r" which is id and then l or r
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [videoLength, setVideoLength] = useState(13.333)
 
     //clipAnnotations are 0-index
     const [clipAnnotations, setClipAnnotations] = useState(["", "note 1", "note 2"]); //this is not how clipAnnotations should work TODO: FIX
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const {user} = useAuth(); //this user object tells us what is going on
 
     /**
@@ -79,7 +83,7 @@ const ProjectView = () => {
         const top = clip.row == 0 ? 2.5 : 44 + (clip.row-1)*11
         const width = ((clip.end - clip.start) * (19/20))
         const left = (clip.start * (19/20))+2.5
-        // console.log(id)
+        // eslint-disable-next-line jsx-a11y/no-static-element-interactions
         return <div style={{
           "position": 'absolute',
           "bottom": `${top*2}px`,
@@ -132,13 +136,6 @@ const ProjectView = () => {
         }
       }
     
-      const toggleSelectResizing = () =>{
-        setSelectResizing(!selectResizing);
-        if(resizing){
-          setResizing(false)
-        }
-      }
-    
       const handleResize = (clipId, isLeft) => {
         if(clipId === 0){
           console.warn("cannot resize main clip")
@@ -153,6 +150,32 @@ const ProjectView = () => {
         }
       }
     
+      function addClip(start, end, map, clipId){
+        const targetMap = map || clips; //this just allows us to pass an arbitrary map if desired
+        let clipEntries = [...targetMap.entries()]
+        outerLoop:
+        for(let i = 1; i<MAX_ROW; i++){
+          let clipsInIthRow = clipEntries.filter(isInRow(i))
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          for(let [_, clip] of clipsInIthRow){
+            if(clip.start < end+1 && start < clip.end+1){
+              continue outerLoop
+            }  
+          }
+          let newClips = new Map(targetMap)
+          if(map === undefined){
+            newClips.set(nextClipId, {'row': i, 'start': start, 'end': end})
+            nextClipId++;
+          } else{
+            newClips.set(clipId, {'row': i, 'start': start, 'end': end})
+            //console.log(newClips)
+          }
+          setClips(newClips);
+          return;
+        }
+        return null
+      }
+
       const moveLeft = () =>{
         // console.log(clips)
         if(!resizing){
@@ -202,6 +225,7 @@ const ProjectView = () => {
         }
       }
     
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const handleDelete = () =>{
         if(currentClipId === undefined){
             return;
