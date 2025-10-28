@@ -8,8 +8,7 @@ const OverlayView = ({
   setTransparency,
   videoUrl,
   startTime,
-  endTime,
-  landmarks
+  endTime
 }) => {
   return (
     <div className="overlay-mode">
@@ -20,16 +19,16 @@ const OverlayView = ({
           muted
           playsInline
           className="webcam-video"
-          style={{ 
-            width: '100%', 
-            height: '100%', 
+          style={{
+            width: '100%',
+            height: '100%',
             objectFit: 'cover',
             transform: 'scaleX(-1)'
           }}
         />
       </div>
-      
-      <div 
+
+      <div
         className="dance-overlay"
         style={{ opacity: overlayOpacity }}
       >
@@ -38,14 +37,11 @@ const OverlayView = ({
           url={videoUrl}
           start={startTime}
           end={endTime}
-          landmarks={landmarks}
-          isLearningMode={true}
-          isLearningModePaused={false}
         />
       </div>
-      
+
       {/* Transparency Slider */}
-      <div 
+      <div
         className="transparency-slider"
         title="Use ↑/↓ arrow keys for quick adjustment"
       >

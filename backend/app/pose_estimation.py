@@ -412,6 +412,7 @@ def render_landmarks_video(
         # Transcode to H.264/AVC for broad browser compatibility
         # - yuv420p pixel format
         # - +faststart to move moov atom to beginning for progressive playback
+        # - Preserve audio from original video
         ffmpeg_cmd = [
             "ffmpeg",
             "-y",
@@ -423,11 +424,19 @@ def render_landmarks_video(
 
         ffmpeg_cmd.extend([
             "-i",
-            intermediate_path,
+            intermediate_path,          # Processed video (no audio)
+            "-i",
+            input_video_path,            # Original video (with audio)
+            "-map",
+            "0:v:0",                     # Use video from first input (processed)
+            "-map",
+            "1:a:0?",                    # Use audio from second input (original), ? = optional
             "-c:v",
             "libx264",
+            "-c:a",
+            "aac",                       # Encode audio with AAC
             "-preset",
-            "fast",  # Faster encoding
+            "fast",                      # Faster encoding
             "-pix_fmt",
             "yuv420p",
             "-movflags",

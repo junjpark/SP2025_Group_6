@@ -20,15 +20,13 @@ import './LearningMode.css';
  * @param {string} videoUrl - URL blob for the dance video to practice with
  * @param {number} startTime - clip start (seconds)
  * @param {number} endTime - clip end (seconds)
- * @param {any} landmarks - pose landmarks for overlay rendering (if available)
  * @param {() => void} onExit - callback when the user exits learning mode
  */
-const LearningMode = ({ 
-  videoUrl, 
-  startTime, 
-  endTime, 
-  landmarks, 
-  onExit 
+const LearningMode = ({
+  videoUrl,
+  startTime,
+  endTime,
+  onExit
 }) => {
   // Ref for the primary CustomVideoPlayer instance used across views
   const videoPlayerRef = useRef(null);
@@ -36,13 +34,13 @@ const LearningMode = ({
   // Webcam hook exposes refs and safe callback ref binders which ensure
   // the MediaStream is reattached whenever the underlying <video> node remounts.
   // It also provides the detected webcam aspect ratio for PIP sizing.
-  const { 
-    webcamMainRef, 
-    webcamPipRef, 
-    isWebcamActive, 
-    attachWebcamMain, 
-    attachWebcamPip, 
-    webcamAspectRatio 
+  const {
+    webcamMainRef,
+    webcamPipRef,
+    isWebcamActive,
+    attachWebcamMain,
+    attachWebcamPip,
+    webcamAspectRatio
   } = useWebcam();
   const {
     viewMode,
@@ -72,7 +70,6 @@ const LearningMode = ({
       videoUrl,
       startTime,
       endTime,
-      landmarks,
       webcamAspectRatio
     };
 

@@ -7,8 +7,7 @@ const FullView = ({
   isSwitched,
   videoUrl,
   startTime,
-  endTime,
-  landmarks
+  endTime
 }) => {
   return (
     <div className="full-mode">
@@ -29,9 +28,6 @@ const FullView = ({
             url={videoUrl}
             start={startTime}
             end={endTime}
-            landmarks={landmarks}
-            isLearningMode={true}
-            isLearningModePaused={false}
           />
         </div>
       )}

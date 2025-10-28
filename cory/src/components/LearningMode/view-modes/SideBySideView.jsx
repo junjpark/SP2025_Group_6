@@ -7,8 +7,7 @@ const SideBySideView = ({
   isSwitched,
   videoUrl,
   startTime,
-  endTime,
-  landmarks
+  endTime
 }) => {
   return (
     <div className="sidebyside-mode">
@@ -19,9 +18,6 @@ const SideBySideView = ({
             url={videoUrl}
             start={startTime}
             end={endTime}
-            landmarks={landmarks}
-            isLearningMode={true}
-            isLearningModePaused={false}
           />
         ) : (
           <video
@@ -30,16 +26,16 @@ const SideBySideView = ({
             muted
             playsInline
             className="webcam-video"
-            style={{ 
-              width: '100%', 
-              height: '100%', 
+            style={{
+              width: '100%',
+              height: '100%',
               objectFit: 'contain',
               transform: 'scaleX(-1)'
             }}
           />
         )}
       </div>
-      
+
       <div className={`sidebyside-right ${isSwitched ? 'webcam-side' : 'dance-side'}`}>
         {isSwitched ? (
           <video
@@ -48,9 +44,9 @@ const SideBySideView = ({
             muted
             playsInline
             className="webcam-video"
-            style={{ 
-              width: '100%', 
-              height: '100%', 
+            style={{
+              width: '100%',
+              height: '100%',
               objectFit: 'contain',
               transform: 'scaleX(-1)'
             }}
@@ -61,9 +57,6 @@ const SideBySideView = ({
             url={videoUrl}
             start={startTime}
             end={endTime}
-            landmarks={landmarks}
-            isLearningMode={true}
-            isLearningModePaused={false}
           />
         )}
       </div>

@@ -156,7 +156,7 @@ const ProjectView = () => {
     }
     setIsLearningMode(true);
   }
-  
+
   /**
    * Exit learning mode
    */
@@ -255,21 +255,13 @@ const ProjectView = () => {
 
             <div id="projectViewVideoPlayer">
               {isLoading ? (
-                isProcessingLandmarks ? (
-                  <p>
-                    Processing landmarks — this may take a minute. The project will
-                    open once processing finishes.
-                  </p>
-                ) : (
-                  <p>Loading video...</p>
-                )
+                <p>Loading video...</p>
               ) : (
                 <CustomVideoPlayer
                   ref={videoPlayerRef}
                   url={videoUrl}
                   start={getCurrentStartClipTimeStamp()}
                   end={getCurrentEndClipTimeStamp()}
-                  landmarks={landmarks}
                 ></CustomVideoPlayer>
               )}
             </div>
@@ -321,7 +313,6 @@ const ProjectView = () => {
           videoUrl={videoUrl}
           startTime={getCurrentStartClipTimeStamp()}
           endTime={getCurrentEndClipTimeStamp()}
-          landmarks={landmarks}
           onExit={exitLearningMode}
         />
       )}

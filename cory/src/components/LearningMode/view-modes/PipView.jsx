@@ -10,7 +10,6 @@ const PipView = ({
   videoUrl,
   startTime,
   endTime,
-  landmarks,
   webcamAspectRatio
 }) => {
   const pipRef = useRef(null);
@@ -123,9 +122,6 @@ const PipView = ({
             url={videoUrl}
             start={startTime}
             end={endTime}
-            landmarks={landmarks}
-            isLearningMode={true}
-            isLearningModePaused={false}
           />
         )}
       </div>
@@ -144,9 +140,6 @@ const PipView = ({
               url={videoUrl}
               start={startTime}
               end={endTime}
-              landmarks={landmarks}
-              isLearningMode={true}
-              isLearningModePaused={false}
             />
           ) : (
             // Webcam as PIP
