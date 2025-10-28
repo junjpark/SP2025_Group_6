@@ -9,6 +9,7 @@ import shutil
 import logging
 import time
 import cv2
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
@@ -38,8 +39,7 @@ from .password_reset import (
 )
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
-from .pose_estimation import process_video_for_landmarks
-# pylint: disable=no-member
+from .pose_estimation import process_video_for_landmarks, render_landmarks_video
 
 
 # Initialize FastAPI application
@@ -171,6 +171,76 @@ async def signup(user_data: UserCreate):
         conn.close()
 
 
+@app.get('/projects/{project_id}/video-with-landmarks', tags=["projects"])
+async def get_project_video_with_landmarks(
+    project_id: int,
+    refresh: bool = False,
+    current_user: dict = Depends(get_current_user),
+    model_complexity: int = 1,
+    use_hw_accel: bool = True
+):
+    """
+    Return the project's video with pose landmarks rendered onto it.
+    If refresh=true, re-render even if a cached output exists.
+    
+    Query Parameters:
+        refresh: Force re-rendering even if cached version exists
+        model_complexity: MediaPipe model (0=lite/fastest, 1=full/default, 2=heavy/accurate)
+        use_hw_accel: Enable hardware acceleration for video encoding (faster)
+    """
+    user_id = current_user['user_id']
+
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT video_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            project = cur.fetchone()
+            if not project:
+                raise HTTPException(status_code=404, detail="Project not found")
+
+            input_path = project['video_url']
+            if not os.path.exists(input_path):
+                raise HTTPException(status_code=404, detail="Video file not found")
+
+            stem = Path(input_path).stem
+            out_dir = os.path.join("uploads", "annotated")
+            os.makedirs(out_dir, exist_ok=True)
+            output_path = os.path.join(out_dir, f"{stem}_landmarks.mp4")
+
+            if refresh or not os.path.exists(output_path):
+                try:
+                    render_landmarks_video(
+                        input_path,
+                        output_path,
+                        model_complexity=model_complexity,
+                        use_hw_accel=use_hw_accel
+                    )
+                except FileNotFoundError as exc:
+                    raise HTTPException(status_code=404, detail="Video file not found") from exc
+                except RuntimeError as exc:
+                    raise HTTPException(
+                        status_code=500, detail="Error rendering landmarks video"
+                    ) from exc
+
+            return FileResponse(
+                output_path,
+                media_type='video/mp4',
+                filename=os.path.basename(output_path)
+            )
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Error serving video-with-landmarks for project %s", project_id)
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
+    finally:
+        conn.close()
+
 # User login endpoint
 @app.post("/login", response_model=SessionResponse, tags=["authentication"])
 async def login(user_credentials: UserLogin, response: Response):
@@ -261,14 +331,14 @@ async def google_login(google_user: GoogleUserCreate, response: Response):
 
             # Create session data
             session_data = SessionData(
-                user_id=user["user_id"],
+                user_id=user["id"],
                 email=user["email"],
                 display_name=user["display_name"],
                 google_id=user.get("google_id")
             )
 
             # Create session
-            session_token = create_session(user["user_id"], session_data.dict())
+            session_token = create_session(user["id"], session_data.dict())
 
             # Set HTTP-only cookie
             response.set_cookie(
@@ -283,7 +353,7 @@ async def google_login(google_user: GoogleUserCreate, response: Response):
             return SessionResponse(
                 message="Google login successful",
                 user=UserResponse(
-                    user_id=user["user_id"],
+                    user_id=user["id"],
                     email=user["email"],
                     display_name=user["display_name"],
                     google_id=user.get("google_id")
@@ -310,7 +380,7 @@ async def read_users_me(current_user: dict = Depends(get_current_user)):
         UserResponse: Current user's profile data
     """
     return UserResponse(
-        user_id=current_user['user_id'],
+        user_id=current_user['id'],
         email=current_user['email'],
         display_name=current_user['display_name'],
         google_id=current_user.get('google_id')
@@ -637,11 +707,19 @@ async def rename_project(
 @app.get('/projects/{project_id}/landmarks', tags=["projects"])
 async def get_project_landmarks(
     project_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    sample_rate: int = 1,
+    use_parallel: bool = True,
+    model_complexity: int = 1
 ):
     """
     Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
     202 Accepted if processing/not yet available, or 404 if project not found/unauthorized.
+    
+    Query Parameters:
+        sample_rate: Process every Nth frame (1 = every frame, 2 = every other frame, etc.)
+        use_parallel: Enable parallel processing for faster processing on multi-core systems
+        model_complexity: MediaPipe model (0=lite/fastest, 1=full/default, 2=heavy/accurate)
     """
     user_id = current_user['user_id']
 
@@ -663,7 +741,12 @@ async def get_project_landmarks(
             if not os.path.exists(video_path):
                 raise HTTPException(status_code=404, detail="Video file not found")
             try:
-                landmarks_data = process_video_for_landmarks(video_path, video_sample_rate=1)
+                landmarks_data = process_video_for_landmarks(
+                    video_path,
+                    video_sample_rate=sample_rate,
+                    use_parallel=use_parallel,
+                    model_complexity=model_complexity
+                )
                 return landmarks_data
             except FileNotFoundError as e:
                 raise HTTPException(status_code=404, detail="Video file not found") from e
@@ -715,7 +798,7 @@ async def forgot_password(request: ForgotPasswordRequest):
     if user:
         # Create password reset token
         reset_token = create_password_reset_token(
-            user['user_id'],
+            user['id'],
             user['email'],
             user['display_name']
         )
