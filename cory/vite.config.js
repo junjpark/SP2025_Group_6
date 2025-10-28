@@ -3,7 +3,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-const target = process.env.VITE_PROXY_TARGET || 'http://backend:8000';
+// Default to local FastAPI dev server; allow override via VITE_PROXY_TARGET for Docker
+const target = process.env.VITE_PROXY_TARGET || 'http://localhost:8000';
 
 // https://vite.dev/config/
 export default defineConfig({
