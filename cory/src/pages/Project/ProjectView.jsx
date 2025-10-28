@@ -10,15 +10,12 @@ import { FiScissors } from "react-icons/fi";
 const ProjectView = () => {
   const { projectId } = useParams(); //get the project id from the url
   console.log("Project ID from URL:", projectId);
-//   const API = import.meta.env.VITE_API_URL || "";
+  //   const API = import.meta.env.VITE_API_URL || "";
 
   const [videoUrl, setVideoUrl] = useState(null);
-  const [landmarks, setLandmarks] = useState(null);
-
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessingLandmarks, setIsProcessingLandmarks] = useState(false);
 
-//   const [videoPaused, setVideoPaused] = useState(true);
+  //   const [videoPaused, setVideoPaused] = useState(true);
 
   const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
@@ -52,64 +49,8 @@ const ProjectView = () => {
   useEffect(() => {
     let cancelled = false;
 
-    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-
-    const waitForLandmarks = async (
-      currentProjectId,
-      maxAttempts = 60,
-      intervalMs = 2000
-    ) => {
-      setIsProcessingLandmarks(true);
-      try {
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          if (cancelled) return null;
-          const res = await fetch(
-            `/api/projects/${currentProjectId}/landmarks`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-
-          if (res.status === 202) {
-            // still processing, wait and retry
-            await sleep(intervalMs);
-            continue;
-          }
-
-          if (!res.ok) {
-            console.error("Failed to fetch landmarks, status:", res.status);
-            return null;
-          }
-
-          const data = await res.json();
-          return data;
-        }
-
-        console.warn("Timed out waiting for landmarks");
-        return null;
-      } finally {
-        setIsProcessingLandmarks(false);
-      }
-    };
-
     const init = async () => {
-      // Wait for landmarks to be ready before loading the video/player
-      const lm = await waitForLandmarks(projectId);
-      if (cancelled) return;
-
-      if (!lm) {
-        // Landmarks failed or timed out; keep the UI in a safe state and do not open the project
-        setLandmarks(null);
-        // setVideoUrl(null);
-        setIsLoading(false);
-        return;
-      }
-
-      setLandmarks(lm);
-
-      // Now fetch the video blob and allow the player to mount
-      const url = await getVideoUrl(projectId);
+      const url = await getAnnotatedVideoUrl(projectId);
       if (cancelled) return;
       setVideoUrl(url);
       setIsLoading(false);
@@ -120,7 +61,7 @@ const ProjectView = () => {
     return () => {
       cancelled = true;
     };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
 
   /**
@@ -215,7 +156,7 @@ const ProjectView = () => {
     }
     setIsLearningMode(true);
   }
-
+  
   /**
    * Exit learning mode
    */
@@ -227,16 +168,16 @@ const ProjectView = () => {
     }
   }
 
-  async function getVideoUrl(currentProjectId) {
+  async function getAnnotatedVideoUrl(currentProjectId) {
     if (user == null) {
       return null;
     }
     try {
-      const response = await fetch(`/api/projects/${currentProjectId}`, {
+      const response = await fetch(`/api/projects/${currentProjectId}/video-with-landmarks`, {
         method: "GET",
         credentials: "include", //JP: This is the change needed to make auth stuff work for fetching the project by projectid and using auth for current user, just gotta pass credentials along workflow
       });
-      console.log("fetching video for project id ", currentProjectId);
+      console.log("fetching annotated video for project id ", currentProjectId);
       if (response.status === 403) {
         console.warn(
           "Access forbidden: project does not belong to current user. Redirecting to library."
@@ -245,7 +186,7 @@ const ProjectView = () => {
         return null;
       }
       if (!response.ok) {
-        console.error("Failed to fetch video URL, status:", response.status);
+        console.error("Failed to fetch annotated video URL, status:", response.status);
         return null;
       }
       const contentType = response.headers.get("content-type") || "";
@@ -255,10 +196,10 @@ const ProjectView = () => {
       }
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
-      console.log("Fetched video URL:", url);
+      console.log("Fetched annotated video URL:", url);
       return url;
     } catch (error) {
-      console.error("Error fetching video URL:", error);
+      console.error("Error fetching annotated video URL:", error);
       return null;
     }
   }
