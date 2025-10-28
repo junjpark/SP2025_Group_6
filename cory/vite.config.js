@@ -1,3 +1,5 @@
+/* eslint-env node */
+/* eslint no-undef: 0 */
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 

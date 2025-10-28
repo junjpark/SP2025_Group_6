@@ -11,6 +11,14 @@ export default [
   {
     ignores: ['dist/'],
   },
+  {
+    files: ['vite.config.*', '**/vite.config.*'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
   
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
