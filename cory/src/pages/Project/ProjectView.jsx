@@ -15,62 +15,23 @@ const ProjectView = () => {
     //time stamps are of the form [a,b)
     const [clipTimings, setClipTimings] = useState([[0, 5],[5,13.346667]]); 
 
-    const [selectedClipDiv, setSelectedClipDiv] = useState(null); //this propably can be reworked to not exist
+    const [clips, setClips] = useState(new Map([
+        [0, {'row': 0, 'start': 0, 'end':100}],
+        [1, {'row': 1, 'start': 30, 'end':70}],
+        [2, {'row': 1, 'start': 0, 'end':20}]
+    ]))
 
-    const [currentClipId, setCurrentClipId] = useState(0); //this is the current clip selected
+    const [selectResizing, setSelectResizing] = useState(false)
+    const [resizing, setResizing] = useState(false)
+    const [currentClipId, setCurrentClipId] = useState();
+    const [currentClipBeingDraggedId, setCurrentClipBeingDraggedId] = useState("xx"); //be of the form "1l" or "2r" which is id and then l or r
+
+    const [videoLength, setVideoLength] = useState(13.333)
 
     //clipAnnotations are 0-index
     const [clipAnnotations, setClipAnnotations] = useState(["", "note 1", "note 2"]); //this is not how clipAnnotations should work TODO: FIX
 
     const {user} = useAuth(); //this user object tells us what is going on
-    {console.log(user.user_id)}
-
-    /**
-     * This is a getter for the start of the selected time stamp
-     * @param {int} clipId - Default is the state variable currentClip
-     * @returns {int} The start time stamp of the clip
-     */
-    function getCurrentStartClipTimeStamp(clipId=currentClipId){
-        if(clipId == 0){
-            return 0;
-        }
-        return clipTimings[clipId-1][0]
-    }
-
-    /**
-     * This is a getter for the end of the selected time stamp
-     * @param {int} clipId - Default is the state variable currentClip
-     * @returns {int} The end time stamp of the clip
-     */
-    function getCurrentEndClipTimeStamp(clipId=currentClipId){
-        if(clipId == 0){
-            return 13.346667;
-        }
-        return clipTimings[clipId-1][1]
-    }
-
-    /**
-     * This allows the user to select a clip
-     * @param {int} clipIdx - the is the 0-indexed variable for the clip
-     * @param {HTML Div} divToHighlight - this is the div to highlight (TODO: maybe we can remove this)
-     * @returns {void}
-     */
-    function selectClip(idx, divToHighlight){
-        const clipPTag = document.querySelector("#clipInfoGoesHere") //this is the annotation
-        if(selectedClipDiv != null){
-            selectedClipDiv.classList.remove("selected")
-        }
-        if((currentClipId == idx+1) || divToHighlight == null){ //if we click on the same clip already selected or if we click off
-            setCurrentClipId(0); //set the current clip to the whole video
-            clipPTag.classList.add("hidden"); //there should be no annotation
-            return;
-        }
-        //this means a new clip has been selected
-        setCurrentClipId(idx+1); //set the currentClipId to the new value
-        clipPTag.classList.remove("hidden"); //show the annotation
-        setSelectedClipDiv(divToHighlight); //update the state
-        divToHighlight.classList.add("selected") //add some highlighting to that clip
-    }
 
     /**
      * This handles when a user changes an annotation
@@ -84,46 +45,22 @@ const ProjectView = () => {
         setClipAnnotations(newClipAnnotations)
     }
 
-
-    function clipCanBeMade(){
-        const videoCurrentTime = videoPlayerRef.current.currentTime;
-        for(const interval of clipTimings){
-            if(videoCurrentTime == interval[0]){
-                return false;
-            }
+    const getCurrentStartClipTimeStamp = () =>{
+        if(currentClipId === undefined){
+            return 0;
         }
-        return clipTimings[clipTimings.length-1] != videoCurrentTime
+       return calculateTimeStamp(clips.get(currentClipId).start)
     }
-    /**
-     * This allows the user to cut the current clip in half here
-     */
 
+    const getCurrentEndClipTimeStamp = () =>{
+        if(currentClipId === undefined){
+            return videoLength;
+        }
+        return calculateTimeStamp(clips.get(currentClipId).end)
+    }
 
     function clip(){
-        const videoRef = videoPlayerRef.current;
-        if(!clipCanBeMade()){ //if the clip would be invalid then don't clip it
-            if(videoRef.paused){
-                let scissorsButton = document.querySelector("#scissorsHolder")
-                scissorsButton.classList.add("disabled");
-                videoRef.addEventListener('play', () => {
-                    scissorsButton.classList.remove("disabled");
-                }, {'once' : true});
-            }
-            return;
-        }
-        selectClip(-1, null);
-        const videoCurrentTime = videoPlayerRef.current.currentTime;
-        let newClipTimings = []
-        for(const interval of clipTimings){ //we need to rebuild the clipTimings array
-            if(videoCurrentTime >= interval[0] && videoCurrentTime < interval[1]){ //if the intervals intersect split it
-                newClipTimings.push([interval[0], videoCurrentTime]);
-                newClipTimings.push([videoCurrentTime, interval[1]]);
-            } else{ //else just push it
-                newClipTimings.push([interval[0], interval[1]]);
-            }
-        }
-        // console.log(newClipTimings)
-        setClipTimings(newClipTimings);
+        //TODO: update clip
     }
 
     function mirror(){
@@ -136,6 +73,159 @@ const ProjectView = () => {
             videoRef.classList.add("mirrored")
         }
     }
+
+    const renderClip = (clip, id) =>{
+        const height = clip.row == 0 ? 40 : 10
+        const top = clip.row == 0 ? 2.5 : 44 + (clip.row-1)*11
+        const width = ((clip.end - clip.start) * (19/20))
+        const left = (clip.start * (19/20))+2.5
+        // console.log(id)
+        return <div style={{
+          "position": 'absolute',
+          "bottom": `${top*2}px`,
+          "height": `${height*2}px`,
+          "left": `${left}%`,
+          "width": `${width}%`
+        }} key={id} onClick={handleClick} data-clip-id={id} tabIndex={id+1} onKeyDown={(e) => handleKeyDown(e, id)} className='clip'></div>
+    }
+
+    const handleClick = (e) =>{
+        const clipClicked = e.currentTarget.getBoundingClientRect();
+        const mouseX = e.clientX
+        const clipX = clipClicked.x;
+        const clipWidth = clipClicked.width;
+        const clipId = parseInt(e.currentTarget.dataset.clipId, 10);
+        const clip = clips.get(clipId)
+        setCurrentClipId(clipId)
+        const clipStart = clip.start
+        const clipEnd = clip.end
+        calculatePercent(clipStart, clipEnd, clipX, clipWidth, mouseX)
+        const width = clipClicked.width;
+        const relativeX = e.clientX - clipClicked.left; // Position within the element
+        if(selectResizing){
+          if (relativeX < width / 10) {
+            handleResize(clipId, true)
+          } else if(relativeX > 9 * width / 10){
+            handleResize(clipId, false)
+          }
+        }
+      }
+
+      const handleKeyDown = (e, clipId) => {
+        const buttonPressed = e.key
+        if(buttonPressed == "Enter"){
+          setCurrentClipBeingDraggedId("xx");
+          setCurrentClipId();
+          document.activeElement.blur();
+          return;
+        }
+        if(buttonPressed !== "ArrowRight" && buttonPressed !== "ArrowLeft"){
+          return;
+        }
+        if(clipId != currentClipBeingDraggedId.charAt(0)){
+          return
+        }
+        if(buttonPressed == "ArrowRight"){
+          moveRight();
+        } else{
+          moveLeft();
+        }
+      }
+    
+      const toggleSelectResizing = () =>{
+        setSelectResizing(!selectResizing);
+        if(resizing){
+          setResizing(false)
+        }
+      }
+    
+      const handleResize = (clipId, isLeft) => {
+        if(clipId === 0){
+          console.warn("cannot resize main clip")
+          return
+        }
+        setSelectResizing(false)
+        setResizing(true)
+        if(isLeft){
+          setCurrentClipBeingDraggedId(clipId+"l")
+        } else{
+          setCurrentClipBeingDraggedId(clipId+"r")
+        }
+      }
+    
+      const moveLeft = () =>{
+        // console.log(clips)
+        if(!resizing){
+          return
+        }
+        const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
+        const side = currentClipBeingDraggedId.charAt(1);
+        const oldClip = clips.get(clipId);
+        let newClips = new Map(clips)
+        newClips.delete(clipId)
+        if(side == 'l'){
+          const newStart = oldClip.start-1;
+          if(newStart < 0){
+            return;
+          }
+          addClip(newStart, oldClip.end, newClips, clipId)
+        } else{
+          const newEnd = oldClip.end-1;
+          if(newEnd <= oldClip.start){
+            return;
+          }
+          addClip(oldClip.start, newEnd, newClips, clipId)
+        }
+      }
+    
+      const moveRight = () =>{
+        if(!resizing){
+          return
+        }
+        const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
+        const side = currentClipBeingDraggedId.charAt(1);
+        const oldClip = clips.get(clipId);
+        let newClips = new Map(clips)
+        newClips.delete(clipId)
+        if(side == 'l'){
+          const newStart = oldClip.start+1;
+          if(newStart >= oldClip.end){
+            return;
+          }
+          addClip(newStart, oldClip.end, newClips, clipId)
+        } else{
+          const newEnd = oldClip.end+1;
+          if(newEnd > 100){
+            return;
+          }
+          addClip(oldClip.start, newEnd, newClips, clipId)
+        }
+      }
+    
+      const handleDelete = () =>{
+        if(currentClipId === undefined){
+            return;
+        }
+        if(currentClipId == 0){
+          console.warn("cannot delete main clip")
+          return;
+        }
+        let newClips = new Map(clips);
+        newClips.delete(currentClipId);
+        setClips(newClips)
+      }
+
+      const calculatePercent = (clipStart, clipEnd, clipX, clipWidth, newX) => {
+        const pixelPerPerecent = clipWidth/(clipEnd-clipStart)
+        const pixelZero = clipX - (clipStart*pixelPerPerecent)
+        const desiredPercent = (newX - pixelZero)/pixelPerPerecent
+        return desiredPercent
+      }
+
+      const calculateTimeStamp = (percentOfVideo) => {
+        return percentOfVideo * videoLength / 100
+      }
+    
 
     return (
     <div id="projectView">
@@ -171,13 +261,9 @@ const ProjectView = () => {
 
         </div>
         {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
-        <button id="projectViewFooter" onClick={()=>selectClip(-1, null)} onKeyDown={(e)=>{if(e.key === 'Enter'){selectClip(-1, null);}}}>
-            {clipTimings.map(function(tuple,idx) { //maps all the clip timings to be their own clips
-                return (
-                    <Clip clipId={idx} onClick={(idx,divToHighlight)=>{selectClip(idx,divToHighlight)}} key={idx}></Clip>
-                );
-            })}
-        </button>
+        <div id="projectViewFooter">
+            {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
+        </div>
     </div>
     )
 
