@@ -3,13 +3,12 @@ Pose estimation processing using MediaPipe with parallel processing support.
 """
 import os
 import logging
-from typing import List, Dict, Optional, Tuple
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+import subprocess
+from typing import List, Dict, Optional
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing as mp_sys
 import cv2
 import mediapipe as mp
-import subprocess
-import numpy as np
 # pylint: disable=no-member
 
 logger = logging.getLogger(__name__)
@@ -63,7 +62,7 @@ def _process_frame_batch(
     """
     results = []
     cap = cv2.VideoCapture(video_path)
-    
+
     try:
         mp_pose = mp.solutions.pose
         with mp_pose.Pose(
@@ -76,26 +75,26 @@ def _process_frame_batch(
             for frame_idx in frame_indices:
                 if frame_idx % video_sample_rate != 0:
                     continue
-                    
+
                 cap.set(cv2.CAP_PROP_POS_FRAMES, frame_idx)
                 ret, frame = cap.read()
-                
+
                 if not ret:
                     continue
-                
+
                 # Process frame
                 rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                 res = pose.process(rgb_frame)
-                
+
                 # Get timestamp
                 timestamp_ms = int(cap.get(cv2.CAP_PROP_POS_MSEC))
-                
+
                 entry: Dict[str, Optional[object]] = {
                     "frame": frame_idx,
                     "time": timestamp_ms / 1000.0,
                     "landmarks": None
                 }
-                
+
                 if res.pose_landmarks:
                     entry["landmarks"] = [
                         {
@@ -106,11 +105,11 @@ def _process_frame_batch(
                         }
                         for lm in res.pose_landmarks.landmark
                     ]
-                
+
                 results.append(entry)
     finally:
         cap.release()
-    
+
     return results
 
 
@@ -147,12 +146,12 @@ def process_video_for_landmarks(
 
         if use_parallel:
             return _process_video_parallel(
-                video_path, 
-                video_sample_rate, 
-                num_workers, 
+                video_path,
+                video_sample_rate,
+                num_workers,
                 model_complexity
             )
-        
+
         # Original sequential processing
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
@@ -201,13 +200,13 @@ def _process_video_parallel(
     """
     Process video frames in parallel using multiprocessing.
     Splits the video into chunks and processes each chunk in a separate process.
-    
+
     Args:
         video_path: Path to the video file
         video_sample_rate: Sample rate for frames
         num_workers: Number of parallel workers
         model_complexity: MediaPipe model complexity
-        
+
     Returns:
         List of landmark entries sorted by frame index
     """
@@ -215,24 +214,24 @@ def _process_video_parallel(
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     cap.release()
-    
+
     if num_workers is None:
         num_workers = max(1, mp_sys.cpu_count() - 1)
-    
+
     # Split frames into chunks for parallel processing
     frames_to_process = list(range(0, total_frames, video_sample_rate))
     chunk_size = max(1, len(frames_to_process) // num_workers)
-    
+
     frame_chunks = [
         frames_to_process[i:i + chunk_size]
         for i in range(0, len(frames_to_process), chunk_size)
     ]
-    
+
     logger.info(
         "Processing %d frames in %d chunks with %d workers",
         len(frames_to_process), len(frame_chunks), num_workers
     )
-    
+
     # Process chunks in parallel
     all_results = []
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
@@ -246,7 +245,7 @@ def _process_video_parallel(
             )
             for chunk in frame_chunks
         ]
-        
+
         for future in as_completed(futures):
             try:
                 chunk_results = future.result()
@@ -254,10 +253,10 @@ def _process_video_parallel(
             except Exception as exc:
                 logger.exception("Error processing frame chunk: %s", exc)
                 raise
-    
+
     # Sort results by frame index
     all_results.sort(key=lambda x: x['frame'])
-    
+
     logger.info("Parallel processing finished, total results: %d", len(all_results))
     return all_results
 
@@ -271,23 +270,23 @@ def process_multiple_videos_parallel(
     """
     Process multiple videos in parallel.
     Each video is processed in a separate process.
-    
+
     Args:
         video_paths: List of paths to video files
         video_sample_rate: Sample rate for frames
         num_workers: Number of parallel workers (defaults to CPU count)
         model_complexity: MediaPipe model complexity
-        
+
     Returns:
         Dictionary mapping video paths to their landmark results
     """
     if num_workers is None:
         num_workers = min(len(video_paths), mp_sys.cpu_count())
-    
+
     logger.info("Processing %d videos with %d workers", len(video_paths), num_workers)
-    
+
     results_dict = {}
-    
+
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         # Submit all videos for processing
         future_to_path = {
@@ -301,7 +300,7 @@ def process_multiple_videos_parallel(
             ): path
             for path in video_paths
         }
-        
+
         # Collect results as they complete
         for future in as_completed(future_to_path):
             video_path = future_to_path[future]
@@ -309,14 +308,15 @@ def process_multiple_videos_parallel(
                 results = future.result()
                 results_dict[video_path] = results
                 logger.info("Completed processing: %s", video_path)
-            except Exception as exc:
+            except Exception as exc:  # pylint: disable=broad-exception-caught
                 logger.exception("Error processing video %s: %s", video_path, exc)
                 results_dict[video_path] = None
-    
+
     return results_dict
 
 
 # New: Render an annotated video with pose landmarks overlaid
+# pylint: disable=too-many-locals,too-many-branches,too-many-statements
 def render_landmarks_video(
     input_video_path: str,
     output_video_path: Optional[str] = None,
@@ -354,7 +354,7 @@ def render_landmarks_video(
         out_dir = os.path.dirname(output_video_path) or "."
         os.makedirs(out_dir, exist_ok=True)
 
-        # Write an intermediate file first using OpenCV (mp4v), then transcode to H.264 for browser playback
+        # Write intermediate file using OpenCV (mp4v), transcode to H.264 for browser
         intermediate_path = (output_video_path + ".tmp.mp4") if output_video_path else None
         if intermediate_path is None:
             base, _ = os.path.splitext(input_video_path)
@@ -367,7 +367,7 @@ def render_landmarks_video(
 
         mp_pose = mp.solutions.pose
         drawing_utils = mp.solutions.drawing_utils
-        
+
         # Custom purple drawing specifications
         # Purple in BGR format: (128, 0, 128)
         landmark_style = drawing_utils.DrawingSpec(
@@ -375,7 +375,7 @@ def render_landmarks_video(
             thickness=1,           # Smaller dots
             circle_radius=2        # Smaller radius (default is 5)
         )
-        
+
         connection_style = drawing_utils.DrawingSpec(
             color=(128, 0, 128),  # Purple color in BGR
             thickness=2            # Line thickness
@@ -416,11 +416,11 @@ def render_landmarks_video(
             "ffmpeg",
             "-y",
         ]
-        
+
         # Add hardware acceleration if requested
         if use_hw_accel:
             ffmpeg_cmd.extend(["-hwaccel", "auto"])
-        
+
         ffmpeg_cmd.extend([
             "-i",
             intermediate_path,
@@ -434,17 +434,20 @@ def render_landmarks_video(
             "+faststart",
             output_video_path,
         ])
-        
+
         try:
-            subprocess.run(ffmpeg_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.run(
+                ffmpeg_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
         except subprocess.CalledProcessError as exc:
-            logger.exception("ffmpeg transcode failed: %s", exc.stderr.decode(errors='ignore') if exc.stderr else exc)
+            stderr_msg = exc.stderr.decode(errors='ignore') if exc.stderr else str(exc)
+            logger.exception("ffmpeg transcode failed: %s", stderr_msg)
             raise RuntimeError("Failed to transcode annotated video to H.264") from exc
         finally:
             try:
                 if os.path.exists(intermediate_path):
                     os.remove(intermediate_path)
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 pass
 
         return output_video_path

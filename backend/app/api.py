@@ -8,6 +8,7 @@ import uuid
 import shutil
 import logging
 import time
+from pathlib import Path
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
@@ -38,7 +39,6 @@ from .password_reset import (
 from .middleware import SessionMiddleware, LoggingMiddleware
 from .database import get_db_connection
 from .pose_estimation import process_video_for_landmarks, render_landmarks_video
-from pathlib import Path
 
 
 # Initialize FastAPI application
@@ -220,10 +220,12 @@ async def get_project_video_with_landmarks(
                         model_complexity=model_complexity,
                         use_hw_accel=use_hw_accel
                     )
-                except FileNotFoundError:
-                    raise HTTPException(status_code=404, detail="Video file not found")
-                except RuntimeError:
-                    raise HTTPException(status_code=500, detail="Error rendering landmarks video")
+                except FileNotFoundError as exc:
+                    raise HTTPException(status_code=404, detail="Video file not found") from exc
+                except RuntimeError as exc:
+                    raise HTTPException(
+                        status_code=500, detail="Error rendering landmarks video"
+                    ) from exc
 
             return FileResponse(
                 output_path,
@@ -232,9 +234,9 @@ async def get_project_video_with_landmarks(
             )
     except HTTPException:
         raise
-    except Exception:
+    except Exception as exc:
         logger.exception("Error serving video-with-landmarks for project %s", project_id)
-        raise HTTPException(status_code=500, detail="Internal server error")
+        raise HTTPException(status_code=500, detail="Internal server error") from exc
     finally:
         conn.close()
 
