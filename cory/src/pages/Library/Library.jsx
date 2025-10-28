@@ -46,6 +46,18 @@ export default function Library() {
     fetchProjects();
   }, []);
 
+  const handleDeleteProject = (id) => {
+    setProjects((prev) => prev.filter((project) => project.id !== id));
+  };
+
+  const handleRenameProject = (id, newTitle) => {
+    setProjects((prev) =>
+      prev.map((project) =>
+        project.id === id ? { ...project, title: newTitle } : project
+      )
+    );
+  };
+
   return (
     <div className="library-container">
       <h1>Library</h1>
@@ -63,6 +75,8 @@ export default function Library() {
               thumbnailEndpoint={project.thumbnailEndpoint}
               isCreate={project.isCreate}
               onCreateClick={() => setIsCreateModalOpen(true)}
+              onDelete={() => handleDeleteProject(project.id)}
+              onRename={(newTitle) => handleRenameProject(project.id, newTitle)}
             />
           ))
         )}

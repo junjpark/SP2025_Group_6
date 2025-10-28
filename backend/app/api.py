@@ -398,7 +398,7 @@ async def get_project_thumbnail(project_id: int, current_user: dict = Depends(ge
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT thumbnail_url, user_id FROM projects" \
-            "WHERE id = %s AND user_id = %s",
+            " WHERE id = %s AND user_id = %s",
                         (project_id, current_user['user_id']))
             row = cur.fetchone()
             if not row:
@@ -541,7 +541,7 @@ async def get_project(
         conn.close()
 
 # Delete project by ID
-@app.get('/projects/{project_id}/delete', tags=["projects"])
+@app.delete('/projects/{project_id}', tags=["projects"])
 async def delete_project(
     project_id: int,
     current_user: dict = Depends(get_current_user)
@@ -564,11 +564,28 @@ async def delete_project(
 
     try:
         with conn.cursor() as cur:
+            cur.execute(
+                "SELECT video_url, thumbnail_url FROM projects WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            project = cur.fetchone()
+
+            if not project:
+                # Either project doesn't exist or doesn't belong to the user
+                raise HTTPException(status_code=404, detail="Project not found")
+            # delete associated video and thumbnail files
+            video_path = project['video_url'] if project['video_url'] else None
+            thumbnail_path = project['thumbnail_url'] if project['thumbnail_url'] else None
+            if os.path.exists(video_path):
+                os.remove(video_path)
+            if os.path.exists(thumbnail_path):
+                os.remove(thumbnail_path)
             # delete the project owned by the current user (single-step authorization)
             cur.execute(
                 "DELETE FROM projects WHERE id = %s AND user_id = %s",
                 (project_id, user_id)
             )
+            conn.commit()
     except HTTPException:
         # Re-raise HTTPExceptions so FastAPI returns the intended status code
         raise
@@ -577,8 +594,46 @@ async def delete_project(
     finally:
         conn.close()
 
+# Rename project by ID
+@app.post('/projects/{project_id}/rename', tags=["projects"])
+async def rename_project(
+    project_id: int,
+    new_name: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Rename a specific project by its ID for the current authenticated user.
 
+    Args:
+        project_id: ID of the project to retrieve (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Project details
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
 
+    try:
+        with conn.cursor() as cur:
+            # update the project name owned by the current user
+            cur.execute(
+                "UPDATE projects SET title = %s WHERE id = %s AND user_id = %s",
+                (new_name, project_id, user_id)
+            )
+            conn.commit()
+    except HTTPException:
+        # Re-raise HTTPExceptions so FastAPI returns the intended status code
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# Get landmarks for a project
 @app.get('/projects/{project_id}/landmarks', tags=["projects"])
 async def get_project_landmarks(
     project_id: int,
