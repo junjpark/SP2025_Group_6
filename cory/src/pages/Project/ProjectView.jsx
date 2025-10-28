@@ -11,10 +11,7 @@ const ProjectView = () => {
   //   const API = import.meta.env.VITE_API_URL || "";
 
   const [videoUrl, setVideoUrl] = useState(null);
-  const [landmarks, setLandmarks] = useState(null);
-
   const [isLoading, setIsLoading] = useState(true);
-  const [isProcessingLandmarks, setIsProcessingLandmarks] = useState(false);
 
   //   const [videoPaused, setVideoPaused] = useState(true);
 
@@ -47,63 +44,7 @@ const ProjectView = () => {
   useEffect(() => {
     let cancelled = false;
 
-    const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-
-    const waitForLandmarks = async (
-      currentProjectId,
-      maxAttempts = 60,
-      intervalMs = 2000
-    ) => {
-      setIsProcessingLandmarks(true);
-      try {
-        for (let attempt = 0; attempt < maxAttempts; attempt++) {
-          if (cancelled) return null;
-          const res = await fetch(
-            `/api/projects/${currentProjectId}/landmarks`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-
-          if (res.status === 202) {
-            // still processing, wait and retry
-            await sleep(intervalMs);
-            continue;
-          }
-
-          if (!res.ok) {
-            console.error("Failed to fetch landmarks, status:", res.status);
-            return null;
-          }
-
-          const data = await res.json();
-          return data;
-        }
-
-        console.warn("Timed out waiting for landmarks");
-        return null;
-      } finally {
-        setIsProcessingLandmarks(false);
-      }
-    };
-
     const init = async () => {
-      // Wait for landmarks to be ready before loading the video/player
-      const lm = await waitForLandmarks(projectId);
-      if (cancelled) return;
-
-      if (!lm) {
-        // Landmarks failed or timed out; keep the UI in a safe state and do not open the project
-        setLandmarks(null);
-        // setVideoUrl(null);
-        setIsLoading(false);
-        return;
-      }
-
-      setLandmarks(lm);
-
-      // Now fetch the annotated video blob and allow the player to mount
       const url = await getAnnotatedVideoUrl(projectId);
       if (cancelled) return;
       setVideoUrl(url);
@@ -262,21 +203,13 @@ const ProjectView = () => {
 
         <div id="projectViewVideoPlayer">
           {isLoading ? (
-            isProcessingLandmarks ? (
-              <p>
-                Processing landmarks — this may take a minute. The project will
-                open once processing finishes.
-              </p>
-            ) : (
-              <p>Loading video...</p>
-            )
+            <p>Loading video...</p>
           ) : (
             <CustomVideoPlayer
               ref={videoPlayerRef}
               url={videoUrl}
               start={getCurrentStartClipTimeStamp()}
               end={getCurrentEndClipTimeStamp()}
-              landmarks={landmarks}
             ></CustomVideoPlayer>
           )}
         </div>

@@ -9,6 +9,9 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 5173,
+    watch: {
+      usePolling: true, 
+    },
     proxy: {
       // Use a dedicated /api namespace to avoid colliding with frontend asset paths
       '/api': {

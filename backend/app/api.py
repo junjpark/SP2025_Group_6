@@ -174,11 +174,18 @@ async def signup(user_data: UserCreate):
 async def get_project_video_with_landmarks(
     project_id: int,
     refresh: bool = False,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    model_complexity: int = 1,
+    use_hw_accel: bool = True
 ):
     """
     Return the project's video with pose landmarks rendered onto it.
     If refresh=true, re-render even if a cached output exists.
+    
+    Query Parameters:
+        refresh: Force re-rendering even if cached version exists
+        model_complexity: MediaPipe model (0=lite/fastest, 1=full/default, 2=heavy/accurate)
+        use_hw_accel: Enable hardware acceleration for video encoding (faster)
     """
     user_id = current_user['user_id']
 
@@ -207,7 +214,12 @@ async def get_project_video_with_landmarks(
 
             if refresh or not os.path.exists(output_path):
                 try:
-                    render_landmarks_video(input_path, output_path)
+                    render_landmarks_video(
+                        input_path,
+                        output_path,
+                        model_complexity=model_complexity,
+                        use_hw_accel=use_hw_accel
+                    )
                 except FileNotFoundError:
                     raise HTTPException(status_code=404, detail="Video file not found")
                 except RuntimeError:
@@ -543,11 +555,19 @@ async def get_project(
 @app.get('/projects/{project_id}/landmarks', tags=["projects"])
 async def get_project_landmarks(
     project_id: int,
-    current_user: dict = Depends(get_current_user)
+    current_user: dict = Depends(get_current_user),
+    sample_rate: int = 1,
+    use_parallel: bool = True,
+    model_complexity: int = 1
 ):
     """
     Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
     202 Accepted if processing/not yet available, or 404 if project not found/unauthorized.
+    
+    Query Parameters:
+        sample_rate: Process every Nth frame (1 = every frame, 2 = every other frame, etc.)
+        use_parallel: Enable parallel processing for faster processing on multi-core systems
+        model_complexity: MediaPipe model (0=lite/fastest, 1=full/default, 2=heavy/accurate)
     """
     user_id = current_user['user_id']
 
@@ -569,7 +589,12 @@ async def get_project_landmarks(
             if not os.path.exists(video_path):
                 raise HTTPException(status_code=404, detail="Video file not found")
             try:
-                landmarks_data = process_video_for_landmarks(video_path, video_sample_rate=1)
+                landmarks_data = process_video_for_landmarks(
+                    video_path,
+                    video_sample_rate=sample_rate,
+                    use_parallel=use_parallel,
+                    model_complexity=model_complexity
+                )
                 return landmarks_data
             except FileNotFoundError as e:
                 raise HTTPException(status_code=404, detail="Video file not found") from e
