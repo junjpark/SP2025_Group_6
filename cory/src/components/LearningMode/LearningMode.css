@@ -1,0 +1,586 @@
+/* ===== LEARNING MODE COMPONENT ===== */
+.learning-mode-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Control Buttons - Floating overlay controls */
+.exit-learning-btn {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.exit-learning-btn:hover {
+  background: rgba(127, 29, 29, 0.9); /* deeper red */
+  border-color: rgba(255, 255, 255, 0.85);
+  transform: scale(1.1);
+}
+
+.switch-video-btn {
+  position: fixed;
+  top: 20px;
+  right: 100px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  transition: all 0.2s;
+}
+
+.switch-video-btn:hover {
+  background: rgba(99, 102, 241, 0.8);
+  border-color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.1);
+}
+
+.view-mode-btn {
+  position: fixed;
+  top: 20px;
+  right: 190px;
+  z-index: 1001;
+  background: rgba(0, 0, 0, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  color: white;
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.view-mode-btn:hover {
+  transform: scale(1.1);
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+.view-mode-btn.active {
+  transform: scale(1.2);
+  border-color: rgba(255, 255, 255, 0.85);
+}
+
+.view-mode-btn img {
+  filter: brightness(0) invert(1); /* Makes SVG white */
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Position individual view mode buttons */
+.view-mode-btn:nth-child(3) {
+  right: 160px; /* PIP button */
+}
+
+.view-mode-btn:nth-child(4) {
+  right: 210px; /* Overlay button */
+}
+
+.view-mode-btn:nth-child(5) {
+  right: 260px; /* Side-by-Side button */
+}
+
+.view-mode-btn:nth-child(6) {
+  right: 310px; /* Full button */
+}
+
+/* Main Video Area */
+.main-video-area {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.main-video-area .video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.main-video-area video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+/* Webcam Container */
+.webcam-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the webcam for natural self-view */
+}
+
+/* Picture-in-Picture Area - Small overlay video in bottom-right corner */
+.pip-area {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  height: 200px;
+  border: 3px solid rgba(255, 255, 255, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  z-index: 1002;
+}
+
+.pip-area .video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.pip-area video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Webcam PIP specific styles */
+.webcam-pip-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.webcam-pip-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the webcam */
+}
+
+/* PIP resize handle */
+.pip-resize-handle {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  left: 6px;
+  top: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  cursor: nwse-resize;
+  z-index: 1003;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+}
+
+.pip-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 8px;
+  height: 8px;
+  border-left: 2px solid #4b5563;
+  border-top: 2px solid #4b5563;
+}
+
+/* Dance video PIP */
+.dance-pip .video-container {
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Overlay Mode Styles */
+.overlay-mode {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.webcam-fullscreen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+}
+
+.webcam-fullscreen .webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the webcam for natural self-view */
+}
+
+.dance-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+  pointer-events: none;
+  z-index: 1003;
+  background: transparent;
+  /* opacity is now controlled dynamically via inline styles */
+}
+
+.dance-overlay .video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.dance-overlay video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Transparency Slider Styles */
+.transparency-slider {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 1004;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 10px 15px;
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.transparency-slider label {
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.transparency-slider input[type="range"] {
+  width: 150px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.3);
+  outline: none;
+  border-radius: 3px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.transparency-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.transparency-slider input[type="range"]::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #8b5cf6;
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.transparency-percentage {
+  color: white;
+  font-size: 12px;
+  text-align: center;
+  margin-top: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .pip-area {
+    width: 200px;
+    height: 150px;
+    bottom: 10px;
+    right: 10px;
+  }
+  
+  .switch-video-btn {
+    right: 80px;
+    width: 35px;
+    height: 35px;
+    font-size: 12px;
+  }
+  
+  .view-mode-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .view-mode-btn img {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .view-mode-btn:nth-child(3) {
+    right: 130px; /* PIP button */
+  }
+  
+  .view-mode-btn:nth-child(4) {
+    right: 170px; /* Overlay button */
+  }
+  
+  .view-mode-btn:nth-child(5) {
+    right: 210px; /* Side-by-Side button */
+  }
+  
+  .view-mode-btn:nth-child(6) {
+    right: 250px; /* Full button */
+  }
+  
+  .exit-learning-btn {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  .transparency-slider {
+    bottom: 10px;
+    left: 10px;
+    padding: 8px 12px;
+  }
+  
+  .transparency-slider input[type="range"] {
+    width: 120px;
+  }
+  
+  .sidebyside-mode {
+    flex-direction: column;
+  }
+  
+  .sidebyside-left {
+    border-right: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+  }
+  
+  .video-label {
+    font-size: 12px;
+    padding: 6px 12px;
+    top: 10px;
+    left: 10px;
+  }
+}
+
+/* Side-by-Side Mode Styles */
+.sidebyside-mode {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  background: #000;
+}
+
+.sidebyside-left,
+.sidebyside-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: #000;
+}
+
+.sidebyside-left {
+  border-right: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.video-label {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1003;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.sidebyside-left .webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the webcam for natural self-view */
+}
+
+.sidebyside-right .video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.sidebyside-right video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+/* Side-by-side switching styles */
+.webcam-side .webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the webcam for natural self-view */
+}
+
+.dance-side .video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.dance-side video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}
+
+/* Remove mode-specific switch styles; keep a consistent look */
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(139, 92, 246, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 92, 246, 0);
+  }
+}
+
+/* Full Mode Styles */
+.full-mode {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+}
+
+.full-webcam,
+.full-dance {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+}
+
+.full-webcam .webcam-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1); /* Mirror the webcam for natural self-view */
+}
+
+.full-dance .video-container {
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #000 !important;
+}
+
+.full-dance video {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: contain !important;
+}

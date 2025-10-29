@@ -1,50 +1,147 @@
+/* ===== PROJECT THUMBNAIL STYLES ===== */
+
 .project-thumbnail {
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   cursor: pointer;
-  text-align: center;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  transition: transform var(--transition-base);
 }
 
+.project-thumbnail:hover {
+  transform: translateY(-4px);
+}
+
+.project-thumbnail:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-md);
+}
+
+/* Thumbnail Image Container */
 .thumbnail-image {
   width: 100%;
   aspect-ratio: 16/9;
+  object-fit: cover;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  border-radius: 6px;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-base);
+  border: 2px solid var(--color-border);
 }
 
+.project-thumbnail:hover .thumbnail-image {
+  box-shadow: var(--shadow-lg);
+  border-color: var(--color-primary);
+}
+
+.project-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--spacing-sm);
+  position: relative;
+}
+
+.three-dots {
+  font-size: 2em;
+  color: #888;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+  z-index: 2;
+  pointer-events: auto;
+  margin-top: -4px;
+}
+
+.project-thumbnail:hover .three-dots,
+.project-thumbnail:focus-within .three-dots {
+  opacity: 1;
+}
+
+/* Project Title */
 .project-title {
-  
+  margin-top: var(--spacing-md);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color var(--transition-base);
 }
 
+.project-thumbnail:hover .project-title {
+  color: var(--color-primary-light);
+}
+
+/* Create New Thumbnail */
 .create-thumbnail {
   width: 100%;
   aspect-ratio: 16/9;
-  border-radius: 6px;
-  background: #343434;
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-tertiary) 0%,
+    var(--color-bg-elevated) 100%
+  );
+  border: 2px dashed var(--color-border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  transition: all var(--transition-base);
+  box-shadow: var(--shadow-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.create-thumbnail::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(139, 92, 246, 0.1) 100%
+  );
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.project-thumbnail:hover .create-thumbnail {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-lg);
+  transform: scale(1.02);
+}
+
+.project-thumbnail:hover .create-thumbnail::before {
+  opacity: 1;
+}
+
+/* Plus Icon */
+.plus-icon {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #666;
-  font-size: 2rem;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  color: white;
+  font-size: 2.5rem;
+  font-weight: 300;
+  line-height: 1;
+  transition: all var(--transition-base);
+  z-index: 1;
 }
 
-.plus-icon {
-  display: inline-block;
-  width: 56px;
-  height: 56px;
-  line-height: 56px;
-  color: #9d9d9d;
-  text-align: center;
-  font-weight: 700;
-  font-size: 42px;
-}
-
-.thumbnail-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 6px;
+.project-thumbnail:hover .plus-icon {
+  transform: rotate(90deg) scale(1.1);
 }

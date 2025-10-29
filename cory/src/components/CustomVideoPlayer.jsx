@@ -1,43 +1,69 @@
-import React, {useEffect, useState } from "react";
-import "./CustomVideoPlayer.css"
+import React, { useEffect, useRef } from "react";
+import "./CustomVideoPlayer.css";
 
+const CustomVideoPlayer = React.forwardRef(
+  (
+    { url, start = 0, end = Infinity },
+    ref
+  ) => {
+    CustomVideoPlayer.displayName = "CustomVideoPlayer";
 
-const CustomVideoPlayer = React.forwardRef(({start, end}, ref) => {
-    CustomVideoPlayer.displayName = 'CustomVideoPlayer'
-const [videoSource, ] = useState("sample.mp4")
-const videoBaseDir = "/videos/"
+    console.log(
+      "Rendering CustomVideoPlayer with URL:",
+      url,
+      "start:",
+      start,
+      "end:",
+      end
+    );
 
-useEffect(()=>{
-    const videoPlayer = ref.current;
-    const resetClip = () =>{ //if the timer ever goes past the end go back to the beginning
-        if(videoPlayer.currentTime >= end){
-            videoPlayer.currentTime = start;
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      const video = ref.current;
+      if (!video) return;
+
+      const resetClip = () => {
+        //if the timer ever goes past the end go back to the beginning
+        if (video.currentTime >= end) {
+          video.currentTime = start;
         }
-    };
-    videoPlayer.currentTime = start; //start the clip over
-    videoPlayer.addEventListener("timeupdate", resetClip);
-    return () =>{ //runs once the useEffect is going to run again
-        videoPlayer.removeEventListener("timeupdate", resetClip); //makes sure we don't get too many event listeners
-    };
-// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [start, end]);
+      };
 
-return(
-    <>
-        {/* Just a video and a sorce with a fall back*/}
+      // ensure video starts at the requested start time
+      video.currentTime = start;
+      video.addEventListener("timeupdate", resetClip);
+
+      return () => {
+        //makes sure we don't get too many event listeners
+        video.removeEventListener("timeupdate", resetClip);
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [start, end, ref]);
+
+    // No overlay drawing; backend returns annotated video directly
+
+    return (
+      <div
+        className="video-container"
+        ref={containerRef}
+        style={{ position: "relative", display: "inline-block" }}
+      >
         <video
-            controls
-            width={400}
-            id="myVideo"
-            ref={ref}
+          controls
+          width={400}
+          id="myVideo"
+          ref={ref}
+          src={url}
+          onError={(e) => console.error("Video error:", e, "Video URL:", url)}
+          style={{ display: "block" }}
         >
-            <source src={videoBaseDir + videoSource} type="video/mp4"></source>
-            <track kind="captions" />
-            Not working
+          <track kind="captions" />
+          Not working
         </video>
-    </>
-)
-
-});
+      </div>
+    );
+  }
+);
 
 export default CustomVideoPlayer;

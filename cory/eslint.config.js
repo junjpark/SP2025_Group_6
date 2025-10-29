@@ -11,7 +11,17 @@ export default [
   {
     ignores: ['dist/'],
   },
-  
+
+  // Configuration for Node.js config files (vite.config.js, etc.)
+  {
+    files: ['*.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {
@@ -36,7 +46,7 @@ export default [
       ...react.configs.recommended.rules,
       ...reactHooks.configs.recommended.rules,
       ...jsxA11y.configs.recommended.rules,
-      
+
 
       'react/react-in-jsx-scope': 'off',
       'react/prop-types': 'off',

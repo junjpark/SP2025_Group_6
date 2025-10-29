@@ -18,3 +18,7 @@ fastapi-mail==1.4.1      # For sending emails
 jinja2==3.1.2            # For email templates
 
 # Session management using database storage
+mediapipe
+opencv-python
+
+ffmpeg-python
