@@ -16,17 +16,16 @@
   display: flex;
   gap: var(--spacing-lg);
   padding: var(--spacing-lg);
-  background: linear-gradient(
-    135deg,
-    var(--color-bg-secondary) 0%,
-    var(--color-bg-elevated) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--color-bg-secondary) 0%,
+      var(--color-bg-elevated) 100%);
   min-height: 0;
 }
 
 /* ===== TOOLBAR ===== */
 #projectViewToolbar {
-  width: 120px; /* allow wider Learning Mode button */
+  width: 120px;
+  /* allow wider Learning Mode button */
   background: var(--color-bg-tertiary);
   border-radius: var(--radius-xl);
   padding: var(--spacing-lg);
@@ -37,11 +36,9 @@
 }
 
 #scissorsHolder {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary) 0%,
-    var(--color-accent) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--color-primary) 0%,
+      var(--color-accent) 100%);
   border: none;
   border-radius: var(--radius-md);
   width: 100%;
@@ -58,11 +55,9 @@
 #scissorsHolder:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
-  background: linear-gradient(
-    135deg,
-    var(--color-accent-dark) 0%,
-    var(--color-accent) 100%
-  );
+  background: linear-gradient(135deg,
+      var(--color-accent-dark) 0%,
+      var(--color-accent) 100%);
 }
 
 #scissorsHolder:active {
@@ -148,7 +143,7 @@
   box-shadow: var(--shadow-md);
 }
 
-#clipInfo > p {
+#clipInfo>p {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
@@ -219,7 +214,7 @@
 .clip {
   min-width: 140px;
   height: 120px;
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  background: linear-gradient(135deg, #4e0e70 0%, #400c4b 100%);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -304,6 +299,50 @@
     min-width: 100px;
     height: 80px;
   }
+}
+
+#clipInfo {
+  width: 20%;
+}
+
+#projectViewFooter {
+  width: 100vw;
+  height: 17vh;
+  background-color: #582f4c;
+  display: flex;
+  gap: 10px;
+  align-content: center;
+  flex-wrap: nowrap;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  padding: 10px;
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mirrored {
+  transform: scaleX(-1);
+}
+
+.mirrored::-webkit-media-controls-enclosure {
+  transform: scaleX(-1);
+}
+
+.clip {
+  height: 70%;
+  width: 10%;
+  border: 2px solid transparent;
+}
+
+.selected {
+  border: 2px solid #FFFFFF;
+}
+
+.hidden {
+  visibility: hidden;
 }
 
 @media (max-width: 480px) {
