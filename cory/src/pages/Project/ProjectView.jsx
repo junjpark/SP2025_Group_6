@@ -6,7 +6,7 @@ import LearningMode from "../../components/LearningMode";
 import { use, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiScissors } from "react-icons/fi";
+import { FiArrowLeft, FiScissors } from "react-icons/fi";
 
 let nextClipId = 3;
 
@@ -428,6 +428,18 @@ const ProjectView = () => {
         <>
           <div id="projectViewEditor">
             <div id="projectViewToolbar">
+              <button
+                id="backToLibraryBtn"
+                onClick={() => navigate("/")}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter" || e.key == " ") {
+                    e.preventDefault();
+                    navigate("/");
+                  }
+                }}
+              >
+                <FiArrowLeft />
+              </button>
               <button
                 id="scissorsHolder"
                 onClick={clip}

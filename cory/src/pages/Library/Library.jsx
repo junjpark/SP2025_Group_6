@@ -4,6 +4,7 @@ import "./Library.css";
 import ProjectView from "../Project/ProjectView";
 import CreateNewModal from "../../components/CreateNewModal/CreateNewModal";
 import { useNavigate } from "react-router-dom";
+import Navbar from "../../components/Navbar/Navbar";
 
 export default function Library() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -59,40 +60,45 @@ export default function Library() {
   };
 
   return (
-    <div className="library-container">
-      <h1>Library</h1>
-      <div className="projects-grid">
-        {loading ? (
-          <p>Loading projects...</p>
-        ) : error ? (
-          <p>Error loading projects: {error}</p>
-        ) : (
-          projects.map((project) => (
-            <ProjectThumbnail
-              key={project.id}
-              id={project.id}
-              title={project.title}
-              thumbnailEndpoint={project.thumbnailEndpoint}
-              isCreate={project.isCreate}
-              onCreateClick={() => setIsCreateModalOpen(true)}
-              onDelete={() => handleDeleteProject(project.id)}
-              onRename={(newTitle) => handleRenameProject(project.id, newTitle)}
-            />
-          ))
+    <div>
+      <Navbar />
+      <div className="library-container">
+        <h1>Library</h1>
+        <div className="projects-grid">
+          {loading ? (
+            <p>Loading projects...</p>
+          ) : error ? (
+            <p>Error loading projects: {error}</p>
+          ) : (
+            projects.map((project) => (
+              <ProjectThumbnail
+                key={project.id}
+                id={project.id}
+                title={project.title}
+                thumbnailEndpoint={project.thumbnailEndpoint}
+                isCreate={project.isCreate}
+                onCreateClick={() => setIsCreateModalOpen(true)}
+                onDelete={() => handleDeleteProject(project.id)}
+                onRename={(newTitle) =>
+                  handleRenameProject(project.id, newTitle)
+                }
+              />
+            ))
+          )}
+        </div>
+
+        {isCreateModalOpen && (
+          <CreateNewModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            onCreate={(id) => {
+              console.log("Navigating to project:", id);
+              navigate(`/projects/${id}`);
+              setIsCreateModalOpen(false);
+            }}
+          />
         )}
       </div>
-
-      {isCreateModalOpen && (
-        <CreateNewModal
-          isOpen={isCreateModalOpen}
-          onClose={() => setIsCreateModalOpen(false)}
-          onCreate={(id) => {
-            console.log("Navigating to project:", id);
-            navigate(`/projects/${id}`);
-            setIsCreateModalOpen(false);
-          }}
-        />
-      )}
     </div>
   );
 }
