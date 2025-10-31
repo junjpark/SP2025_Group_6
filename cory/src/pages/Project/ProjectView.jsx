@@ -5,7 +5,7 @@ import LearningMode from "../../components/LearningMode";
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiArrowLeft, FiScissors } from "react-icons/fi";
+import { FiArrowLeft, FiScissors, FiTrash2 } from "react-icons/fi";
 
 let nextClipId = 3;
 
@@ -116,6 +116,28 @@ const ProjectView = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+  // Get video duration once video is loaded
+  useEffect(() => {
+    const video = videoPlayerRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      if (video.duration && isFinite(video.duration)) {
+        setVideoLength(video.duration);
+      }
+    };
+
+    video.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+    // Also check if metadata is already loaded
+    if (video.readyState >= 1 && video.duration && isFinite(video.duration)) {
+      setVideoLength(video.duration);
+    }
+
+    return () => {
+      video.removeEventListener("loadedmetadata", handleLoadedMetadata);
+    };
+  }, [videoUrl]);
 
   const getCurrentStartClipTimeStamp = () => {
     if (currentClipId === undefined) {
@@ -463,6 +485,24 @@ const ProjectView = () => {
                   }
                 }}
               ></button>
+              <button
+                id="deleteHolder"
+                onClick={handleDelete}
+                disabled={currentClipId === undefined || currentClipId === 0}
+                onKeyDown={(e) => {
+                  if (e.key == "Enter" || e.key == " ") {
+                    e.preventDefault();
+                    handleDelete();
+                  }
+                }}
+                title={
+                  currentClipId === undefined || currentClipId === 0
+                    ? "Select a clip to delete"
+                    : "Delete selected clip"
+                }
+              >
+                <FiTrash2 />
+              </button>{" "}
               <button
                 id="learningModeBtn"
                 onClick={handleEnterLearningMode}
