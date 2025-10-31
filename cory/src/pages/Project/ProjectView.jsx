@@ -6,7 +6,7 @@ import LearningMode from "../../components/LearningMode";
 import { use, useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
-import { FiScissors } from "react-icons/fi";
+import { FiScissors, FiTrash2 } from "react-icons/fi";
 
 let nextClipId = 3;
 
@@ -116,6 +116,50 @@ const ProjectView = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId]);
+    // Get video duration once video is loaded
+    useEffect(() => {
+        const video = videoPlayerRef.current;
+        if (!video) return;
+
+        const handleLoadedMetadata = () => {
+            if (video.duration && isFinite(video.duration)) {
+                setVideoLength(video.duration);
+            }
+        };
+
+        video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+        // Also check if metadata is already loaded
+        if (video.readyState >= 1 && video.duration && isFinite(video.duration)) {
+            setVideoLength(video.duration);
+        }
+
+        return () => {
+            video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        };
+    }, [videoUrl]);
+
+    const getCurrentStartClipTimeStamp = () => {
+        if (currentClipId === undefined) {
+            return 0;
+        }
+        const clip = clips.get(currentClipId);
+        if (!clip) {
+            return 0;
+        }
+        return calculateTimeStamp(clip.start)
+    }
+
+    const getCurrentEndClipTimeStamp = () => {
+        if (currentClipId === undefined) {
+            return videoLength;
+        }
+        const clip = clips.get(currentClipId);
+        if (!clip) {
+            return videoLength;
+        }
+        return calculateTimeStamp(clip.end)
+    }
 
   const getCurrentStartClipTimeStamp = () => {
     if (currentClipId === undefined) {
@@ -238,17 +282,10 @@ const ProjectView = () => {
         if (clip.start < end + 1 && start < clip.end + 1) {
           continue outerLoop;
         }
-      }
-      let newClips = new Map(targetMap);
-      if (map === undefined) {
-        newClips.set(nextClipId, { row: i, start: start, end: end });
-        nextClipId++;
-      } else {
-        newClips.set(clipId, { row: i, start: start, end: end });
-        //console.log(newClips)
-      }
-      setClips(newClips);
-      return;
+        let newClips = new Map(clips);
+        newClips.delete(currentClipId);
+        setClips(newClips);
+        setCurrentClipId(undefined);
     }
     return null;
   }
@@ -419,67 +456,85 @@ const ProjectView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClipId]);
 
-  return (
-    <div
-      id="projectView"
-      className={isLearningMode ? "learning-mode-active" : ""}
-    >
-      {!isLearningMode && (
-        <>
-          <div id="projectViewEditor">
-            <div id="projectViewToolbar">
-              <button
-                id="scissorsHolder"
-                onClick={clip}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter" || e.key == " ") {
-                    e.preventDefault();
-                    clip(e);
-                  }
-                }}
-              >
-                <FiScissors />
+    return (
+        <div id="projectView" className={isLearningMode ? "learning-mode-active" : ""}>
+            {!isLearningMode && (
+                <>
+                    <div id="projectViewEditor">
+                        <div id="projectViewToolbar">
+                             <button
+                              id="backToLibraryBtn"
+                              onClick={() => navigate("/")}
+                              onKeyDown={(e) => {
+                               if (e.key == "Enter" || e.key == " ") {
+                                  e.preventDefault();
+                                  navigate("/");
+                                }
+                                }}
+                      >
+                <FiArrowLeft />
               </button>
-              <button
-                id="mirrorHolder"
-                onClick={mirror}
-                onKeyDown={(e) => {
-                  if (e.key == "Enter" || e.key == " ") {
-                    e.preventDefault();
-                    mirror(e);
-                  }
-                }}
-              ></button>
-              <button
-                id="learningModeBtn"
-                onClick={handleEnterLearningMode}
-                disabled={currentClipId === 0}
-                title={
-                  currentClipId === 0
-                    ? "Select a clip first"
-                    : "Enter Learning Mode"
-                }
-              >
-                Learning Mode
-              </button>
-            </div>
+                            <button
+                                id="scissorsHolder"
+                                onClick={clip}
+                                onKeyDown={(e) => {
+                                    if (e.key == "Enter" || e.key == " ") {
+                                        e.preventDefault();
+                                        clip(e);
+                                    }
+                                }}
+                            >
+                                <FiScissors />
+                            </button>
+                            <button id="mirrorHolder" onClick={mirror} onKeyDown={(e) => {
+                                if (e.key == 'Enter' || e.key == ' ') {
+                                    e.preventDefault();
+                                    mirror(e);
+                                }
+                            }}></button>
+                            <button
+                                id="deleteHolder"
+                                onClick={handleDelete}
+                                disabled={currentClipId === undefined || currentClipId === 0}
+                                onKeyDown={(e) => {
+                                    if (e.key == 'Enter' || e.key == ' ') {
+                                        e.preventDefault();
+                                        handleDelete();
+                                    }
+                                }}
+                                title={currentClipId === undefined || currentClipId === 0 ? "Select a clip to delete" : "Delete selected clip"}
+                            >
+                                <FiTrash2 />
+                            </button>
+                            <button
+                                id="learningModeBtn"
+                                onClick={handleEnterLearningMode}
+                                disabled={currentClipId === 0}
+                                title={currentClipId === 0 ? "Select a clip first" : "Enter Learning Mode"}
+                            >
+                                Learning Mode
+                            </button>
+                        </div>
 
-            <div id="projectViewVideoPlayer">
-              {isLoading ? (
-                <p>Loading video...</p>
-              ) : (
-                <CustomVideoPlayer
-                  ref={videoPlayerRef}
-                  url={videoUrl}
-                  start={getCurrentStartClipTimeStamp()}
-                  end={getCurrentEndClipTimeStamp()}
-                ></CustomVideoPlayer>
-              )}
-            </div>
-          </div>
-          <div id="projectViewFooter">
-            {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
-            <AnnotationPanel headerText="Notes">
+                        <div id="projectViewVideoPlayer">
+                            {isLoading ? (
+                                <p>Loading video...</p>
+                            ) : (
+                                <CustomVideoPlayer
+                                    ref={videoPlayerRef}
+                                    url={videoUrl}
+                                    start={getCurrentStartClipTimeStamp()}
+                                    end={getCurrentEndClipTimeStamp()}
+                                ></CustomVideoPlayer>
+                            )}
+                        </div>
+
+                        
+                    </div>
+                    {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
+                    <div id="projectViewFooter">
+                        {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
+                        <AnnotationPanel headerText="Notes">
               <div className="annotation-content">
                 <h2>Annotations</h2>
                 {currentClipId === 0 ? (
@@ -500,21 +555,21 @@ const ProjectView = () => {
                 )}
               </div>
             </AnnotationPanel>
-          </div>
-        </>
-      )}
+                    </div>
+                </>
+            )}
 
-      {/* Learning Mode Component - Full-screen practice with webcam */}
-      {isLearningMode && (
-        <LearningMode
-          videoUrl={videoUrl}
-          startTime={getCurrentStartClipTimeStamp()}
-          endTime={getCurrentEndClipTimeStamp()}
-          onExit={exitLearningMode}
-        />
-      )}
-    </div>
-  );
+            {/* Learning Mode Component - Full-screen practice with webcam */}
+            {isLearningMode && (
+                <LearningMode
+                    videoUrl={videoUrl}
+                    startTime={getCurrentStartClipTimeStamp()}
+                    endTime={getCurrentEndClipTimeStamp()}
+                    onExit={exitLearningMode}
+                />
+            )}
+        </div>
+    );
 };
 
 export default ProjectView;

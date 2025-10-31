@@ -3,7 +3,7 @@
 /* Main Layout */
 #projectView {
   width: 100vw;
-  height: 100vh;
+  height: calc(100vh - 95px);
   display: flex;
   flex-direction: column;
   background: var(--color-bg-primary);
@@ -20,6 +20,7 @@
       var(--color-bg-secondary) 0%,
       var(--color-bg-elevated) 100%);
   min-height: 0;
+  overflow: hidden;
 }
 
 /* ===== TOOLBAR ===== */
@@ -72,6 +73,47 @@
 }
 
 #scissorsHolder svg {
+  color: white;
+  font-size: 24px;
+}
+
+#deleteHolder {
+  background: linear-gradient(135deg,
+      var(--color-primary) 0%,
+      var(--color-accent) 100%);
+  border: none;
+  border-radius: var(--radius-md);
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+#deleteHolder:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  background: linear-gradient(135deg,
+      var(--color-accent-dark) 0%,
+      var(--color-accent) 100%);
+}
+
+#deleteHolder:active {
+  transform: translateY(0);
+}
+
+#deleteHolder:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#deleteHolder svg {
   color: white;
   font-size: 24px;
 }
@@ -173,6 +215,7 @@
 
 /* ===== TIMELINE FOOTER ===== */
 #projectViewFooter {
+  flex-shrink: 0;
   height: 180px;
   background: var(--color-bg-tertiary);
   display: flex;
@@ -190,6 +233,11 @@
   overflow-x: auto;
   overflow-y: hidden;
   align-items: center;
+  border-top: 2px solid var(--color-border);
+  cursor: default;
+  box-sizing: border-box;
+  width: 100%;
+  position: relative;
 }
 
 .clipsContainer::-webkit-scrollbar {
@@ -214,7 +262,9 @@
 .clip {
   min-width: 140px;
   height: 120px;
-  background: linear-gradient(135deg, #4e0e70 0%, #400c4b 100%);
+  background: linear-gradient(135deg,
+      var(--color-primary) 0%,
+      var(--color-accent) 100%);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -246,7 +296,9 @@
 .clip.selected {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-  background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
+  background: linear-gradient(135deg,
+      var(--color-primary-dark) 0%,
+      var(--color-accent-dark) 100%);
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -306,16 +358,18 @@
 }
 
 #projectViewFooter {
-  width: 100vw;
-  height: 17vh;
-  background-color: #582f4c;
+  flex-shrink: 0;
+  height: 180px;
+  background: var(--color-bg-tertiary);
   display: flex;
   gap: 10px;
   align-content: center;
   flex-wrap: nowrap;
-  overflow-x: hidden;
+  overflow-x: auto;
   overflow-y: hidden;
   padding: 10px;
+  position: relative;
+  box-sizing: border-box;
 }
 
 .disabled {
