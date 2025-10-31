@@ -100,12 +100,10 @@
   font-size: 14px;
   font-weight: 700;
   letter-spacing: 0.2px;
-  text-shadow: 0 1px 0 rgba(0,0,0,0.2);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
   text-align: center;
   line-height: 1.15;
 }
-
-
 
 #learningModeBtn:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -183,32 +181,37 @@
   height: 180px;
   background: var(--color-bg-tertiary);
   display: flex;
+  align-items: stretch; /* Changed from center to stretch */
+  border-top: 2px solid var(--color-border);
+  width: 100%;
+  overflow: hidden; /* Changed from overflow-x: auto */
+}
+
+.clipsContainer {
+  display: flex;
+  flex: 1;
   gap: var(--spacing-sm);
-  align-items: center;
   padding: var(--spacing-lg) var(--spacing-xl);
   overflow-x: auto;
   overflow-y: hidden;
-  border-top: 2px solid var(--color-border);
-  cursor: default;
-  border: none;
-  width: 100%;
+  align-items: center;
 }
 
-#projectViewFooter::-webkit-scrollbar {
+.clipsContainer::-webkit-scrollbar {
   height: 8px;
 }
 
-#projectViewFooter::-webkit-scrollbar-track {
+.clipsContainer::-webkit-scrollbar-track {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm);
 }
 
-#projectViewFooter::-webkit-scrollbar-thumb {
+.clipsContainer::-webkit-scrollbar-thumb {
   background: var(--color-border-light);
   border-radius: var(--radius-sm);
 }
 
-#projectViewFooter::-webkit-scrollbar-thumb:hover {
+.clipsContainer::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
 
@@ -250,7 +253,6 @@
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   background: linear-gradient(135deg, #312e81 0%, #1e1b4b 100%);
 }
-
 
 /* ===== UTILITY CLASSES ===== */
 .hidden {

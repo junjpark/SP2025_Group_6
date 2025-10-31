@@ -766,6 +766,91 @@ async def get_project_landmarks(
     finally:
         conn.close()
 
+# Create a new annotation for the current user
+@app.post("/annotations/{project_id}", tags=["annotations"])
+async def create_annotation(
+    project_id: int,
+    text: str = Form(...),
+    timestamp: float = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Creates a new annotation on the specified project at the specified time stamp.
+
+    Args:
+        text: Text of the annotation (form data)
+        timestamp: Time stamp in seconds for the annotation (form data)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        annotation_id: ID of the newly created annotation
+    Raises:
+        HTTPException: If database error occurs
+    """
+    if not text:
+        raise HTTPException(status_code=400, detail="Annotation text is required")
+    if timestamp < 0:
+        raise HTTPException(status_code=400, detail="Invalid timestamp")
+
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO annotations (project_id, user_id, description, timestamp, created_at) " \
+                "VALUES (%s, %s, %s, %s, now()) RETURNING id",
+                (project_id, current_user["user_id"], text, timestamp)
+            )
+            id_row = cur.fetchone()
+            conn.commit()
+
+            return {"id": id_row['id'] if id_row else None}
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# Edit an annotation given its ID
+@app.post("/annotations/edit/{annotation_id}", tags=["annotations"])
+async def create_annotation(
+    annotation_id: int,
+    text: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Edits the text of an existing annotation.
+
+    Args:
+        text: Text of the annotation (form data)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        nada
+    Raises:
+        HTTPException: If database error occurs
+    """
+    if not text:
+        raise HTTPException(status_code=400, detail="Annotation text is required")
+
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE annotations SET description = %s WHERE id = %s AND user_id = %s",
+                (text, annotation_id, current_user["user_id"])
+            )
+            conn.commit()
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+
 # Session cleanup endpoint (for maintenance)
 @app.post("/cleanup-sessions", tags=["maintenance"])
 async def cleanup_sessions():

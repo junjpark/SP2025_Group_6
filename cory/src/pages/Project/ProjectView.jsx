@@ -1,5 +1,6 @@
 import "./ProjectView.css";
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
+import AnnotationPanel from "../../components/AnnotationPanel/AnnotationPanel";
 import Clip from "../../components/Clip";
 import LearningMode from "../../components/LearningMode";
 import { useEffect, useRef, useState } from "react";
@@ -173,10 +174,13 @@ const ProjectView = () => {
       return null;
     }
     try {
-      const response = await fetch(`/api/projects/${currentProjectId}/video-with-landmarks`, {
-        method: "GET",
-        credentials: "include", //JP: This is the change needed to make auth stuff work for fetching the project by projectid and using auth for current user, just gotta pass credentials along workflow
-      });
+      const response = await fetch(
+        `/api/projects/${currentProjectId}/video-with-landmarks`,
+        {
+          method: "GET",
+          credentials: "include", //JP: This is the change needed to make auth stuff work for fetching the project by projectid and using auth for current user, just gotta pass credentials along workflow
+        }
+      );
       console.log("fetching annotated video for project id ", currentProjectId);
       if (response.status === 403) {
         console.warn(
@@ -186,7 +190,10 @@ const ProjectView = () => {
         return null;
       }
       if (!response.ok) {
-        console.error("Failed to fetch annotated video URL, status:", response.status);
+        console.error(
+          "Failed to fetch annotated video URL, status:",
+          response.status
+        );
         return null;
       }
       const contentType = response.headers.get("content-type") || "";
@@ -207,9 +214,14 @@ const ProjectView = () => {
   // Enter Learning Mode when the user makes the player fullscreen
   useEffect(() => {
     const onFsChange = () => {
-      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      const fsEl =
+        document.fullscreenElement || document.webkitFullscreenElement;
       const playerContainer = document.getElementById("projectViewVideoPlayer");
-      const isPlayerFullscreen = !!(fsEl && playerContainer && playerContainer.contains(fsEl));
+      const isPlayerFullscreen = !!(
+        fsEl &&
+        playerContainer &&
+        playerContainer.contains(fsEl)
+      );
 
       if (isPlayerFullscreen && !isLearningMode) {
         setIsLearningMode(true);
@@ -224,9 +236,11 @@ const ProjectView = () => {
     };
   }, [isLearningMode]);
 
-
   return (
-    <div id="projectView" className={isLearningMode ? "learning-mode-active" : ""}>
+    <div
+      id="projectView"
+      className={isLearningMode ? "learning-mode-active" : ""}
+    >
       {!isLearningMode && (
         <>
           <div id="projectViewEditor">
@@ -247,7 +261,11 @@ const ProjectView = () => {
                 id="learningModeBtn"
                 onClick={handleEnterLearningMode}
                 disabled={currentClipId === 0}
-                title={currentClipId === 0 ? "Select a clip first" : "Enter Learning Mode"}
+                title={
+                  currentClipId === 0
+                    ? "Select a clip first"
+                    : "Enter Learning Mode"
+                }
               >
                 Learning Mode
               </button>
@@ -265,45 +283,58 @@ const ProjectView = () => {
                 ></CustomVideoPlayer>
               )}
             </div>
-
-            <div id="clipInfo">
-              <p>
-                Clip Info {getCurrentStartClipTimeStamp()} ,{" "}
-                {getCurrentEndClipTimeStamp()}
-              </p>
-              <textarea
-                id="clipInfoGoesHere"
-                className="hidden"
-                value={clipAnnotations[currentClipId]}
-                onChange={(e) =>
-                  handleAnnotationChange(currentClipId, e.target.value)
-                }
-              ></textarea>
-            </div>
           </div>
           {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
-          <button
+          <div
             id="projectViewFooter"
-            onClick={() => selectClip(-1, null)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
+            role="button"
+            onClick={(e) => {
+              // Only deselect if clicking directly on the clips container
+              if (e.target.id === "clipsContainer") {
                 selectClip(-1, null);
               }
             }}
           >
-            {clipTimings.map(function (tuple, idx) {
-              //maps all the clip timings to be their own clips
-              return (
-                <Clip
-                  clipId={idx}
-                  onClick={(idx, divToHighlight) => {
-                    selectClip(idx, divToHighlight);
-                  }}
-                  key={idx}
-                ></Clip>
-              );
-            })}
-          </button>
+            <div
+              role="button"
+              id="clipsContainer"
+              onClick={(e) => {
+                // If clicking the container background (not a clip), deselect
+                if (e.target.id === "clipsContainer") {
+                  selectClip(-1, null);
+                }
+              }}
+            >
+              {clipTimings.map(function (tuple, idx) {
+                return (
+                  <Clip
+                    clipId={idx}
+                    onClick={(idx, divToHighlight) => {
+                      selectClip(idx, divToHighlight);
+                    }}
+                    key={idx}
+                  ></Clip>
+                );
+              })}
+            </div>
+            <AnnotationPanel headerText="Notes">
+              <div className="annotation-content">
+                <h2>Annotations</h2>
+                {currentClipId === 0 ? (
+                  <p>Select a clip to add annotations</p>
+                ) : (
+                  <textarea
+                    value={clipAnnotations[currentClipId]}
+                    onChange={(e) =>
+                      handleAnnotationChange(currentClipId, e.target.value)
+                    }
+                    placeholder="Add notes about this clip..."
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+              </div>
+            </AnnotationPanel>
+          </div>
         </>
       )}
 
