@@ -798,7 +798,8 @@ async def create_annotation(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id FROM annotations WHERE project_id = %s AND user_id = %s AND timestamp = %s",
+                "SELECT id FROM annotations WHERE project_id = %s " \
+                "AND user_id = %s AND timestamp = %s",
                 (project_id, current_user["user_id"], timestamp)
             )
             row = cur.fetchone()
@@ -846,7 +847,6 @@ async def fetch_annotation(
     """
     if timestamp < 0:
         raise HTTPException(status_code=400, detail="Invalid timestamp")
-    
     conn = get_db_connection()
     if not conn:
         raise HTTPException(status_code=500, detail="Database connection failed")
@@ -854,7 +854,8 @@ async def fetch_annotation(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT description FROM annotations WHERE timestamp = %s AND user_id = %s AND project_id = %s",
+                "SELECT description FROM annotations WHERE timestamp = %s " \
+                "AND user_id = %s AND project_id = %s",
                 (timestamp, current_user["user_id"], project_id)
             )
             text_row = cur.fetchone()

@@ -12,6 +12,8 @@ const AnnotationPanel = ({ children, headerText = "Panel" }) => {
   return (
     <div
       role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.stopPropagation()}
       className={`annotation-panel ${isExpanded ? "expanded" : "collapsed"}`}
       onClick={(e) => e.stopPropagation()}
     >

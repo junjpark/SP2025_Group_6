@@ -1,9 +1,8 @@
 import "./ProjectView.css";
 import CustomVideoPlayer from "../../components/CustomVideoPlayer";
 import AnnotationPanel from "../../components/AnnotationPanel/AnnotationPanel";
-import Clip from "../../components/Clip";
 import LearningMode from "../../components/LearningMode";
-import { use, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiScissors } from "react-icons/fi";
@@ -20,6 +19,7 @@ const ProjectView = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isInRow = (row) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     return ([_index, clip]) => clip.row == row;
   };
   const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
@@ -161,6 +161,7 @@ const ProjectView = () => {
           left: `${left}%`,
           width: `${width}%`,
         }}
+        role="button"
         key={id}
         onClick={handleClick}
         data-clip-id={id}
