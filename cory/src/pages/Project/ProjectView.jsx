@@ -79,6 +79,29 @@ const ProjectView = () => {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [projectId]);
 
+    // Get video duration once video is loaded
+    useEffect(() => {
+        const video = videoPlayerRef.current;
+        if (!video) return;
+
+        const handleLoadedMetadata = () => {
+            if (video.duration && isFinite(video.duration)) {
+                setVideoLength(video.duration);
+            }
+        };
+
+        video.addEventListener('loadedmetadata', handleLoadedMetadata);
+
+        // Also check if metadata is already loaded
+        if (video.readyState >= 1 && video.duration && isFinite(video.duration)) {
+            setVideoLength(video.duration);
+        }
+
+        return () => {
+            video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        };
+    }, [videoUrl]);
+
     const getCurrentStartClipTimeStamp = () => {
         if (currentClipId === undefined) {
             return 0;
