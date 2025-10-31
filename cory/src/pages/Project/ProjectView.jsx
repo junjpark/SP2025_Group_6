@@ -39,8 +39,6 @@ const ProjectView = () => {
     const [videoLength, setVideoLength] = useState(13.333)
     const [isLearningMode, setIsLearningMode] = useState(false);
 
-    const [selectedClipDiv, setSelectedClipDiv] = useState(null); //this propably can be reworked to not exist
-
     const [clipAnnotations, setClipAnnotations] = useState([
         "",
         "note 1",
@@ -57,38 +55,29 @@ const ProjectView = () => {
      * @returns {void}
      */
     function handleAnnotationChange(clipIdToChange, newMessage) {
-        let newClipAnnotations = [...clipAnnotations] //simply copies the array
-        newClipAnnotations[clipIdToChange] = newMessage //and changes the one value we need
-        setClipAnnotations(newClipAnnotations)
-        const { user } = useAuth(); //this user object tells us what is going on
-        {
-            console.log(user.user_id);
-        }
-        const navigate = useNavigate();
+        let newClipAnnotations = [...clipAnnotations]; //simply copies the array
+        newClipAnnotations[clipIdToChange] = newMessage; //and changes the one value we need
+        setClipAnnotations(newClipAnnotations);
+      }
+    const navigate = useNavigate();
 
-        useEffect(() => {
-            let cancelled = false;
+    useEffect(() => {
+        let cancelled = false;
 
-            const init = async () => {
-                const url = await getAnnotatedVideoUrl(projectId);
-                if (cancelled) return;
-                setVideoUrl(url);
-                setIsLoading(false);
-            };
+        const init = async () => {
+            const url = await getAnnotatedVideoUrl(projectId);
+            if (cancelled) return;
+            setVideoUrl(url);
+            setIsLoading(false);
+        };
 
-            init();
+        init();
 
-            return () => {
-                cancelled = true;
-            };
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [projectId]);
-    }
-    //this means a new clip has been selected
-    setCurrentClipId(idx + 1); //set the currentClipId to the new value
-    clipPTag.classList.remove("hidden"); //show the annotation
-    setSelectedClipDiv(divToHighlight); //update the state
-    divToHighlight.classList.add("selected"); //add some highlighting to that clip
+        return () => {
+            cancelled = true;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [projectId]);
 
     const getCurrentStartClipTimeStamp = () => {
         if (currentClipId === undefined) {
@@ -96,8 +85,6 @@ const ProjectView = () => {
         }
         return calculateTimeStamp(clips.get(currentClipId).start)
     }
-    // console.log(newClipTimings)
-    setClipTimings(newClipTimings);
 
     const getCurrentEndClipTimeStamp = () => {
         if (currentClipId === undefined) {
@@ -424,7 +411,7 @@ const ProjectView = () => {
                     </div>
                     {/* In order to get the click off the clip to work this needs to be clickable and per the linter must be a button */}
                     <div id="projectViewFooter">
-                        { Array.from(clips).map(([id, clip]) => renderClip(clip, id)) }
+                        {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
                     </div>
                 </>
             )}

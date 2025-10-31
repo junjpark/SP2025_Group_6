@@ -211,7 +211,7 @@
 .clip {
   min-width: 140px;
   height: 120px;
-  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+  background: linear-gradient(135deg, #4e0e70 0%, #400c4b 100%);
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -331,7 +331,6 @@
 
 .clip {
   height: 70%;
-  background-color: #000;
   width: 10%;
   border: 2px solid transparent;
 }
