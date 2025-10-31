@@ -30,7 +30,6 @@ const ProjectView = () => {
         [2, { 'row': 1, 'start': 0, 'end': 20 }]
     ]))
 
-    const [selectResizing, setSelectResizing] = useState(false)
     const [resizing, setResizing] = useState(false)
     const [currentClipId, setCurrentClipId] = useState();
     const [currentClipBeingDraggedId, setCurrentClipBeingDraggedId] = useState("xx"); //be of the form "1l" or "2r" which is id and then l or r
@@ -167,12 +166,10 @@ const ProjectView = () => {
         calculatePercent(clipStart, clipEnd, clipX, clipWidth, mouseX)
         const width = clipClicked.width;
         const relativeX = e.clientX - clipClicked.left; // Position within the element
-        if (selectResizing) {
-            if (relativeX < width / 10) {
-                handleResize(clipId, true)
-            } else if (relativeX > 9 * width / 10) {
-                handleResize(clipId, false)
-            }
+        if (relativeX < width / 10) {
+            handleResize(clipId, true)
+        } else if (relativeX > 9 * width / 10) {
+            handleResize(clipId, false)
         }
     }
 
@@ -202,7 +199,6 @@ const ProjectView = () => {
             console.warn("cannot resize main clip")
             return
         }
-        setSelectResizing(false)
         setResizing(true)
         if (isLeft) {
             setCurrentClipBeingDraggedId(clipId + "l")
@@ -250,7 +246,7 @@ const ProjectView = () => {
         if (side == 'l') {
             const newStart = oldClip.start - 1;
             if (newStart < 0) {
-                return;
+                newStart = 0;
             }
             addClip(newStart, oldClip.end, newClips, clipId)
         } else {
@@ -280,7 +276,7 @@ const ProjectView = () => {
         } else {
             const newEnd = oldClip.end + 1;
             if (newEnd > 100) {
-                return;
+                newEnd = 100;
             }
             addClip(oldClip.start, newEnd, newClips, clipId)
         }
