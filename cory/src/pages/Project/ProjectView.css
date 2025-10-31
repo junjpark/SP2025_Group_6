@@ -142,8 +142,6 @@
   line-height: 1.15;
 }
 
-
-
 #learningModeBtn:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 10px 24px rgba(139, 92, 246, 0.45);
@@ -221,11 +219,20 @@
   height: 180px;
   background: var(--color-bg-tertiary);
   display: flex;
+  align-items: stretch; /* Changed from center to stretch */
+  border-top: 2px solid var(--color-border);
+  width: 100%;
+  overflow: hidden; /* Changed from overflow-x: auto */
+}
+
+.clipsContainer {
+  display: flex;
+  flex: 1;
   gap: var(--spacing-sm);
-  align-items: center;
   padding: var(--spacing-lg) var(--spacing-xl);
   overflow-x: auto;
   overflow-y: hidden;
+  align-items: center;
   border-top: 2px solid var(--color-border);
   cursor: default;
   box-sizing: border-box;
@@ -233,21 +240,21 @@
   position: relative;
 }
 
-#projectViewFooter::-webkit-scrollbar {
+.clipsContainer::-webkit-scrollbar {
   height: 8px;
 }
 
-#projectViewFooter::-webkit-scrollbar-track {
+.clipsContainer::-webkit-scrollbar-track {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm);
 }
 
-#projectViewFooter::-webkit-scrollbar-thumb {
+.clipsContainer::-webkit-scrollbar-thumb {
   background: var(--color-border-light);
   border-radius: var(--radius-sm);
 }
 
-#projectViewFooter::-webkit-scrollbar-thumb:hover {
+.clipsContainer::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
 
@@ -293,7 +300,6 @@
       var(--color-primary-dark) 0%,
       var(--color-accent-dark) 100%);
 }
-
 
 /* ===== UTILITY CLASSES ===== */
 .hidden {
