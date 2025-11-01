@@ -192,6 +192,7 @@ const ProjectView = () => {
           width: `${width}%`,
         }}
         key={id}
+        role="button"
         onClick={handleClick}
         data-clip-id={id}
         tabIndex={id + 1}
@@ -294,7 +295,7 @@ const ProjectView = () => {
     let newClips = new Map(clips);
     newClips.delete(clipId);
     if (side == "l") {
-      const newStart = oldClip.start - 1;
+      let newStart = oldClip.start - 1;
       if (newStart < 0) {
         newStart = 0;
       }
