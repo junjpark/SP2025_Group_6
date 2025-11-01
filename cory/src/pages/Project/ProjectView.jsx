@@ -11,6 +11,7 @@ import { FiScissors, FiTrash2 } from "react-icons/fi";
 let nextClipId = 3;
 
 const ProjectView = () => {
+
   const { projectId } = useParams(); //get the project id from the url
   console.log("Project ID from URL:", projectId);
   const MAX_ROW = 4;
@@ -25,19 +26,17 @@ const ProjectView = () => {
   const videoPlayerRef = useRef(null); //this allows us to see the current time of the player
 
   const [isMirrored, setIsMirrored] = useState(false);
-
+  
   //note that clipTimings is 1-index because the currentClipId = 0 pertains to the whole video
-  //time stamps are of the form [a,b)
+    //time stamps are of the form [a,b)
 
-  const [clips, setClips] = useState(
-    new Map([
-      [0, { row: 0, start: 0, end: 100 }],
-      [1, { row: 1, start: 30, end: 70 }],
-      [2, { row: 1, start: 0, end: 20 }],
-    ])
-  );
+    const [clips, setClips] = useState(new Map([
+        [0, { 'row': 0, 'start': 0, 'end': 100 }],
+        [1, { 'row': 1, 'start': 30, 'end': 70 }],
+        [2, { 'row': 1, 'start': 0, 'end': 20 }]
+    ]))
 
-  const [selectResizing, setSelectResizing] = useState(false);
+
   const [resizing, setResizing] = useState(false);
   const [currentClipId, setCurrentClipId] = useState();
   const [currentClipBeingDraggedId, setCurrentClipBeingDraggedId] =
@@ -188,52 +187,25 @@ const ProjectView = () => {
     } else {
       videoRef.classList.add("mirrored");
     }
-  }
 
-  const renderClip = (clip, id) => {
-    const height = clip.row == 0 ? 40 : 10;
-    const top = clip.row == 0 ? 2.5 : 44 + (clip.row - 1) * 11;
-    const width = (clip.end - clip.start) * (19 / 20);
-    const left = clip.start * (19 / 20) + 2.5;
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    return (
-      <div
-        style={{
-          position: "absolute",
-          bottom: `${top * 2}px`,
-          height: `${height * 2}px`,
-          left: `${left}%`,
-          width: `${width}%`,
-        }}
-        key={id}
-        onClick={handleClick}
-        data-clip-id={id}
-        tabIndex={id + 1}
-        onKeyDown={(e) => handleKeyDown(e, id)}
-        className="clip"
-      ></div>
-    );
-  };
-
-  const handleClick = (e) => {
-    const clipClicked = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX;
-    const clipX = clipClicked.x;
-    const clipWidth = clipClicked.width;
-    const clipId = parseInt(e.currentTarget.dataset.clipId, 10);
-    const clip = clips.get(clipId);
-    setCurrentClipId(clipId);
-    const clipStart = clip.start;
-    const clipEnd = clip.end;
-    calculatePercent(clipStart, clipEnd, clipX, clipWidth, mouseX);
-    const width = clipClicked.width;
-    const relativeX = e.clientX - clipClicked.left; // Position within the element
-    if (selectResizing) {
-      if (relativeX < width / 10) {
-        handleResize(clipId, true);
-      } else if (relativeX > (9 * width) / 10) {
-        handleResize(clipId, false);
-      }
+    const handleClick = (e) => {
+        const clipClicked = e.currentTarget.getBoundingClientRect();
+        const mouseX = e.clientX
+        const clipX = clipClicked.x;
+        const clipWidth = clipClicked.width;
+        const clipId = parseInt(e.currentTarget.dataset.clipId, 10);
+        const clip = clips.get(clipId)
+        setCurrentClipId(clipId)
+        const clipStart = clip.start
+        const clipEnd = clip.end
+        calculatePercent(clipStart, clipEnd, clipX, clipWidth, mouseX)
+        const width = clipClicked.width;
+        const relativeX = e.clientX - clipClicked.left; // Position within the element
+        if (relativeX < width / 10) {
+            handleResize(clipId, true)
+        } else if (relativeX > 9 * width / 10) {
+            handleResize(clipId, false)
+        }
     }
   };
 
@@ -245,23 +217,71 @@ const ProjectView = () => {
       document.activeElement.blur();
       return;
     }
-    if (buttonPressed !== "ArrowRight" && buttonPressed !== "ArrowLeft") {
-      return;
+
+    const handleResize = (clipId, isLeft) => {
+        if (clipId === 0) {
+            console.warn("cannot resize main clip")
+            return
+        }
+        setResizing(true)
+        if (isLeft) {
+            setCurrentClipBeingDraggedId(clipId + "l")
+        } else {
+            setCurrentClipBeingDraggedId(clipId + "r")
+        }
     }
     if (clipId != currentClipBeingDraggedId.charAt(0)) {
       return;
     }
-    if (buttonPressed == "ArrowRight") {
-      moveRight();
-    } else {
-      moveLeft();
+
+    const moveLeft = () => {
+        // console.log(clips)
+        if (!resizing) {
+            return
+        }
+        const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
+        const side = currentClipBeingDraggedId.charAt(1);
+        const oldClip = clips.get(clipId);
+        let newClips = new Map(clips)
+        newClips.delete(clipId)
+        if (side == 'l') {
+            const newStart = oldClip.start - 1;
+            if (newStart < 0) {
+                newStart = 0;
+            }
+            addClip(newStart, oldClip.end, newClips, clipId)
+        } else {
+            const newEnd = oldClip.end - 1;
+            if (newEnd <= oldClip.start) {
+                return;
+            }
+            addClip(oldClip.start, newEnd, newClips, clipId)
+        }
     }
   };
 
-  const handleResize = (clipId, isLeft) => {
-    if (clipId === 0) {
-      console.warn("cannot resize main clip");
-      return;
+    const moveRight = () => {
+        if (!resizing) {
+            return
+        }
+        const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
+        const side = currentClipBeingDraggedId.charAt(1);
+        const oldClip = clips.get(clipId);
+        let newClips = new Map(clips)
+        newClips.delete(clipId)
+        if (side == 'l') {
+            const newStart = oldClip.start + 1;
+            if (newStart >= oldClip.end) {
+                return;
+            }
+            addClip(newStart, oldClip.end, newClips, clipId)
+        } else {
+            const newEnd = oldClip.end + 1;
+            if (newEnd > 100) {
+                newEnd = 100;
+            }
+            addClip(oldClip.start, newEnd, newClips, clipId)
+        }
     }
     setSelectResizing(false);
     setResizing(true);
