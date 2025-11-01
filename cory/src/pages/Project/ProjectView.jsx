@@ -143,14 +143,22 @@ const ProjectView = () => {
     if (currentClipId === undefined) {
       return 0;
     }
-    return calculateTimeStamp(clips.get(currentClipId).start);
+    const clip = clips.get(currentClipId);
+    if (!clip) {
+      return 0;
+    }
+    return calculateTimeStamp(clip.start);
   };
 
   const getCurrentEndClipTimeStamp = () => {
     if (currentClipId === undefined) {
       return videoLength;
     }
-    return calculateTimeStamp(clips.get(currentClipId).end);
+    const clip = clips.get(currentClipId);
+    if (!clip) {
+      return videoLength;
+    }
+    return calculateTimeStamp(clip.end);
   };
 
   function clip() {
@@ -183,7 +191,6 @@ const ProjectView = () => {
           left: `${left}%`,
           width: `${width}%`,
         }}
-        role="button"
         key={id}
         onClick={handleClick}
         data-clip-id={id}
@@ -289,7 +296,7 @@ const ProjectView = () => {
     if (side == "l") {
       const newStart = oldClip.start - 1;
       if (newStart < 0) {
-        return;
+        newStart = 0;
       }
       addClip(newStart, oldClip.end, newClips, clipId);
     } else {
@@ -433,7 +440,6 @@ const ProjectView = () => {
       setAnnotationText("");
       return;
     }
-
     const fetchAnnotation = async () => {
       const text = await getAnnotation(getCurrentStartClipTimeStamp());
       setAnnotationText(text);
