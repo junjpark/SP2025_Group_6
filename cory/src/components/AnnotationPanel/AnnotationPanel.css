@@ -1,0 +1,102 @@
+.annotation-panel {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: row-reverse; /* Reverse so header is on left */
+  background: rgba(99, 102, 241, 0.8);
+  transition: width 0.3s ease;
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.annotation-panel.collapsed {
+  width: 40px;
+}
+
+.annotation-panel.expanded {
+  width: 300px;
+}
+
+.panel-header {
+  width: 40px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  background: rgba(68, 70, 191, 0.8);
+  user-select: none;
+  padding: 10px 0;
+  border-right: 1px solid #6d28d9;
+}
+
+.panel-header:hover {
+  background: rgba(68, 70, 191, 0.5);
+}
+
+.panel-toggle-icon {
+  transition: transform 0.3s ease;
+  font-size: 20px;
+  color: white;
+  transform: rotate(180deg); /* Points left when collapsed */
+}
+
+.expanded .panel-toggle-icon {
+  transform: rotate(0deg); /* Points right when expanded */
+}
+
+.panel-content {
+  flex: 1;
+  padding: 20px;
+  overflow: hidden;
+  min-width: 0;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.expanded .panel-content {
+  opacity: 1;
+}
+
+.panel-content textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: white;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  transition: all 0.2s ease;
+}
+
+.panel-content textarea:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.panel-content textarea::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.panel-header-text {
+  font-size: 11px;
+  font-weight: 600;
+  color: white;
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.expanded .panel-header-text {
+  display: none;
+}

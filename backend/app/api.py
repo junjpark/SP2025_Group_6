@@ -766,6 +766,108 @@ async def get_project_landmarks(
     finally:
         conn.close()
 
+# Create or update annotation for the current project, timestamp, and user
+@app.post("/projects/{project_id}/annotations", tags=["annotations"])
+async def create_annotation(
+    project_id: int,
+    text: str = Form(...),
+    timestamp: float = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Creates or update annotation on the specified project at the specified time stamp.
+
+    Args:
+        text: Text of the annotation (form data)
+        timestamp: Time stamp in seconds for the annotation (form data)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        annotation_id: ID of the annotation
+    Raises:
+        HTTPException: If database error occurs
+    """
+    if not text:
+        raise HTTPException(status_code=400, detail="Annotation text is required")
+    if timestamp < 0:
+        raise HTTPException(status_code=400, detail="Invalid timestamp")
+
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT id FROM annotations WHERE project_id = %s " \
+                "AND user_id = %s AND timestamp = %s",
+                (project_id, current_user["user_id"], timestamp)
+            )
+            row = cur.fetchone()
+            if row:
+                cur.execute(
+                    "UPDATE annotations SET description = %s, created_at = now() "
+                    "WHERE id = %s",
+                    (text, row['id'])
+                )
+                annotation_id = row['id']
+            else:
+                cur.execute(
+                "INSERT INTO annotations (project_id, user_id, description, timestamp, created_at) "
+                "VALUES (%s, %s, %s, %s, now()) RETURNING id",
+                (project_id, current_user["user_id"], text, timestamp)
+                )
+                annotation_id = cur.fetchone()['id']
+            conn.commit()
+            return {"id": annotation_id}
+
+    except Exception as error:
+        logger.exception("Error creating/updating annotation for project %s", project_id)
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+
+# Fetch an annotation's text given its timestamp
+@app.get("/projects/{project_id}/annotations", tags=["annotations"])
+async def fetch_annotation(
+    project_id: int,
+    timestamp: float,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Retrieves the text of an existing annotation.
+
+    Args:
+        timestamp: time stamp of the annotaion (float, path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        text: Text of the annotation
+    Raises:
+        HTTPException: If database error occurs
+    """
+    if timestamp < 0:
+        raise HTTPException(status_code=400, detail="Invalid timestamp")
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT description FROM annotations WHERE timestamp = %s " \
+                "AND user_id = %s AND project_id = %s",
+                (timestamp, current_user["user_id"], project_id)
+            )
+            text_row = cur.fetchone()
+            conn.commit()
+
+            return {"text": text_row['description'] if text_row else None}
+
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
 # Session cleanup endpoint (for maintenance)
 @app.post("/cleanup-sessions", tags=["maintenance"])
 async def cleanup_sessions():
