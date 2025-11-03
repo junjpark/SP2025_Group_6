@@ -293,6 +293,13 @@
   opacity: 1;
 }
 
+/* .clip.newClip{
+  background: linear-gradient(135deg,
+      var(--color-accent) 0%
+      var(--color-primary) 100%,
+      );
+} */
+
 .clip.selected {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);

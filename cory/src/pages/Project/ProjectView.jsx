@@ -13,6 +13,9 @@ const ProjectView = () => {
   const { projectId } = useParams(); //get the project id from the url
   console.log("Project ID from URL:", projectId);
   const MAX_ROW = 4;
+  const [newClipStatus, setNewClipStatus] = useState(0);
+  const newClipRef = useRef(null);
+  const [newClipObj, setNewClipObj] = useState({'start': 25, 'end': 75});
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [annotationText, setAnnotationText] = useState("");
@@ -140,6 +143,11 @@ const ProjectView = () => {
   }, [videoUrl]);
 
   const getCurrentStartClipTimeStamp = () => {
+    if(newClipStatus === 1){
+        return calculateTimeStamp(newClipObj.start || 0);
+    } else if(newClipStatus === 2){
+        return calculateTimeStamp(newClipObj.end || videoLength);
+    }
     if (currentClipId === undefined) {
       return 0;
     }
@@ -151,6 +159,9 @@ const ProjectView = () => {
   };
 
   const getCurrentEndClipTimeStamp = () => {
+    if(newClipStatus !== 0){
+        return videoLength;
+    }
     if (currentClipId === undefined) {
       return videoLength;
     }
@@ -160,10 +171,6 @@ const ProjectView = () => {
     }
     return calculateTimeStamp(clip.end);
   };
-
-  function clip() {
-    //TODO: update clip
-  }
 
   function mirror() {
     const isCurrentlyMirrored = isMirrored;
@@ -449,6 +456,87 @@ const ProjectView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClipId]);
 
+  const clip = () =>{
+    setNewClipStatus(1);
+    setNewClipObj({'start': 25, 'end': 75});
+  }
+
+  const handleKeyDownNewClip = (e) =>{
+    const buttonPressed = e.key
+    if(buttonPressed == 'Enter'){
+        console.log("entering!!!");
+        let newNewClipStatus = (newClipStatus + 1) % 3;
+        setNewClipStatus(newNewClipStatus);
+        if(newNewClipStatus == 0){
+            addNewClip();
+        }
+    }
+    else if(buttonPressed == 'ArrowRight'){
+      if(newClipStatus === 1){ //setting the left side
+        const newStart = Math.min(newClipObj.end-1, newClipObj.start+1);
+        let newNewClipObj = structuredClone(newClipObj);
+        newNewClipObj.start = newStart;
+        setNewClipObj(newNewClipObj);
+      } else{ //setting the right side
+        const newEnd = Math.min(newClipObj.end+1, 100);
+        let newNewClipObj = structuredClone(newClipObj);
+        newNewClipObj.end = newEnd;
+        setNewClipObj(newNewClipObj);
+      }
+    } else if(buttonPressed == 'ArrowLeft'){
+      if(newClipStatus === 1){ //setting the left side
+        const newStart = Math.max(newClipObj.start-1, 0);
+        let newNewClipObj = structuredClone(newClipObj);
+        newNewClipObj.start = newStart;
+        setNewClipObj(newNewClipObj);
+      } else{ //setting the right side
+        const newEnd = Math.max(newClipObj.end-1, newClipObj.start+1);
+        let newNewClipObj = structuredClone(newClipObj);
+        newNewClipObj.end = newEnd;
+        setNewClipObj(newNewClipObj);
+      }
+    } else{
+      //do nothing
+    }
+  }
+
+  const addNewClip = () =>{
+    setNewClipStatus(0);
+    addClip(newClipObj.start, newClipObj.end);
+  }
+
+  const handleBlurNewClip = () =>{
+    if(newClipStatus !== 2){
+      setNewClipStatus(0);
+      return;
+    }
+    addNewClip();
+  }
+
+  useEffect(() =>{
+    if(newClipStatus !== 0){
+      newClipRef.current?.focus();
+    }
+  }, [newClipStatus])
+
+  const renderNewClip = () =>{
+    if(newClipStatus === 0){
+      return;
+    }
+    const height = 45;
+    const top = 0;
+    const width = ((newClipObj.end - newClipObj.start) * (19/20))
+    const left = (newClipObj.start * (19/20))+2.5
+    return <div style={{
+      "position": 'absolute',
+      "bottom": `${top*2}px`,
+      "height": `${height*2}px`,
+      "left": `${left}%`,
+      "width": `${width}%`
+    }} ref={newClipRef} id={"newClip"} tabIndex={32767} onKeyDown={(e) => handleKeyDownNewClip(e)} className='clip newClip' onBlur={handleBlurNewClip}></div>
+  }
+
+
   return (
     <div
       id="projectView"
@@ -539,6 +627,7 @@ const ProjectView = () => {
           </div>
           <div id="projectViewFooter">
             {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
+            {renderNewClip()}
             <AnnotationPanel headerText="Notes">
               <div className="annotation-content">
                 <h2>Annotations</h2>
