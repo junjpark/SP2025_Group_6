@@ -527,12 +527,14 @@ const ProjectView = () => {
     const top = 0;
     const width = ((newClipObj.end - newClipObj.start) * (19/20))
     const left = (newClipObj.start * (19/20))+2.5
+    //eslint-disable-next-line jsx-a11y/no-static-element-interactions
     return <div style={{
       "position": 'absolute',
       "bottom": `${top*2}px`,
       "height": `${height*2}px`,
       "left": `${left}%`,
       "width": `${width}%`
+      //eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex, jsx-a11y/tabindex-no-positive
     }} ref={newClipRef} id={"newClip"} tabIndex={32767} onKeyDown={(e) => handleKeyDownNewClip(e)} className='clip newClip' onBlur={handleBlurNewClip}></div>
   }
 
