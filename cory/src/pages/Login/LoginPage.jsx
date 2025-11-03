@@ -131,7 +131,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="Enter your email (case sensitive)"
               required
               className="form-input"
             />
