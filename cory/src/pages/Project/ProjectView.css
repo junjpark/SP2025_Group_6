@@ -3,7 +3,7 @@
 /* Main Layout */
 #projectView {
   width: 100vw;
-  height: calc(100vh - 95px);
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-primary);
@@ -293,12 +293,14 @@
   opacity: 1;
 }
 
-/* .clip.newClip{
-  background: linear-gradient(135deg,
-      var(--color-accent) 0%
-      var(--color-primary) 100%,
-      );
-} */
+.clip.newClip {
+  /*
+   * Created with https://www.css-gradient.com
+   * Gradient link: https://www.css-gradient.com/?c1=f99e66&c2=e8b371&gt=r&gd=dcc
+   */
+  background: transparent !important;
+  border: 2px solid #F99E66;
+}
 
 .clip.selected {
   border-color: var(--color-primary);
