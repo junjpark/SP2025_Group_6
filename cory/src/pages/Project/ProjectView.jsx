@@ -15,7 +15,7 @@ const ProjectView = () => {
   const MAX_ROW = 4;
   const [newClipStatus, setNewClipStatus] = useState(0);
   const newClipRef = useRef(null);
-  const [newClipObj, setNewClipObj] = useState({'start': 25, 'end': 75});
+  const [newClipObj, setNewClipObj] = useState({'start': 0, 'end': 100});
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [annotationText, setAnnotationText] = useState("");
@@ -456,7 +456,7 @@ const ProjectView = () => {
 
   const clip = () =>{
     setNewClipStatus(1);
-    setNewClipObj({'start': 25, 'end': 75});
+    setNewClipObj({'start': 0, 'end': 100});
   }
 
   const handleKeyDownNewClip = (e) =>{
