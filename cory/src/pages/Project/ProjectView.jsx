@@ -34,9 +34,7 @@ const ProjectView = () => {
 
   const [clips, setClips] = useState(
     new Map([
-      [0, { row: 0, start: 0, end: 100 }],
-      [1, { row: 1, start: 30, end: 70 }],
-      [2, { row: 1, start: 0, end: 20 }],
+      [0, { row: 0, start: 0, end: 100 }]
     ])
   );
 
