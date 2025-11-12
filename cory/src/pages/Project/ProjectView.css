@@ -299,7 +299,7 @@
    * Gradient link: https://www.css-gradient.com/?c1=f99e66&c2=e8b371&gt=r&gd=dcc
    */
   background: transparent !important;
-  border: 2px solid #F99E66;
+  border: 4px solid #F99E66;
 }
 
 .clip.selected {

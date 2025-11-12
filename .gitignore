@@ -138,6 +138,9 @@ flyway.conf
 .env.production
 .env.staging
 
+# k8s
+/k8s/deployment.yaml
+
 # Python
 __pycache__/
 *.py[cod]
