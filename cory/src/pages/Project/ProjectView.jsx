@@ -15,7 +15,7 @@ const ProjectView = () => {
   const MAX_ROW = 4;
   const [newClipStatus, setNewClipStatus] = useState(0);
   const newClipRef = useRef(null);
-  const [newClipObj, setNewClipObj] = useState({'start': 0, 'end': 100});
+  const [newClipObj, setNewClipObj] = useState({ start: 0, end: 100 });
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [annotationText, setAnnotationText] = useState("");
@@ -33,9 +33,7 @@ const ProjectView = () => {
   //time stamps are of the form [a,b)
 
   const [clips, setClips] = useState(
-    new Map([
-      [0, { row: 0, start: 0, end: 100 }]
-    ])
+    new Map([[0, { row: 0, start: 0, end: 100 }]])
   );
 
   const [selectResizing, setSelectResizing] = useState(false);
@@ -140,11 +138,73 @@ const ProjectView = () => {
     };
   }, [videoUrl]);
 
+  const loadClipsFromDB = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/clips`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch clips: ${response.status}`);
+      }
+      const data = await response.json();
+      const loadedClips = new Map();
+      loadedClips.set(0, { row: 0, start: 0, end: 100 }); // main clip
+
+      if (data.clipping_timestamps && Array.isArray(data.clipping_timestamps)) {
+        data.clipping_timestamps.forEach((clip) => {
+          loadedClips.set(clip.id, {
+            row: clip.row,
+            start: clip.start,
+            end: clip.end,
+          });
+          if (clip.id >= nextClipId) {
+            nextClipId = clip.id + 1;
+          }
+        });
+      }
+      setClips(loadedClips);
+      console.log("Clips loaded from DB:", loadedClips);
+    } catch (error) {
+      console.error("Error loading clips from DB:", error);
+    }
+  };
+
+  const saveClipsToDB = async (clipsToSave) => {
+    try {
+      const clipArray = Array.from(clipsToSave.entries())
+        .filter(([id]) => id !== 0) // Exclude main clip
+        .map(([id, clip]) => ({
+          id: id,
+          row: clip.row,
+          start: clip.start,
+          end: clip.end,
+        }));
+
+      const response = await fetch(`/api/projects/${projectId}/clips`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ clipping_timestamps: clipArray }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save clips: ${response.status}`);
+      }
+      console.log("Clips saved to DB:", clipArray);
+      return true;
+    } catch (error) {
+      console.error("Error saving clips to DB:", error);
+      return false;
+    }
+  };
+
   const getCurrentStartClipTimeStamp = () => {
-    if(newClipStatus === 1){
-        return calculateTimeStamp(newClipObj.start || 0);
-    } else if(newClipStatus === 2){
-        return calculateTimeStamp(newClipObj.end || videoLength);
+    if (newClipStatus === 1) {
+      return calculateTimeStamp(newClipObj.start || 0);
+    } else if (newClipStatus === 2) {
+      return calculateTimeStamp(newClipObj.end || videoLength);
     }
     if (currentClipId === undefined) {
       return 0;
@@ -157,8 +217,8 @@ const ProjectView = () => {
   };
 
   const getCurrentEndClipTimeStamp = () => {
-    if(newClipStatus !== 0){
-        return videoLength;
+    if (newClipStatus !== 0) {
+      return videoLength;
     }
     if (currentClipId === undefined) {
       return videoLength;
@@ -264,7 +324,7 @@ const ProjectView = () => {
     }
   };
 
-  function addClip(start, end, map, clipId) {
+  async function addClip(start, end, map, clipId) {
     const targetMap = map || clips; //this just allows us to pass an arbitrary map if desired
     let clipEntries = [...targetMap.entries()];
     outerLoop: for (let i = 1; i < MAX_ROW; i++) {
@@ -284,12 +344,13 @@ const ProjectView = () => {
         //console.log(newClips)
       }
       setClips(newClips);
+      await saveClipsToDB(newClips);
       return;
     }
     return null;
   }
 
-  const moveLeft = () => {
+  const moveLeft = async () => {
     // console.log(clips)
     if (!resizing) {
       return;
@@ -304,17 +365,17 @@ const ProjectView = () => {
       if (newStart < 0) {
         newStart = 0;
       }
-      addClip(newStart, oldClip.end, newClips, clipId);
+      await addClip(newStart, oldClip.end, newClips, clipId);
     } else {
       const newEnd = oldClip.end - 1;
       if (newEnd <= oldClip.start) {
         return;
       }
-      addClip(oldClip.start, newEnd, newClips, clipId);
+      await addClip(oldClip.start, newEnd, newClips, clipId);
     }
   };
 
-  const moveRight = () => {
+  const moveRight = async () => {
     if (!resizing) {
       return;
     }
@@ -328,18 +389,18 @@ const ProjectView = () => {
       if (newStart >= oldClip.end) {
         return;
       }
-      addClip(newStart, oldClip.end, newClips, clipId);
+      await addClip(newStart, oldClip.end, newClips, clipId);
     } else {
       const newEnd = oldClip.end + 1;
       if (newEnd > 100) {
         return;
       }
-      addClip(oldClip.start, newEnd, newClips, clipId);
+      await addClip(oldClip.start, newEnd, newClips, clipId);
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (currentClipId === undefined) {
       return;
     }
@@ -350,6 +411,8 @@ const ProjectView = () => {
     let newClips = new Map(clips);
     newClips.delete(currentClipId);
     setClips(newClips);
+    await saveClipsToDB(newClips);
+    setCurrentClipId(undefined);
   };
 
   const calculatePercent = (clipStart, clipEnd, clipX, clipWidth, newX) => {
@@ -454,88 +517,105 @@ const ProjectView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClipId]);
 
-  const clip = () =>{
+  const clip = () => {
     setNewClipStatus(1);
-    setNewClipObj({'start': 0, 'end': 100});
-  }
+    setNewClipObj({ start: 0, end: 100 });
+  };
 
-  const handleKeyDownNewClip = (e) =>{
-    const buttonPressed = e.key
-    if(buttonPressed == 'Enter'){
-        console.log("entering!!!");
-        let newNewClipStatus = (newClipStatus + 1) % 3;
-        setNewClipStatus(newNewClipStatus);
-        if(newNewClipStatus == 0){
-            addNewClip();
-        }
-    }
-    else if(buttonPressed == 'ArrowRight'){
-      if(newClipStatus === 1){ //setting the left side
-        const newStart = Math.min(newClipObj.end-1, newClipObj.start+1);
+  const handleKeyDownNewClip = (e) => {
+    const buttonPressed = e.key;
+    if (buttonPressed == "Enter") {
+      console.log("entering!!!");
+      let newNewClipStatus = (newClipStatus + 1) % 3;
+      setNewClipStatus(newNewClipStatus);
+      if (newNewClipStatus == 0) {
+        addNewClip();
+      }
+    } else if (buttonPressed == "ArrowRight") {
+      if (newClipStatus === 1) {
+        //setting the left side
+        const newStart = Math.min(newClipObj.end - 1, newClipObj.start + 1);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.start = newStart;
         setNewClipObj(newNewClipObj);
-      } else{ //setting the right side
-        const newEnd = Math.min(newClipObj.end+1, 100);
+      } else {
+        //setting the right side
+        const newEnd = Math.min(newClipObj.end + 1, 100);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.end = newEnd;
         setNewClipObj(newNewClipObj);
       }
-    } else if(buttonPressed == 'ArrowLeft'){
-      if(newClipStatus === 1){ //setting the left side
-        const newStart = Math.max(newClipObj.start-1, 0);
+    } else if (buttonPressed == "ArrowLeft") {
+      if (newClipStatus === 1) {
+        //setting the left side
+        const newStart = Math.max(newClipObj.start - 1, 0);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.start = newStart;
         setNewClipObj(newNewClipObj);
-      } else{ //setting the right side
-        const newEnd = Math.max(newClipObj.end-1, newClipObj.start+1);
+      } else {
+        //setting the right side
+        const newEnd = Math.max(newClipObj.end - 1, newClipObj.start + 1);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.end = newEnd;
         setNewClipObj(newNewClipObj);
       }
-    } else{
+    } else {
       //do nothing
     }
-  }
+  };
 
-  const addNewClip = () =>{
+  const addNewClip = () => {
     setNewClipStatus(0);
     addClip(newClipObj.start, newClipObj.end);
-  }
+  };
 
-  const handleBlurNewClip = () =>{
-    if(newClipStatus !== 2){
+  const handleBlurNewClip = () => {
+    if (newClipStatus !== 2) {
       setNewClipStatus(0);
       return;
     }
     addNewClip();
-  }
+  };
 
-  useEffect(() =>{
-    if(newClipStatus !== 0){
+  useEffect(() => {
+    if (newClipStatus !== 0) {
       newClipRef.current?.focus();
     }
-  }, [newClipStatus])
+  }, [newClipStatus]);
 
-  const renderNewClip = () =>{
-    if(newClipStatus === 0){
+  useEffect(() => {
+    loadClipsFromDB();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const renderNewClip = () => {
+    if (newClipStatus === 0) {
       return;
     }
     const height = 45;
     const top = 0;
-    const width = ((newClipObj.end - newClipObj.start) * (19/20))
-    const left = (newClipObj.start * (19/20))+2.5
-    //eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    return <div style={{
-      "position": 'absolute',
-      "bottom": `${top*2}px`,
-      "height": `${height*2}px`,
-      "left": `${left}%`,
-      "width": `${width}%`
-      //eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex, jsx-a11y/tabindex-no-positive
-    }} ref={newClipRef} id={"newClip"} tabIndex={32767} onKeyDown={(e) => handleKeyDownNewClip(e)} className='clip newClip' onBlur={handleBlurNewClip}></div>
-  }
-
+    const width = (newClipObj.end - newClipObj.start) * (19 / 20);
+    const left = newClipObj.start * (19 / 20) + 2.5;
+    return (
+      //eslint-disable-next-line jsx-a11y/no-static-element-interactions
+      <div
+        style={{
+          position: "absolute",
+          bottom: `${top * 2}px`,
+          height: `${height * 2}px`,
+          left: `${left}%`,
+          width: `${width}%`,
+        }}
+        ref={newClipRef}
+        id={"newClip"}
+        //eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex, jsx-a11y/tabindex-no-positive
+        tabIndex={32767}
+        onKeyDown={(e) => handleKeyDownNewClip(e)}
+        className="clip newClip"
+        onBlur={handleBlurNewClip}
+      ></div>
+    );
+  };
 
   return (
     <div

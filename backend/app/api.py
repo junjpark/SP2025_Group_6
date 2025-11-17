@@ -9,12 +9,15 @@ import shutil
 import logging
 import time
 from pathlib import Path
+from typing import List
 import cv2
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
 #from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from psycopg2.extras import Json
 from .models import (
     UserCreate, UserLogin, GoogleUserCreate, UserResponse, SessionResponse, SessionData,
     ForgotPasswordRequest, ResetPasswordRequest, PasswordResetResponse
@@ -81,6 +84,31 @@ app.add_middleware(SessionMiddleware, cleanup_interval=3600)  # Cleanup every ho
 os.makedirs("uploads", exist_ok=True)
 # Add logging middleware (optional, for development)
 app.add_middleware(LoggingMiddleware)
+
+# Pydantic models for clip timestamps
+class Clip(BaseModel):
+    """
+    Represents a single clip or segment of a video.
+    
+    Attributes:
+        id: Unique identifier for the clip.
+        row: Display row position for the clip in the UI.
+        start: Start position as a percentage of the video (0-100).
+        end: End position as a percentage of the video (0-100).
+    """
+    id: int
+    row: int
+    start: float
+    end: float
+
+class ClipsUpdate(BaseModel):
+    """
+    Request model for updating clipping timestamps for a project.
+    
+    Attributes:
+        clipping_timestamps: List of Clip objects representing all clips to save for a project.
+    """
+    clipping_timestamps: List[Clip]
 
 
 def get_current_user(request: Request):
@@ -765,6 +793,93 @@ async def get_project_landmarks(
         raise HTTPException(status_code=500, detail="Internal server error") from e
     finally:
         conn.close()
+
+# load clips for project
+@app.get('/projects/{project_id}/clips', tags=["projects"])
+async def get_project_clips(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Retrieve clipping timestamps for a specific project by its ID for the current
+    authenticated user.
+
+    Args:
+        project_id: ID of the project to retrieve (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        list: Clipping timestamps for the project
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT clipping_timestamps FROM projects WHERE id = %s AND user_id = %s",
+            (project_id, current_user['user_id'])
+        )
+        result = cursor.fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Project not found")
+        clipping_timestamps = result['clipping_timestamps']
+
+        cursor.close()
+        conn.close()
+
+        return {"clipping_timestamps": clipping_timestamps or []}
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+
+# save clips for project
+@app.put('/projects/{project_id}/clips', tags=["projects"])
+async def save_project_clips(
+    project_id: int,
+    clips_update: ClipsUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Save clipping timestamps for a specific project by its ID for the current authenticated user.
+
+    Args:
+        project_id: ID of the project to update (path parameter)
+        clips_update: Clipping timestamps to save
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Success message
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE projects SET clipping_timestamps = %s WHERE id = %s AND user_id = %s",
+            ( Json([clip.dict() for clip in clips_update.clipping_timestamps]), project_id,
+             current_user['user_id'])
+        )
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Project not found")
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return {"success": True, "message": "Clipping timestamps updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.exception("Error saving clips for project %s: %s", project_id, str(error))
+        if conn:
+            conn.rollback()
+        raise HTTPException(status_code=500, 
+                            detail=f"Internal server error: {str(error)}")from error
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # Create or update annotation for the current project, timestamp, and user
 @app.post("/projects/{project_id}/annotations", tags=["annotations"])
