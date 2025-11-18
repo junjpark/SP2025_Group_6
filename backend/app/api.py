@@ -2,7 +2,7 @@
 FastAPI application with authentication endpoints.
 Handles user registration, login, Google OAuth, and protected routes using server-side sessions.
 """
-#from datetime import timedelta
+# pylint: disable=too-many-lines
 import os
 import uuid
 import shutil
@@ -873,7 +873,7 @@ async def save_project_clips(
         logger.exception("Error saving clips for project %s: %s", project_id, str(error))
         if conn:
             conn.rollback()
-        raise HTTPException(status_code=500, 
+        raise HTTPException(status_code=500,
                             detail=f"Internal server error: {str(error)}")from error
     finally:
         if cursor:
