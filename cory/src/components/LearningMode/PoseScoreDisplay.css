@@ -1,0 +1,227 @@
+.pose-score-display {
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 15px;
+  padding: 20px;
+  color: white;
+  font-family: 'Arial', sans-serif;
+  max-width: 300px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.pose-score-display.waiting {
+  padding: 15px;
+  text-align: center;
+  opacity: 0.7;
+}
+
+.pose-score-display.waiting p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Main Score Circle */
+.score-circle {
+  width: 120px;
+  height: 120px;
+  border: 6px solid;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px;
+  position: relative;
+  transition: border-color 0.3s ease;
+}
+
+.score-value {
+  font-size: 36px;
+  font-weight: bold;
+  line-height: 1;
+  transition: color 0.3s ease;
+}
+
+.score-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ccc;
+  margin-top: 5px;
+}
+
+/* Feedback Message */
+.feedback-message {
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+  transition: color 0.3s ease;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.8; }
+}
+
+/* Progress Bar */
+.score-bar-container {
+  width: 100%;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.score-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 6px;
+}
+
+/* Statistics */
+.score-details {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 11px;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 5px;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+}
+
+/* Joint Angles */
+.joint-angles {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.angles-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #aaa;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.angles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.angle-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  padding: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.angle-joint {
+  color: #ccc;
+  text-transform: capitalize;
+}
+
+.angle-value {
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Keypoint Feedback */
+.keypoint-feedback {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(255, 100, 100, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #ff6347;
+}
+
+.feedback-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #ffaaaa;
+  margin-bottom: 8px;
+}
+
+.keypoint-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.keypoint-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.keypoint-item:last-child {
+  border-bottom: none;
+}
+
+.keypoint-name {
+  color: #ddd;
+  text-transform: capitalize;
+}
+
+.keypoint-score {
+  color: #ff6347;
+  font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .pose-score-display {
+    max-width: 250px;
+    padding: 15px;
+  }
+
+  .score-circle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .score-value {
+    font-size: 30px;
+  }
+
+  .feedback-message {
+    font-size: 16px;
+  }
+
+  .angles-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

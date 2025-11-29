@@ -1,9 +1,10 @@
 import React from 'react';
 import CustomVideoPlayer from '../../CustomVideoPlayer';
+import WebcamCanvas from '../WebcamCanvas';
 
 const FullView = ({
   videoPlayerRef,
-  attachWebcamMain,
+  webcamStream,
   isSwitched,
   videoUrl,
   startTime,
@@ -13,11 +14,9 @@ const FullView = ({
     <div className="full-mode">
       {isSwitched ? (
         <div className="full-webcam">
-          <video
-            ref={attachWebcamMain}
-            autoPlay
-            muted
-            playsInline
+          <WebcamCanvas
+            webcamStream={webcamStream}
+            isActive={true}
             className="webcam-video"
           />
         </div>

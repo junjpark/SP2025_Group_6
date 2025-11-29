@@ -3,7 +3,7 @@ import "./CustomVideoPlayer.css";
 
 const CustomVideoPlayer = React.forwardRef(
   (
-    { url, start = 0, end = Infinity },
+    { url, start = 0, end = 999999999999 },
     ref
   ) => {
     CustomVideoPlayer.displayName = "CustomVideoPlayer";
