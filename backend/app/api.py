@@ -9,6 +9,7 @@ import shutil
 import logging
 import time
 from pathlib import Path
+from typing import Optional
 import cv2
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
@@ -711,7 +712,8 @@ async def get_project_landmarks(
     current_user: dict = Depends(get_current_user),
     sample_rate: int = 1,
     use_parallel: bool = True,
-    model_complexity: int = 1
+    model_complexity: int = 1,
+    num_workers: Optional[int] = None
 ):
     """
     Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
@@ -746,6 +748,7 @@ async def get_project_landmarks(
                     video_path,
                     video_sample_rate=sample_rate,
                     use_parallel=use_parallel,
+                    num_workers=num_workers,
                     model_complexity=model_complexity
                 )
                 return landmarks_data
