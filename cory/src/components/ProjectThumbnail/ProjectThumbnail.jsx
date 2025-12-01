@@ -192,9 +192,10 @@ export default function ProjectThumbnail({
             className="modal-content"
             onClick={(e) => e.stopPropagation()}
             role="button"
+            tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "o") {
-                stopPropagation();
+                e.stopPropagation();
               }
             }}
           >
