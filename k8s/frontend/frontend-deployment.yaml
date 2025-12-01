@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: cory-frontend:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 5173
+        env:
+        - name: VITE_PROXY_TARGET
+          valueFrom:
+            configMapKeyRef:
+              name: app-config
+              key: VITE_PROXY_TARGET
+        - name: VITE_CLIENT_ID
+          valueFrom:
+            secretKeyRef:
+              name: app-secrets
+              key: VITE_CLIENT_ID
+              optional: true
+        # Note: For production, use proper image with code baked in
+        # For demo, ensure Dockerfile copies all code
+      initContainers:
+      - name: wait-for-backend
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z backend 8000; do echo waiting for backend; sleep 2; done;']
+
