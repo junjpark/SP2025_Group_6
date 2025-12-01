@@ -463,7 +463,8 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, title, created_at, last_opened, user_id, thumbnail_url FROM projects WHERE user_id = %s OR %s = ANY(editor_ids)",
+                "SELECT id, title, created_at, last_opened, user_id, thumbnail_url " \
+                "FROM projects WHERE user_id = %s OR %s = ANY(editor_ids)",
                 (current_user['user_id'], current_user['user_id'])
             )
             projects = cur.fetchall()

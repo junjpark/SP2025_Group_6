@@ -95,7 +95,7 @@ export default function Library() {
       ]);
     };
     filterAndSortProjects();
-  }, [filterType, sortBy]);
+  }, [filterType, sortBy, projects, user]);
 
   const handleDeleteProject = (id) => {
     setProjects((prev) => prev.filter((project) => project.id !== id));

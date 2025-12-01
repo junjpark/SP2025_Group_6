@@ -188,7 +188,16 @@ export default function ProjectThumbnail({
             }
           }}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            role="button"
+            onKeyDown={(e) => {
+              if (e.key === "o") {
+                stopPropagation();
+              }
+            }}
+          >
             <h2>{titleValue}</h2>
             <p>Created: {createdValue}</p>
             <p>Owner: {ownerValue}</p>
