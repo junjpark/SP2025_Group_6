@@ -70,6 +70,7 @@ const ProjectView = () => {
         throw new Error(`Server returned ${response.status}`);
       }
       console.log("Annotation created/updated:", timestamp, newMessage);
+      updateTimeLastEdited();
     } catch (error) {
       console.error("Error creating/updating annotation:", timestamp, error);
     }
@@ -193,10 +194,29 @@ const ProjectView = () => {
         throw new Error(`Failed to save clips: ${response.status}`);
       }
       console.log("Clips saved to DB:", clipArray);
+      updateTimeLastEdited();
       return true;
     } catch (error) {
       console.error("Error saving clips to DB:", error);
       return false;
+    }
+  };
+
+  const updateTimeLastEdited = async () => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/update-timestamp`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      console.log("Project timestamp updated:", projectId);
+    } catch (error) {
+      console.error("Error updating project timestamp:", projectId, error);
     }
   };
 

@@ -12,6 +12,13 @@
   padding: 40px;
 }
 
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
 h1 {
   margin-bottom: 20px;
 }

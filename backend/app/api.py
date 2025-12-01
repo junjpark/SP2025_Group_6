@@ -452,7 +452,7 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
         current_user: Current user data from JWT token (dependency injection)
 
     Returns:
-        list: List of projects belonging to the user
+        list: List of projects belonging to the user or shared with the user
     Raises:
         HTTPException: If database error occurs
     """
@@ -463,8 +463,8 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, title, last_opened, thumbnail_url FROM projects WHERE user_id = %s",
-                (current_user['user_id'],)
+                "SELECT id, title, created_at, last_opened, user_id, thumbnail_url FROM projects WHERE user_id = %s OR %s = ANY(editor_ids)",
+                (current_user['user_id'], current_user['user_id'])
             )
             projects = cur.fetchall()
 
@@ -497,8 +497,8 @@ async def get_project_thumbnail(project_id: int, current_user: dict = Depends(ge
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT thumbnail_url, user_id FROM projects" \
-            " WHERE id = %s AND user_id = %s",
-                        (project_id, current_user['user_id']))
+            " WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+            (project_id, current_user['user_id'], current_user['user_id']))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Project not found")
@@ -978,6 +978,94 @@ async def fetch_annotation(
 
             return {"text": text_row['description'] if text_row else None}
 
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# update time last edited for project
+@app.post('/projects/{project_id}/update-last-opened', tags=["projects"])
+async def update_project_last_edited(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update the last opened timestamp for a specific project by its ID for the current
+    authenticated user.
+
+    Args:
+        project_id: ID of the project to update (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # update the last edited timestamp of the project owned by the current user
+            cur.execute(
+                "UPDATE projects SET last_opened = now() WHERE id = %s AND user_id = %s",
+                (project_id, user_id)
+            )
+            conn.commit()
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# share project with another user given project ID and editor email
+@app.post('/projects/{project_id}/share', tags=["projects"])
+async def share_project(
+    project_id: int,
+    email: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Share a specific project by its ID with another user via their email.
+
+    Args:
+        project_id: ID of the project to share (path parameter)
+        editor_email: Email of the user to share the project with (form data)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Success message
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # Get the user ID of the editor by email
+            cur.execute(
+                "SELECT id FROM users WHERE email = %s",
+                (email,)
+            )
+            editor = cur.fetchone()
+            if not editor:
+                raise HTTPException(status_code=404, detail="Editor user not found")
+
+            # Update the project's editor_ids array to include the new editor
+            cur.execute(
+                "UPDATE projects SET editor_ids = array_append(editor_ids, %s) "
+                "WHERE id = %s AND user_id = %s",
+                (editor['id'], project_id, user_id)
+            )
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Project not found or unauthorized")
+
+            conn.commit()
+            return {"message": "Project shared successfully"}
+
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
