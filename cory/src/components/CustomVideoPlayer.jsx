@@ -8,14 +8,14 @@ const CustomVideoPlayer = React.forwardRef(
   ) => {
     CustomVideoPlayer.displayName = "CustomVideoPlayer";
 
-    console.log(
-      "Rendering CustomVideoPlayer with URL:",
-      url,
-      "start:",
-      start,
-      "end:",
-      end
-    );
+    // console.log(
+    //   "Rendering CustomVideoPlayer with URL:",
+    //   url,
+    //   "start:",
+    //   start,
+    //   "end:",
+    //   end
+    // );
 
     const containerRef = useRef(null);
 
