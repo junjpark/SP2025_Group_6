@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sql-files-config
+data:
+  # SQL files will be added here or mounted separately
+  # For demo, you may need to create this ConfigMap manually with your SQL files
+

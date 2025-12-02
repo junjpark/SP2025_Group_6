@@ -1,0 +1,32 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: flyway-migration
+spec:
+  template:
+    spec:
+      containers:
+      - name: flyway
+        image: flyway/flyway:10
+        command:
+        - flyway
+        - migrate
+        # Flyway config is in the ConfigMap mounted at /flyway/conf
+        volumeMounts:
+        - name: sql-files
+          mountPath: /flyway/sql
+        - name: flyway-config
+          mountPath: /flyway/conf
+      volumes:
+      - name: sql-files
+        configMap:
+          name: sql-files-config
+      - name: flyway-config
+        configMap:
+          name: flyway-config
+      restartPolicy: OnFailure
+      initContainers:
+      - name: wait-for-db
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z postgres 5432; do echo waiting for postgres; sleep 2; done;']
+
