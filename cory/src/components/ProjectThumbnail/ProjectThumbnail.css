@@ -176,7 +176,7 @@
   z-index: 1001;
 }
 
-.modal-content button {
+#delete-button {
   background-color: #ef4444;
   color: white;
   border: none;
@@ -189,13 +189,55 @@
   outline: none;
 }
 
-.modal-content button:hover {
-  background-color: #dc2626;
+#delete-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(85, 15, 15, 0.5);
 }
 
-.modal-content button:focus-visible {
-  outline: 2px solid #ef4444;
-  outline-offset: 2px;
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.title-row h2 {
+  margin: 0;
+}
+
+.title-input {
+  width: 100%;
+  font-size: 28px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border: 2px solid #657590;
+  border-radius: 6px;
+  outline: none;
+  font-family: inherit;
+}
+
+.edit-title-btn {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.edit-title-btn:hover {
+  background-color: #f3f4f6;
+  color: #5e6b80;
+}
+
+.edit-title-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .modal-content p {
@@ -205,18 +247,31 @@
   color: #556479;
 }
 
-.modal-content input[type="text"] {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  box-sizing: border-box;
+.menu-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
 }
 
-.modal-content input[type="text"]:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+#save-button {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  outline: none;
+}
+
+#save-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
 }
