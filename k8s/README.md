@@ -298,7 +298,18 @@ kubectl logs deployment/postgres
 
 ### Rebuild and Redeploy
 
-If you make code changes:
+If you make local code changes, use the rebuild script:
+
+```bash
+./k8s/rebuild.sh
+```
+
+This script will:
+- Rebuild both backend and frontend Docker images
+- Restart the deployments to use the new images
+- Wait for services to be ready
+
+**Manual rebuild (if needed):**
 
 1. Rebuild images:
 ```bash

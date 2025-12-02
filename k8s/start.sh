@@ -30,10 +30,8 @@ kubectl wait --for=condition=available --timeout=300s deployment/backend
 kubectl wait --for=condition=available --timeout=300s deployment/frontend
 
 # Set up port forwarding
-echo "Setting up port forwarding..."
-kubectl port-forward service/frontend 5173:5173 > /dev/null 2>&1 &
-kubectl port-forward service/backend 8000:8000 > /dev/null 2>&1 &
-sleep 2
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+"$SCRIPT_DIR/ensure-port-forward.sh"
 
 echo "✅ All deployments started!"
 echo ""
