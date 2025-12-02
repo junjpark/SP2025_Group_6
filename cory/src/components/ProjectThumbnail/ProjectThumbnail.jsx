@@ -1,4 +1,4 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProjectThumbnail.css";
 import snoopy from "../../snoopy-dancing.jpg";

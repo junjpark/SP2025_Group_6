@@ -226,7 +226,8 @@ async def get_project_video_with_landmarks(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT video_url FROM projects WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+                "SELECT video_url FROM projects WHERE id = %s " \
+                "AND (user_id = %s OR %s = ANY(editor_ids))",
                 (project_id, user_id, user_id)
             )
             project = cur.fetchone()
@@ -616,7 +617,8 @@ async def get_project(
         with conn.cursor() as cur:
             # Query for the project owned by the current user (single-step authorization)
             cur.execute(
-                "SELECT title, video_url FROM projects WHERE id = %s (user_id = %s OR %s = ANY(editor_ids))",
+                "SELECT title, video_url FROM projects " \
+                "WHERE id = %s (user_id = %s OR %s = ANY(editor_ids))",
                 (project_id, user_id, user_id)
             )
             project = cur.fetchone()
@@ -760,7 +762,8 @@ async def get_project_landmarks(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT video_url FROM projects WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+                "SELECT video_url FROM projects WHERE id = %s " \
+                "AND (user_id = %s OR %s = ANY(editor_ids))",
                 (project_id, user_id, user_id)
             )
             project = cur.fetchone()
@@ -817,7 +820,8 @@ async def get_project_clips(
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT clipping_timestamps FROM projects WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+            "SELECT clipping_timestamps FROM projects WHERE id = %s " \
+            "AND (user_id = %s OR %s = ANY(editor_ids))",
             (project_id, current_user['user_id'], current_user['user_id'])
         )
         result = cursor.fetchone()
@@ -857,7 +861,8 @@ async def save_project_clips(
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "UPDATE projects SET clipping_timestamps = %s WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+            "UPDATE projects SET clipping_timestamps = %s WHERE id = %s " \
+            "AND (user_id = %s OR %s = ANY(editor_ids))",
             ( Json([clip.dict() for clip in clips_update.clipping_timestamps]), project_id,
              current_user['user_id'], current_user['user_id'])
         )
@@ -948,7 +953,6 @@ async def create_annotation(
 async def fetch_annotation(
     project_id: int,
     timestamp: float,
-    current_user: dict = Depends(get_current_user)
 ):
     """
     Retrieves the text of an existing annotation.
@@ -1007,7 +1011,8 @@ async def update_project_last_edited(
         with conn.cursor() as cur:
             # update the last edited timestamp of the project owned by the current user
             cur.execute(
-                "UPDATE projects SET last_opened = now() WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+                "UPDATE projects SET last_opened = now() WHERE id = %s " \
+                "AND (user_id = %s OR %s = ANY(editor_ids))",
                 (project_id, user_id, user_id)
             )
             conn.commit()
