@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ProjectThumbnail.css";
 import snoopy from "../../snoopy-dancing.jpg";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function ProjectThumbnail({
   id,
@@ -19,8 +20,11 @@ export default function ProjectThumbnail({
   const [showMenu, setShowMenu] = useState(false);
   const [titleValue, setTitle] = useState(title);
   const [emailAddress, setEmailAddress] = useState("");
-  const ownerValue = owner;
+  const { user } = useAuth();
+  const isOwner = user && owner === user.user_id ? true : false;
+  const [ownerValue, setOwnerValue] = useState("");
   const createdValue = created ? new Date(created).toLocaleString() : "Unknown";
+
   useEffect(() => {
     let isMounted = true;
     let objectUrl = null;
@@ -58,6 +62,26 @@ export default function ProjectThumbnail({
       }
     };
   }, [thumbnailEndpoint]);
+
+  useEffect(() => {
+    async function fetchOwnerEmail() {
+      try {
+        const res = await fetch(`/api/users/${owner}/email`);
+        if (!res.ok) {
+          throw new Error(`Failed to fetch owner email: ${res.status}`);
+        }
+        const data = await res.json();
+        setOwnerValue(data.email);
+      } catch (err) {
+        console.error("Error fetching owner email:", err);
+      }
+    }
+    if (isOwner) {
+      setOwnerValue("You");
+      return;
+    }
+    fetchOwnerEmail();
+  }, [owner, isOwner]);
 
   const handleClick = () => {
     if (isCreate) {
@@ -128,7 +152,9 @@ export default function ProjectThumbnail({
         throw new Error(`Server returned ${response.status}`);
       }
       console.log("Project shared:", id);
+      alert("Project shared successfully!");
     } catch (error) {
+      alert("Email address not found or error sharing project.");
       console.error("Error sharing project:", id, error);
     }
   };
@@ -216,30 +242,36 @@ export default function ProjectThumbnail({
                 }
               }}
             />
-            <p>Rename Project:</p>
-            <input
-              type="text"
-              value={titleValue}
-              onChange={(e) => {
-                setTitle(e.target.value);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleRenameProject();
-                  handleCloseMenu();
-                }
-              }}
-            />
-            <button
-              onClick={handleDeleteProject}
-              onKeyDown={(e) => {
-                if (e.key === "d") {
-                  handleDeleteProject(e);
-                }
-              }}
-            >
-              Delete Project
-            </button>
+            {isOwner && (
+              <div>
+                <p>Rename Project:</p>
+                <input
+                  type="text"
+                  value={titleValue}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleRenameProject();
+                      handleCloseMenu();
+                    }
+                  }}
+                />
+              </div>
+            )}
+            {isOwner && (
+              <button
+                onClick={handleDeleteProject}
+                onKeyDown={(e) => {
+                  if (e.key === "d") {
+                    handleDeleteProject(e);
+                  }
+                }}
+              >
+                Delete Project
+              </button>
+            )}
           </div>
         </div>
       )}
