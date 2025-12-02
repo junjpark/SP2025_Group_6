@@ -65,15 +65,17 @@ export default function ProjectThumbnail({
 
   useEffect(() => {
     async function fetchOwnerEmail() {
-      try {
-        const res = await fetch(`/api/users/${owner}/email`);
-        if (!res.ok) {
-          throw new Error(`Failed to fetch owner email: ${res.status}`);
+      if (!isCreate && !isOwner) {
+        try {
+          const res = await fetch(`/api/users/${owner}/email`);
+          if (!res.ok) {
+            throw new Error(`Failed to fetch owner email: ${res.status}`);
+          }
+          const data = await res.json();
+          setOwnerValue(data.email);
+        } catch (err) {
+          console.error("Error fetching owner email:", err);
         }
-        const data = await res.json();
-        setOwnerValue(data.email);
-      } catch (err) {
-        console.error("Error fetching owner email:", err);
       }
     }
     if (isOwner) {

@@ -6,6 +6,7 @@ import CreateNewModal from "../../components/CreateNewModal/CreateNewModal";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../../components/Navbar/Navbar";
 import { useAuth } from "../../contexts/AuthContext";
+import Joyride from "react-joyride";
 
 export default function Library() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -15,12 +16,57 @@ export default function Library() {
   const [error, setError] = useState(null);
   const [filterType, setFilterType] = useState("all"); // all, mine, shared
   const [sortBy, setSortBy] = useState("lastEdited"); // lastEdited, title, lastCreated
+  const [runTutorial, setRunTutorial] = useState(false);
 
   const [projects, setProjects] = useState([
     { id: 0, title: "Create New", isCreate: true },
   ]);
 
   const [filteredProjects, setFilteredProjects] = useState(projects);
+
+  const getTutorialSteps = () => {
+    const steps = [
+      {
+        target: "body",
+        content:
+          "Welcome to your Library! Let's take a quick tour of the features.",
+        placement: "center",
+      },
+      {
+        target: ".create-thumbnail",
+        content: "Click here to create a new project.",
+      },
+    ];
+
+    const hasProjects = filteredProjects.length > 1;
+
+    if (hasProjects) {
+      steps.push({
+        target: ".project-thumbnail:not(:first-child)",
+        content: "Click on any project thumbnail to open and edit it.",
+      });
+
+      steps.push({
+        target: ".three-dots",
+        content: "Click the three dots to rename, share, or delete a project.",
+      });
+    }
+
+    steps.push(
+      {
+        target: ".filter-bar select:first-of-type",
+        content:
+          "Use this dropdown to filter between all projects, your projects, or projects shared with you.",
+      },
+      {
+        target: ".filter-bar select:last-of-type",
+        content:
+          "Sort your projects by last edited, date created, or alphabetically.",
+      }
+    );
+
+    return steps;
+  };
 
   useEffect(() => {
     const fetchProjects = async () => {
@@ -109,9 +155,53 @@ export default function Library() {
     );
   };
 
+  const handleHelpClick = () => {
+    setRunTutorial(true);
+  };
+
   return (
     <div>
-      <Navbar />
+      <Navbar onHelpClick={handleHelpClick} />
+      <Joyride
+        steps={getTutorialSteps()}
+        run={runTutorial}
+        continuous
+        showProgress
+        showSkipButton
+        locale={{
+          back: "Back",
+          close: "Close",
+          last: "Finish",
+          next: "Next",
+          skip: "Skip Tutorial",
+        }}
+        styles={{
+          options: {
+            primaryColor: "#7d3bf6ff",
+            zIndex: 10000,
+            backgroundColor: "#fff",
+            overlayColor: "rgba(0, 0, 0, 0.5)",
+            arrowColor: "#fff",
+            textColor: "#333",
+          },
+          tooltip: {
+            borderRadius: 12,
+          },
+          buttonNext: {
+            borderRadius: 8,
+          },
+          buttonBack: {
+            borderRadius: 8,
+            color: "#666",
+          },
+        }}
+        callback={(data) => {
+          const { status } = data;
+          if (status === "finished" || status === "skipped") {
+            setRunTutorial(false);
+          }
+        }}
+      />
       <div className="library-container">
         <h1>Library</h1>
         <div className="filter-bar">

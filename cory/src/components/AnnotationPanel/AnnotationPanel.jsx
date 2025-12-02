@@ -2,7 +2,7 @@ import { useState } from "react";
 import { FiChevronLeft } from "react-icons/fi";
 import "./AnnotationPanel.css";
 
-const AnnotationPanel = ({ children, headerText = "Panel" }) => {
+const AnnotationPanel = ({ children, headerText = "Panel", id }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const handleToggle = (e) => {
     e.stopPropagation();
@@ -16,6 +16,7 @@ const AnnotationPanel = ({ children, headerText = "Panel" }) => {
       onKeyDown={(e) => e.stopPropagation()}
       className={`annotation-panel ${isExpanded ? "expanded" : "collapsed"}`}
       onClick={(e) => e.stopPropagation()}
+      id={id}
     >
       <div
         className="panel-header"
