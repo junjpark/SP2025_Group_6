@@ -216,6 +216,7 @@ const ProjectView = () => {
           className="clip"
         >
         </div>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className="handle handle-left"
             style={{
@@ -224,6 +225,7 @@ const ProjectView = () => {
             }}
             onMouseDown={mouseDownOnHandle('left')}
           />
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
           <div
             className="handle handle-right"
             style={{
@@ -261,18 +263,18 @@ const ProjectView = () => {
   };
 
   const handleClick = (e) => {
-    const clipClicked = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX;
-    const clipX = clipClicked.x;
-    const clipWidth = clipClicked.width;
+    // const clipClicked = e.currentTarget.getBoundingClientRect();
+    // const mouseX = e.clientX;
+    // const clipX = clipClicked.x;
+    // const clipWidth = clipClicked.width;
     const clipId = parseInt(e.currentTarget.dataset.clipId, 10);
-    const clip = clips.get(clipId);
+    // const clip = clips.get(clipId);
     setCurrentClipId(clipId);
-    const clipStart = clip.start;
-    const clipEnd = clip.end;
-    // calculatePercent(clipStart, clipEnd, clipX, clipWidth, mouseX);
-    const width = clipClicked.width;
-    const relativeX = e.clientX - clipClicked.left; // Position within the element
+    // const clipStart = clip.start;
+    // const clipEnd = clip.end;
+    // // calculatePercent(clipStart, clipEnd, clipX, clipWidth, mouseX);
+    // const width = clipClicked.width;
+    // const relativeX = e.clientX - clipClicked.left; // Position within the element
   };
 
   const handleKeyDown = (e, clipId) => {
@@ -361,9 +363,9 @@ const ProjectView = () => {
         resizedClip = handleMoveRight(deltaPercent)
       } else if (isDragging.type === 'move') {
         //updates = handleMove(deltaX, containerWidth)
-        return prevBoxes
+        return
       } else {
-        return prevBoxes
+        return
       }
       addClip(resizedClip.start, resizedClip.end, newClips, clipId);
     }
@@ -379,12 +381,14 @@ const ProjectView = () => {
       window.removeEventListener('mousemove', handleMouseMoving)
       window.removeEventListener('mouseup', handleMouseUp)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging])
 
   const mouseDownOnHandle = (side) => (e) => {
     initializeDrag(side, e)
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mouseDownOnClip = (clipId) => (e) => {
     const activeClipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
     if (activeClipId === clipId && !e.target.closest('.handle')) {
