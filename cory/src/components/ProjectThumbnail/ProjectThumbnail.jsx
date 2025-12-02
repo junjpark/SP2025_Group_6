@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "./ProjectThumbnail.css";
 import snoopy from "../../snoopy-dancing.jpg";
 import { useAuth } from "../../contexts/AuthContext";
+import { FiEdit2 } from "react-icons/fi";
 
 export default function ProjectThumbnail({
   id,
@@ -20,6 +21,7 @@ export default function ProjectThumbnail({
   const [showMenu, setShowMenu] = useState(false);
   const [titleValue, setTitle] = useState(title);
   const [emailAddress, setEmailAddress] = useState("");
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
   const { user } = useAuth();
   const isOwner = user && owner === user.user_id ? true : false;
   const [ownerValue, setOwnerValue] = useState("");
@@ -158,7 +160,19 @@ export default function ProjectThumbnail({
     } catch (error) {
       alert("Email address not found or error sharing project.");
       console.error("Error sharing project:", id, error);
+    } finally {
+      setShowMenu(false);
     }
+  };
+
+  const handleSave = async () => {
+    if (emailAddress !== "") {
+      await handleShare();
+    }
+    if (titleValue !== title) {
+      await handleRenameProject();
+    }
+    setShowMenu(false);
   };
 
   const thumbnail = (
@@ -227,7 +241,48 @@ export default function ProjectThumbnail({
               }
             }}
           >
-            <h2>{titleValue}</h2>
+            <div className="title-row">
+              {isEditingTitle ? (
+                <input
+                  type="text"
+                  className="title-input"
+                  value={titleValue}
+                  onChange={(e) => setTitle(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleRenameProject();
+                    } else if (e.key === "Escape") {
+                      setIsEditingTitle(false);
+                      setTitle(title); // Reset to original title
+                    }
+                  }}
+                  onBlur={() => {
+                    if (titleValue !== title) {
+                      handleRenameProject();
+                    } else {
+                      setIsEditingTitle(false);
+                    }
+                  }}
+                  autoFocus
+                />
+              ) : (
+                <>
+                  <h2>{titleValue}</h2>
+                  {isOwner && (
+                    <button
+                      className="edit-title-btn"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsEditingTitle(true);
+                      }}
+                      aria-label="Edit title"
+                    >
+                      <FiEdit2 />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
             <p>Created: {createdValue}</p>
             <p>Owner: {ownerValue}</p>
             <p>Share Project:</p>
@@ -240,40 +295,35 @@ export default function ProjectThumbnail({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleShare();
-                  handleCloseMenu();
                 }
               }}
             />
-            {isOwner && (
-              <div>
-                <p>Rename Project:</p>
-                <input
-                  type="text"
-                  value={titleValue}
-                  onChange={(e) => {
-                    setTitle(e.target.value);
-                  }}
+            <div className="menu-buttons">
+              {isOwner && (
+                <button
+                  onClick={handleDeleteProject}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleRenameProject();
-                      handleCloseMenu();
+                    if (e.key === "d") {
+                      handleDeleteProject(e);
                     }
                   }}
-                />
-              </div>
-            )}
-            {isOwner && (
+                  id="delete-button"
+                >
+                  Delete Project
+                </button>
+              )}
               <button
-                onClick={handleDeleteProject}
+                onClick={handleSave}
                 onKeyDown={(e) => {
-                  if (e.key === "d") {
-                    handleDeleteProject(e);
+                  if (e.key === "s") {
+                    handleSave;
                   }
                 }}
+                id="save-button"
               >
-                Delete Project
+                Save
               </button>
-            )}
+            </div>
           </div>
         </div>
       )}
