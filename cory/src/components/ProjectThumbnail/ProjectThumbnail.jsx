@@ -7,6 +7,8 @@ export default function ProjectThumbnail({
   id,
   title,
   thumbnailEndpoint,
+  owner,
+  created,
   isCreate,
   onCreateClick,
   onDelete,
@@ -16,6 +18,9 @@ export default function ProjectThumbnail({
   const [imgSrc, setImgSrc] = useState(null);
   const [showMenu, setShowMenu] = useState(false);
   const [titleValue, setTitle] = useState(title);
+  const [emailAddress, setEmailAddress] = useState("");
+  const ownerValue = owner;
+  const createdValue = created ? new Date(created).toLocaleString() : "Unknown";
   useEffect(() => {
     let isMounted = true;
     let objectUrl = null;
@@ -112,46 +117,65 @@ export default function ProjectThumbnail({
     }
   };
 
+  const handleShare = async () => {
+    try {
+      const response = await fetch(`/api/projects/${id}/share`, {
+        method: "POST",
+        body: new URLSearchParams({ email: emailAddress }),
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      console.log("Project shared:", id);
+    } catch (error) {
+      console.error("Error sharing project:", id, error);
+    }
+  };
+
   const thumbnail = (
-    <button
-      className="project-thumbnail"
-      key={id}
-      onClick={handleClick}
-      aria-label={isCreate ? "Create new project" : `Open ${titleValue}`}
-      onKeyDown={(e) => {
-        if (e.key === "o") {
-          handleClick();
-        }
-      }}
-    >
-      {isCreate ? (
-        <div className="create-thumbnail">
-          <span className="plus-icon">+</span>
-        </div>
-      ) : (
-        <>
-          <img src={imgSrc} alt={titleValue} className="thumbnail-image" />
-        </>
-      )}
-      <div className="project-title-row">
-        <h3 className="project-title">{titleValue}</h3>
-        {!isCreate && (
-          <span
-            className="three-dots"
-            role="button"
-            onClick={handleDotsClick}
-            tabIndex={0}
-            aria-label="Project options"
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleDotsClick(e);
-              }
-            }}
-          >
-            &#8230;
-          </span>
+    <>
+      <button
+        className="project-thumbnail"
+        key={id}
+        onClick={handleClick}
+        aria-label={isCreate ? "Create new project" : `Open ${titleValue}`}
+        onKeyDown={(e) => {
+          if (e.key === "o") {
+            handleClick();
+          }
+        }}
+      >
+        {isCreate ? (
+          <div className="create-thumbnail">
+            <span className="plus-icon">+</span>
+          </div>
+        ) : (
+          <>
+            <img src={imgSrc} alt={titleValue} className="thumbnail-image" />
+          </>
         )}
-      </div>
+        <div className="project-title-row">
+          <h3 className="project-title">{titleValue}</h3>
+          {!isCreate && (
+            <span
+              className="three-dots"
+              role="button"
+              onClick={handleDotsClick}
+              tabIndex={0}
+              aria-label="Project options"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleDotsClick(e);
+                }
+              }}
+            >
+              &#8230;
+            </span>
+          )}
+        </div>
+      </button>
+
       {showMenu && (
         <div
           className="project-menu"
@@ -159,32 +183,39 @@ export default function ProjectThumbnail({
           role="button"
           tabIndex={0}
           onKeyDown={(e) => {
-            if (e.key === "e") {
+            if (e.key === "Escape") {
               handleCloseMenu();
             }
           }}
         >
           <div
             className="modal-content"
+            onClick={(e) => e.stopPropagation()}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
-              if (e.key === "e") {
+              if (e.key === "o") {
                 e.stopPropagation();
               }
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={handleDeleteProject}
+            <h2>{titleValue}</h2>
+            <p>Created: {createdValue}</p>
+            <p>Owner: {ownerValue}</p>
+            <p>Share Project:</p>
+            <input
+              type="text"
+              placeholder="e.g. alice@example.com, bob@example.com"
+              onChange={(e) => {
+                setEmailAddress(e.target.value);
+              }}
               onKeyDown={(e) => {
-                if (e.key === "d") {
-                  handleDeleteProject(e);
+                if (e.key === "Enter") {
+                  handleShare();
+                  handleCloseMenu();
                 }
               }}
-            >
-              Delete Project{" "}
-            </button>
+            />
             <p>Rename Project:</p>
             <input
               type="text"
@@ -195,13 +226,24 @@ export default function ProjectThumbnail({
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   handleRenameProject();
+                  handleCloseMenu();
                 }
               }}
             />
+            <button
+              onClick={handleDeleteProject}
+              onKeyDown={(e) => {
+                if (e.key === "d") {
+                  handleDeleteProject(e);
+                }
+              }}
+            >
+              Delete Project
+            </button>
           </div>
         </div>
       )}
-    </button>
+    </>
   );
   return thumbnail;
 }
