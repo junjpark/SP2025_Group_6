@@ -1,12 +1,19 @@
 .annotation-panel {
-  position: relative;
-  height: 100%;
+  position: fixed;           /* float over UI */
+  top: 8px;                  /* move to top-right */
+  right: 12px;
+  height: auto;
+  max-height: 60vh;
   display: flex;
-  flex-direction: row-reverse; /* Reverse so header is on left */
-  background: rgba(99, 102, 241, 0.8);
-  transition: width 0.3s ease;
+  flex-direction: row-reverse; /* header on the left edge */
+  background: rgba(0, 0, 0, 0.88); /* black panel */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  transition: width 0.25s ease, max-height 0.25s ease, opacity 0.2s ease;
   overflow: hidden;
-  margin-left: auto;
+  z-index: 1004;
+  margin-left: 0;
 }
 
 .annotation-panel.collapsed {
@@ -26,14 +33,14 @@
   justify-content: center;
   gap: 8px;
   cursor: pointer;
-  background: rgba(68, 70, 191, 0.8);
+  background: transparent;
   user-select: none;
   padding: 10px 0;
-  border-right: 1px solid #6d28d9;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .panel-header:hover {
-  background: rgba(68, 70, 191, 0.5);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .panel-toggle-icon {
@@ -49,8 +56,8 @@
 
 .panel-content {
   flex: 1;
-  padding: 20px;
-  overflow: hidden;
+  padding: 16px;
+  overflow: auto;
   min-width: 0;
   color: white;
   opacity: 0;
@@ -65,7 +72,7 @@
   width: 100%;
   min-height: 120px;
   padding: 12px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #000; /* black input */
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 8px;
   color: white;
@@ -77,9 +84,9 @@
 
 .panel-content textarea:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.15);
+  background: #000;
   border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12);
 }
 
 .panel-content textarea::placeholder {

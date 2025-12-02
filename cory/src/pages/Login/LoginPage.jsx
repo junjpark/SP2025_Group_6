@@ -21,7 +21,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (user && !loading) {
       console.log('User already authenticated, redirecting to dashboard');
-      navigate("/");
+      navigate("/app");
     }
   }, [user, loading, navigate]);
 

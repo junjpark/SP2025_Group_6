@@ -36,8 +36,13 @@ export default function LandingPage() {
           </div>
           <div className="hero-visual" aria-hidden="true">
             <div className="visual-card">
-              <div className="visual-overlay" />
-              <div className="visual-strip" />
+              <img
+                src="/../../public/images/sample-proj-view.png"
+                alt="Sample project view"
+                className="hero-screenshot"
+              />
+         
+             
             </div>
           </div>
         </section>
