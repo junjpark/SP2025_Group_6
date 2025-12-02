@@ -259,11 +259,11 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
                       { x: refEnd.x, y: refEnd.y }
                     );
 
-                    diff = angleDifference(liveAngle, refAngle);
-                    color = getColorForAngleDiff(diff);
+                    const diffCalc = angleDifference(liveAngle, refAngle);
+                    color = getColorForAngleDiff(diffCalc);
                     hasReference = true;
 
-                    totalDiff += diff;
+                    totalDiff += diffCalc;
                     validConnections++;
 
                     // Store for debugging
@@ -271,7 +271,7 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
                       segment: `${i}-${j}`,
                       liveAngle: liveAngle.toFixed(1),
                       refAngle: refAngle.toFixed(1),
-                      diff: diff.toFixed(1),
+                      diff: diffCalc.toFixed(1),
                       color: `rgb(${color.r},${color.g},${color.b})`
                     });
                   }
@@ -285,44 +285,15 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
               ctx.moveTo(start.x * canvas.width, start.y * canvas.height);
               ctx.lineTo(end.x * canvas.width, end.y * canvas.height);
               ctx.stroke();
-
-              // Debug: Draw small circles at endpoints with text showing segment number
-              if (hasReference && Math.random() < 0.1) { // Only log occasionally
-                ctx.fillStyle = 'white';
-                ctx.font = '10px Arial';
-                const midX = (start.x + end.x) / 2 * canvas.width;
-                const midY = (start.y + end.y) / 2 * canvas.height;
-                ctx.fillText(`${diff.toFixed(0)}°`, midX, midY);
-              }
             }
           }
         });
-
-        // Log segment details occasionally for debugging
-        if (validConnections > 0 && Math.random() < 0.02) {
-          console.log('[PoseDetection] Segment comparison details:');
-          console.table(segmentDetails.slice(0, 5)); // Show first 5 segments
-          console.log(`Total segments compared: ${validConnections}/${connections.length}`);
-        }
 
         // Calculate score (0-100)
         let score = 0;
         if (validConnections > 0) {
           const avgDiff = totalDiff / validConnections;
-          // Convert average difference to score
-          // 0° diff = 100, 15° diff = 83, 30° diff = 67, 45° diff = 50, 90° diff = 0
           score = Math.max(0, Math.min(100, 100 - (avgDiff / 90 * 100)));
-
-          // Log score details
-          if (Math.random() < 0.05) { // Log more frequently
-            console.log(`[PoseDetection] ⭐ SCORE: ${score.toFixed(1)}/100 | Avg diff: ${avgDiff.toFixed(1)}° | Valid segments: ${validConnections}/${connections.length}`);
-            console.log(`[PoseDetection] Has reference: ${!!refPose}, Has landmarks: ${!!refPose?.poseLandmarks}`);
-          }
-        } else {
-          // No reference to compare against
-          if (refPose && Math.random() < 0.05) {
-            console.log('[PoseDetection] No valid connections for comparison');
-          }
         }
         setComparisonScore(Math.round(score));
 
@@ -331,9 +302,7 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
           if (landmark.visibility > 0.5) {
             const x = landmark.x * canvas.width;
             const y = landmark.y * canvas.height;
-
-            // Solid purple dot
-            ctx.fillStyle = '#9333EA'; // Purple color
+            ctx.fillStyle = '#9333EA';
             ctx.beginPath();
             ctx.arc(x, y, 6, 0, 2 * Math.PI);
             ctx.fill();
@@ -387,12 +356,9 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
 
     let frameCount = 0;
     const processFrame = async () => {
-      // Validate video is ready and has valid dimensions
       if (video.readyState === video.HAVE_ENOUGH_DATA && 
           video.videoWidth > 0 && 
           video.videoHeight > 0) {
-        
-        // Ensure canvas matches video size
         const canvas = canvasRef.current;
         if (canvas && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
           canvas.width = video.videoWidth;
@@ -400,25 +366,20 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
           console.log('[PoseDetection] Canvas resized during processing:', canvas.width, 'x', canvas.height);
         }
 
-        // Only process pose if initialized and no previous errors
         if (isInitialized && poseRef.current && !hasErroredRef.current) {
           try {
-            // Additional check: ensure pose is ready to receive frames
             if (typeof poseRef.current.send === 'function') {
               await poseRef.current.send({ image: video });
-
-            // Log every 300 frames (about once per 5 seconds at 60fps) - reduced logging
-            if (frameCount % 300 === 0) {
-              console.log('[PoseDetection] Processed', frameCount, 'frames (webcam is live)');
+              if (frameCount % 300 === 0) {
+                console.log('[PoseDetection] Processed', frameCount, 'frames (webcam is live)');
+              }
             }
           } catch (error) {
-            // Mark that an error occurred to stop further processing attempts
             hasErroredRef.current = true;
             console.error('[PoseDetection] Fatal error processing frame, stopping pose detection:', error);
             setIsInitialized(false);
           }
         } else {
-          // If pose detection not ready, just draw the video to canvas
           if (canvas) {
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -461,4 +422,5 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
     comparisonScore
   };
 };
+
 

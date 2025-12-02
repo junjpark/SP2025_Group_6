@@ -3,7 +3,7 @@ import CustomVideoPlayer from '../../CustomVideoPlayer';
 import WebcamCanvas from '../WebcamCanvas';
 import PoseScoreDisplay from '../PoseScoreDisplay';
 import { usePoseComparison } from '../hooks/usePoseComparison';
-import { useMediaPipePose } from '../hooks/useMediaPipePose';
+import { useMediaPipePose } from '../hooks/useMediaPipePose.jsx';
 import { useReferencePoseLandmarks } from '../hooks/useReferencePoseLandmarks';
 
 /**
