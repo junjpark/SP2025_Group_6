@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import "./LandingPage.css";
-import { FiScissors, FiRepeat, FiEdit3, FiLayers, FiShield, FiEye } from "react-icons/fi";
+import { FiScissors, FiRepeat, FiEdit3, FiLayers, FiEye, FiActivity } from "react-icons/fi";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -96,11 +96,12 @@ export default function LandingPage() {
           </article>
           <article className="feature-card">
             <div className="feature-head">
-              <div className="feature-icon"><FiShield /></div>
-              <h3 className="feature-title">Secure sign‑in</h3>
+              <div className="feature-icon"><FiActivity /></div>
+              <h3 className="feature-title">Similarity scoring</h3>
             </div>
             <p className="feature-text">
-              Email or Google with server‑side sessions and HTTP‑only cookies.
+              Get real‑time accuracy scores as you practice. See how closely your
+              movement matches the reference, frame by frame.
             </p>
           </article>
 
