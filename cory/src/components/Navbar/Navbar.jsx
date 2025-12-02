@@ -15,6 +15,7 @@ export default function NavBar({ onHelpClick }) {
       <header className="dashboard-header">
         <h1 className="dashboard-title">
           <Link to="/" className="brand-link">
+          <img src="/../../../public/images/cory-logo.png" alt="Cory" className="logo" width="30" height="23"/>
             cory
           </Link>
         </h1>

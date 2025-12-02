@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { useMediaPipePose } from './hooks/useMediaPipePose';
+import { useMediaPipePose } from './hooks/useMediaPipePose.jsx';
 
 /**
  * WebcamCanvas component that displays webcam feed with pose landmarks

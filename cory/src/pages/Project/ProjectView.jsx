@@ -28,6 +28,7 @@ const ProjectView = () => {
   const dragInitEnd = useRef(0);
   const dragInitX = useRef(0);
   const dragInitWidth = useRef(0);
+  const dragInitPercent = useRef(0);
   const [isDragging, setIsDragging] = useState(null); // { clipId, type: 'left'|'right'|'move' }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -87,7 +88,11 @@ const ProjectView = () => {
     {
       target: "#projectViewFooter",
       content:
-        "Once you've added clips, you can resize them by clicking near the edges.",
+        "Once you've added clips, you can move and resize them by double clicking on the clip.",
+    },
+    {
+      target: "#mirrorHolder",
+      content: "Click here to mirror the video preview.",
     },
     {
       target: "#deleteHolder",
@@ -345,6 +350,7 @@ const ProjectView = () => {
             onDoubleClick={() => {
               handleResize(id);
             }}
+            onMouseDown={mouseDownOnClip(id)}
             className="clip"
           ></div>
           {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
@@ -386,7 +392,8 @@ const ProjectView = () => {
           onKeyDown={(e) => handleKeyDown(e, id)}
           onDoubleClick={() => handleResize(id)}
           className="clip"
-        ></div>
+        >
+        </div>
       </>
     );
   };
@@ -500,8 +507,8 @@ const ProjectView = () => {
         let deltaPercent = newPercent - end;
         resizedClip = handleMoveRight(deltaPercent);
       } else if (isDragging.type === "move") {
-        //updates = handleMove(deltaX, containerWidth)
-        return;
+        let deltaPercent = newPercent - dragInitPercent.current;
+        resizedClip = handleDrag(deltaPercent)
       } else {
         return;
       }
@@ -526,7 +533,6 @@ const ProjectView = () => {
     initializeDrag(side, e);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mouseDownOnClip = (clipId) => (e) => {
     const activeClipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
     if (activeClipId === clipId && !e.target.closest(".handle")) {
@@ -551,6 +557,7 @@ const ProjectView = () => {
     // console.log(target);
     dragInitWidth.current = target.getBoundingClientRect().width;
     dragInitX.current = target.getBoundingClientRect().left;
+    dragInitPercent.current = calculatePercent(clip.start, clip.end, dragInitX.current, dragInitWidth.current, e.clientX)
   };
 
   const handleMoveLeft = (deltaPercent) => {
@@ -583,6 +590,23 @@ const ProjectView = () => {
     // console.log("desiredNewEnd", desiredNewEnd)
     return { start: clip.start, end: actualNewEnd };
   };
+
+  const handleDrag = (deltaPercent) => {
+    const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
+    const clip = clips.get(clipId);
+    if (!clip) {
+      console.warn("drag failed");
+      return;
+    }
+    if(clip.start + deltaPercent < 0){
+      console.log("pushing to the left")
+      return { start: 0, end: clip.end - clip.start}
+    } else if(clip.end + deltaPercent > 100){
+      actualDelta = 100 - clip.end;
+      return {start: clip.start + actualDelta, end: 100}
+    }
+    return {start: clip.start + deltaPercent, end: clip.end + deltaPercent}
+  }
 
   const moveLeft = () => {
     // console.log(clips)

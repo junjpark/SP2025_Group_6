@@ -11,7 +11,7 @@
  * - Public and private routes
  */
 
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import LoginPage from "./pages/Login/LoginPage";
@@ -20,6 +20,8 @@ import Library from "./pages/Library/Library";
 import ProjectView from "./pages/Project/ProjectView";
 import ForgotPassword from "./pages/ForgotPassword/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword/ResetPassword";
+import LandingPage from "./pages/Landing/LandingPage";
+import NavBar from "./components/Navbar/Navbar";
 
 /**
  * Main App Component
@@ -33,6 +35,7 @@ export default function App() {
     <AuthProvider>
       {/* Set up React Router for navigation */}
       <Router>
+        <ConditionalNav />
         <Routes>
           {/* Public Routes - accessible without authentication */}
 
@@ -42,11 +45,13 @@ export default function App() {
           {/* Signup page - redirects to login after successful registration */}
           <Route path="/signup" element={<SignupPage />} />
 
-          {/* Protected Routes - require authentication */}
+          {/* Public landing page (default for logged out users) */}
+          <Route path="/" element={<LandingPage />} />
 
-          {/* Dashboard - main application interface */}
+          {/* Protected Routes - require authentication */}
+          {/* Library (app home) */}
           <Route
-            path="/"
+            path="/app"
             element={
               <ProtectedRoute>
                 <Library />
@@ -66,17 +71,17 @@ export default function App() {
 
           <Route path="/reset-password" element={<ResetPassword />} />
 
-          {/* Catch-all route - redirect to library for any unknown paths */}
-          <Route
-            path="*"
-            element={
-              <ProtectedRoute>
-                <Library />
-              </ProtectedRoute>
-            }
-          />
+          {/* Catch-all route - send to landing */}
+          <Route path="*" element={<LandingPage />} />
         </Routes>
       </Router>
     </AuthProvider>
   );
+}
+
+function ConditionalNav() {
+  const location = useLocation();
+  const hideOnProjectView = location.pathname.startsWith("/projects/");
+  if (hideOnProjectView) return null;
+  return <NavBar />;
 }

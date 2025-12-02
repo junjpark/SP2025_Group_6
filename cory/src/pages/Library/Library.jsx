@@ -161,7 +161,7 @@ export default function Library() {
 
   return (
     <div>
-      <Navbar onHelpClick={handleHelpClick} />
+      
       <Joyride
         steps={getTutorialSteps()}
         run={runTutorial}
