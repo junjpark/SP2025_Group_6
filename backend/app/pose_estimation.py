@@ -113,6 +113,100 @@ def _process_frame_batch(
     return results
 
 
+def _process_video_chunk_sequential(
+    video_path: str,
+    frame_indices: List[int],
+    video_sample_rate: int = 1,
+    model_complexity: int = 1
+) -> List[Dict]:
+    """
+    Process a contiguous chunk of video frames sequentially.
+    This is more efficient than seeking for each frame as it processes
+    video sequentially without constant seeking.
+    
+    Args:
+        video_path: Path to the video file
+        frame_indices: List of frame indices to process (should be contiguous)
+        video_sample_rate: Sample rate for frames
+        model_complexity: MediaPipe model complexity (0=lite, 1=full, 2=heavy)
+    
+    Returns:
+        List of landmark entries for the processed frames
+    """
+    results = []
+    cap = cv2.VideoCapture(video_path)
+
+    if not cap.isOpened():
+        logger.error("Failed to open video: %s", video_path)
+        return results
+
+    try:
+        if not frame_indices:
+            return results
+
+        # Get the range of frames to process
+        start_frame = frame_indices[0]
+        end_frame = frame_indices[-1]
+        frame_indices_set = set(frame_indices)
+
+        # Seek to start position
+        cap.set(cv2.CAP_PROP_POS_FRAMES, start_frame)
+        
+        mp_pose = mp.solutions.pose
+        with mp_pose.Pose(
+            static_image_mode=False,
+            model_complexity=model_complexity,
+            enable_segmentation=False,
+            min_detection_confidence=0.5,
+            min_tracking_confidence=0.5
+        ) as pose:
+            current_frame = start_frame
+            
+            # Read frames sequentially from start to end
+            while current_frame <= end_frame:
+                ret, frame = cap.read()
+                
+                if not ret:
+                    break
+
+                # Only process frames that are in our list and match sample rate
+                if current_frame in frame_indices_set and current_frame % video_sample_rate == 0:
+                    # Process frame
+                    rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                    res = pose.process(rgb_frame)
+
+                    # Get timestamp
+                    timestamp_ms = int(cap.get(cv2.CAP_PROP_POS_MSEC))
+
+                    entry: Dict[str, Optional[object]] = {
+                        "frame": current_frame,
+                        "time": timestamp_ms / 1000.0,
+                        "landmarks": None
+                    }
+
+                    if res.pose_landmarks:
+                        entry["landmarks"] = [
+                            {
+                                "x": lm.x,
+                                "y": lm.y,
+                                "z": lm.z,
+                                "visibility": getattr(lm, 'visibility', None)
+                            }
+                            for lm in res.pose_landmarks.landmark
+                        ]
+
+                    results.append(entry)
+                
+                current_frame += 1
+
+    except Exception as exc:
+        logger.exception("Error processing video chunk: %s", exc)
+    finally:
+        cap.release()
+
+    return results
+
+
 def process_video_for_landmarks(
     video_path: str,
     video_sample_rate: int = 1,
@@ -199,12 +293,12 @@ def _process_video_parallel(
 ) -> List[Dict]:
     """
     Process video frames in parallel using multiprocessing.
-    Splits the video into chunks and processes each chunk in a separate process.
+    Splits the video into approximately 12 equal-length batches and processes each in parallel.
 
     Args:
         video_path: Path to the video file
         video_sample_rate: Sample rate for frames
-        num_workers: Number of parallel workers
+        num_workers: Number of parallel workers (defaults to 12)
         model_complexity: MediaPipe model complexity
 
     Returns:
@@ -213,31 +307,48 @@ def _process_video_parallel(
     # Get video info
     cap = cv2.VideoCapture(video_path)
     total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    fps = cap.get(cv2.CAP_PROP_FPS)
     cap.release()
 
+    # Default to 12 workers for optimal video chunk processing
     if num_workers is None:
-        num_workers = max(1, mp_sys.cpu_count() - 1)
+        num_workers = 12
+    
+    # Ensure we don't create more workers than needed
+    num_workers = min(num_workers, max(1, mp_sys.cpu_count() - 1))
+    
+    # Also ensure we don't have more workers than frames to process
+    frames_to_process = (total_frames + video_sample_rate - 1) // video_sample_rate
+    num_workers = min(num_workers, max(1, frames_to_process))
 
-    # Split frames into chunks for parallel processing
-    frames_to_process = list(range(0, total_frames, video_sample_rate))
-    chunk_size = max(1, len(frames_to_process) // num_workers)
-
-    frame_chunks = [
-        frames_to_process[i:i + chunk_size]
-        for i in range(0, len(frames_to_process), chunk_size)
-    ]
+    # Split video into equal-length chunks (contiguous frame ranges)
+    frames_per_chunk = max(1, total_frames // num_workers)
+    
+    # Create contiguous frame ranges for each chunk - one chunk per worker
+    frame_chunks = []
+    for i in range(num_workers):
+        start_frame = i * frames_per_chunk
+        # Last chunk gets any remaining frames
+        end_frame = total_frames if i == num_workers - 1 else (i + 1) * frames_per_chunk
+        
+        if start_frame < total_frames:
+            # Include all frames in range (sample rate filtering happens in processing)
+            chunk_frames = list(range(start_frame, end_frame))
+            frame_chunks.append(chunk_frames)
 
     logger.info(
-        "Processing %d frames in %d chunks with %d workers",
-        len(frames_to_process), len(frame_chunks), num_workers
+        "Processing video in %d chunks (%.1f seconds per chunk) with %d workers",
+        len(frame_chunks), frames_per_chunk / fps if fps > 0 else 0, len(frame_chunks)
     )
+    logger.info("Total frames: %d, Frames to process (before sampling): %d", 
+                total_frames, sum(len(chunk) for chunk in frame_chunks))
 
     # Process chunks in parallel
     all_results = []
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+    with ProcessPoolExecutor(max_workers=len(frame_chunks)) as executor:
         futures = [
             executor.submit(
-                _process_frame_batch,
+                _process_video_chunk_sequential,
                 video_path,
                 chunk,
                 video_sample_rate,
@@ -246,15 +357,20 @@ def _process_video_parallel(
             for chunk in frame_chunks
         ]
 
+        # Collect results as they complete
+        completed = 0
         for future in as_completed(futures):
             try:
                 chunk_results = future.result()
                 all_results.extend(chunk_results)
+                completed += 1
+                logger.info("Chunk %d/%d completed, %d frames processed", 
+                           completed, len(frame_chunks), len(chunk_results))
             except Exception as exc:
                 logger.exception("Error processing frame chunk: %s", exc)
                 raise
 
-    # Sort results by frame index
+    # Sort results by frame index to maintain correct order
     all_results.sort(key=lambda x: x['frame'])
 
     logger.info("Parallel processing finished, total results: %d", len(all_results))

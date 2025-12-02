@@ -1,10 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
 import CustomVideoPlayer from '../../CustomVideoPlayer';
+import WebcamCanvas from '../WebcamCanvas';
 
 const PipView = ({
   videoPlayerRef,
   attachWebcamMain,
   attachWebcamPip,
+  webcamStream,
   isSwitched,
   isWebcamActive,
   videoUrl,
@@ -107,11 +109,9 @@ const PipView = ({
         {isSwitched ? (
           // Webcam as main video
           <div className="webcam-container">
-            <video
-              ref={attachWebcamMain}
-              autoPlay
-              muted
-              playsInline
+            <WebcamCanvas
+              webcamStream={webcamStream}
+              isActive={true}
               className="webcam-video"
             />
           </div>
@@ -144,11 +144,9 @@ const PipView = ({
           ) : (
             // Webcam as PIP
             <div className="webcam-pip-container">
-              <video
-                ref={attachWebcamPip}
-                autoPlay
-                muted
-                playsInline
+              <WebcamCanvas
+                webcamStream={webcamStream}
+                isActive={true}
                 className="webcam-pip-video"
               />
             </div>

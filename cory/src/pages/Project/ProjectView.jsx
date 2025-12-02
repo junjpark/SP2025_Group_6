@@ -757,6 +757,7 @@ const ProjectView = () => {
       {isLearningMode && (
         <LearningMode
           videoUrl={videoUrl}
+          projectId={parseInt(projectId, 10)}
           startTime={getCurrentStartClipTimeStamp()}
           endTime={getCurrentEndClipTimeStamp()}
           onExit={exitLearningMode}
