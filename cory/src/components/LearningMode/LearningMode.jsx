@@ -18,12 +18,14 @@ import './LearningMode.css';
 /**
  * LearningMode
  * @param {string} videoUrl - URL blob for the dance video to practice with
+ * @param {number} projectId - The project ID for fetching landmarks
  * @param {number} startTime - clip start (seconds)
  * @param {number} endTime - clip end (seconds)
  * @param {() => void} onExit - callback when the user exits learning mode
  */
 const LearningMode = ({
   videoUrl,
+  projectId,
   startTime,
   endTime,
   onExit
@@ -38,6 +40,7 @@ const LearningMode = ({
     webcamMainRef,
     webcamPipRef,
     isWebcamActive,
+    webcamStream,
     attachWebcamMain,
     attachWebcamPip,
     webcamAspectRatio
@@ -67,7 +70,9 @@ const LearningMode = ({
       attachWebcamPip,
       isSwitched,
       isWebcamActive,
+      webcamStream,
       videoUrl,
+      projectId,
       startTime,
       endTime,
       webcamAspectRatio

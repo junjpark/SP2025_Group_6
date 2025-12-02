@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiScissors, FiTrash2 } from "react-icons/fi";
+import Joyride from "react-joyride";
 import { GoMirror } from "react-icons/go";
 
 let nextClipId = 3;
@@ -17,10 +18,11 @@ const ProjectView = () => {
   const MIN_CLIP_SIZE = 2;
   const [newClipStatus, setNewClipStatus] = useState(0);
   const newClipRef = useRef(null);
-  const [newClipObj, setNewClipObj] = useState({'start': 0, 'end': 100});
+  const [newClipObj, setNewClipObj] = useState({ start: 0, end: 100 });
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [annotationText, setAnnotationText] = useState("");
+  const [runTutorial, setRunTutorial] = useState(false);
 
   const dragInitStart = useRef(0);
   const dragInitEnd = useRef(0);
@@ -42,9 +44,7 @@ const ProjectView = () => {
   //time stamps are of the form [a,b)
 
   const [clips, setClips] = useState(
-    new Map([
-      [0, { row: 0, start: 0, end: 100 }]
-    ])
+    new Map([[0, { row: 0, start: 0, end: 100 }]])
   );
 
   const [resizing, setResizing] = useState(false);
@@ -58,6 +58,52 @@ const ProjectView = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuth(); //this user object tells us what is going on
+
+  const tutorialSteps = [
+    {
+      target: "body",
+      content:
+        "Welcome to the Project Editor! Let's learn how to use the tools.",
+      placement: "center",
+    },
+    {
+      target: "#backToLibraryBtn",
+      content: "Click here to return to your Library.",
+    },
+    {
+      target: "#projectViewVideoPlayer",
+      content:
+        "This is your video preview. It will show the selected clip or full video.",
+    },
+    {
+      target: "#scissorsHolder",
+      content:
+        "Click the scissors to create a new clip. Use arrow keys to adjust the clip boundaries.",
+    },
+    {
+      target: "#projectViewFooter",
+      content:
+        "This timeline shows your video and clips. Click clips to select them.",
+    },
+    {
+      target: "#projectViewFooter",
+      content:
+        "Once you've added clips, you can resize them by clicking near the edges.",
+    },
+    {
+      target: "#deleteHolder",
+      content: "Select a clip and click here to delete it.",
+    },
+    {
+      target: "#annotationPanel",
+      content:
+        "Add notes about your selected clip here. Your annotations are saved automatically.",
+    },
+    {
+      target: "#learningModeBtn",
+      content: "Enter Learning Mode to practice along with your webcam!",
+    },
+  ];
 
   /**
    * This handles when a user changes an annotation
@@ -80,6 +126,7 @@ const ProjectView = () => {
         throw new Error(`Server returned ${response.status}`);
       }
       console.log("Annotation created/updated:", timestamp, newMessage);
+      updateTimeLastEdited();
     } catch (error) {
       console.error("Error creating/updating annotation:", timestamp, error);
     }
@@ -91,7 +138,6 @@ const ProjectView = () => {
         "/api/projects/" + projectId + "/annotations?timestamp=" + timestamp;
       const response = await fetch(url, {
         method: "GET",
-        credentials: "include",
       });
 
       if (!response.ok) {
@@ -148,11 +194,96 @@ const ProjectView = () => {
     };
   }, [videoUrl]);
 
+  const handleHelpClick = () => {
+    setRunTutorial(true);
+  };
+
+  const loadClipsFromDB = async () => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}/clips`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to fetch clips: ${response.status}`);
+      }
+      const data = await response.json();
+      const loadedClips = new Map();
+      loadedClips.set(0, { row: 0, start: 0, end: 100 }); // main clip
+
+      if (data.clipping_timestamps && Array.isArray(data.clipping_timestamps)) {
+        data.clipping_timestamps.forEach((clip) => {
+          loadedClips.set(clip.id, {
+            row: clip.row,
+            start: clip.start,
+            end: clip.end,
+          });
+          if (clip.id >= nextClipId) {
+            nextClipId = clip.id + 1;
+          }
+        });
+      }
+      setClips(loadedClips);
+      console.log("Clips loaded from DB:", loadedClips);
+    } catch (error) {
+      console.error("Error loading clips from DB:", error);
+    }
+  };
+
+  const saveClipsToDB = async (clipsToSave) => {
+    try {
+      const clipArray = Array.from(clipsToSave.entries())
+        .filter(([id]) => id !== 0) // Exclude main clip
+        .map(([id, clip]) => ({
+          id: id,
+          row: clip.row,
+          start: clip.start,
+          end: clip.end,
+        }));
+
+      const response = await fetch(`/api/projects/${projectId}/clips`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ clipping_timestamps: clipArray }),
+      });
+      if (!response.ok) {
+        throw new Error(`Failed to save clips: ${response.status}`);
+      }
+      // console.log("Clips saved to DB:", clipArray);
+      updateTimeLastEdited();
+      return true;
+    } catch (error) {
+      console.error("Error saving clips to DB:", error);
+      return false;
+    }
+  };
+
+  const updateTimeLastEdited = async () => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/update-last-edited`,
+        {
+          method: "POST",
+          credentials: "include",
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Server returned ${response.status}`);
+      }
+      // console.log("Project timestamp updated:", projectId);
+    } catch (error) {
+      console.error("Error updating project timestamp:", projectId, error);
+    }
+  };
+
   const getCurrentStartClipTimeStamp = () => {
-    if(newClipStatus === 1){
-        return calculateTimeStamp(newClipObj.start || 0);
-    } else if(newClipStatus === 2){
-        return calculateTimeStamp(newClipObj.end || videoLength);
+    if (newClipStatus === 1) {
+      return calculateTimeStamp(newClipObj.start || 0);
+    } else if (newClipStatus === 2) {
+      return calculateTimeStamp(newClipObj.end || videoLength);
     }
     if (currentClipId === undefined) {
       return 0;
@@ -165,8 +296,8 @@ const ProjectView = () => {
   };
 
   const getCurrentEndClipTimeStamp = () => {
-    if(newClipStatus !== 0){
-        return videoLength;
+    if (newClipStatus !== 0) {
+      return videoLength;
     }
     if (currentClipId === undefined) {
       return videoLength;
@@ -195,7 +326,7 @@ const ProjectView = () => {
     const width = (clip.end - clip.start) * (19 / 20);
     const left = clip.start * (19 / 20) + 2.5;
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    if(id == currentClipBeingDraggedId.charAt(0)){
+    if (id == currentClipBeingDraggedId.charAt(0)) {
       return (
         <>
           <div
@@ -312,8 +443,7 @@ const ProjectView = () => {
     }
   };
 
-  function addClip(start, end, map, clipId) {
-    console.log(start, end)
+  async function addClip(start, end, map, clipId) {
     const targetMap = map || clips; //this just allows us to pass an arbitrary map if desired
     let clipEntries = [...targetMap.entries()];
     outerLoop: for (let i = 1; i < MAX_ROW; i++) {
@@ -333,22 +463,32 @@ const ProjectView = () => {
         //console.log(newClips)
       }
       setClips(newClips);
+      await saveClipsToDB(newClips);
       return;
     }
     return null;
   }
 
   useEffect(() => {
-    if(!isDragging) return
+    if (!isDragging) return;
     const handleMouseMoving = (e) => {
+      
+      const newPercent = calculatePercent(
+        dragInitStart.current,
+        dragInitEnd.current,
+        dragInitX.current,
+        dragInitWidth.current,
+        e.clientX
+      );
       console.table({
         dragInitStart: dragInitStart.current,
         dragInitEnd: dragInitEnd.current,
         dragInitX: dragInitX.current,
         dragInitWidth: dragInitWidth.current,
-        clientX: e.clientX
+        clientX: e.clientX,
+        newPercent: newPercent,
       });
-      const newPercent = calculatePercent(dragInitStart.current, dragInitEnd.current, dragInitX.current, dragInitWidth.current, e.clientX)
+      // console.log("new percent", newPercent)
       const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
       const oldClip = clips.get(clipId);
       let newClips = new Map(clips);
@@ -366,53 +506,51 @@ const ProjectView = () => {
         let deltaPercent = newPercent - dragInitPercent.current;
         resizedClip = handleDrag(deltaPercent)
       } else {
-        return
+        return;
       }
       addClip(resizedClip.start, resizedClip.end, newClips, clipId);
-    }
-  
-    const handleMouseUp = () => {
-      setIsDragging(null)
-    }
+    };
 
-    window.addEventListener('mousemove', handleMouseMoving)
-    window.addEventListener('mouseup', handleMouseUp)
+    const handleMouseUp = () => {
+      setIsDragging(null);
+    };
+
+    window.addEventListener("mousemove", handleMouseMoving);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMoving)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
+      window.removeEventListener("mousemove", handleMouseMoving);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging])
+  }, [isDragging]);
 
   const mouseDownOnHandle = (side) => (e) => {
-    initializeDrag(side, e)
-  }
+    initializeDrag(side, e);
+  };
 
   const mouseDownOnClip = (clipId) => (e) => {
     const activeClipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    if (activeClipId === clipId && !e.target.closest('.handle')) {
-      initializeDrag('move', e)
+    if (activeClipId === clipId && !e.target.closest(".handle")) {
+      initializeDrag("move", e);
     }
-  }
+  };
 
   const initializeDrag = (type, e) => {
     e.preventDefault();
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    const clip = clips.get(clipId)
-    if (!clip) return
-    setIsDragging({ clipId, type })
-    dragInitX.current = e.clientX
-    dragInitStart.current = clip.start
-    dragInitEnd.current = clip.end
-    let target = e.currentTarget
-    if(type === 'left'){
-      target = target.previousElementSibling
+    const clip = clips.get(clipId);
+    if (!clip) return;
+    setIsDragging({ clipId, type });
+    dragInitStart.current = clip.start;
+    dragInitEnd.current = clip.end;
+    let target = e.currentTarget;
+    if (type === "left") {
+      target = target.previousElementSibling;
+    } else if (type === "right") {
+      target = target.previousElementSibling.previousElementSibling;
     }
-    else if(type === 'right'){
-      target = target.previousElementSibling.previousElementSibling
-    }
-    console.log(target)
+    // console.log(target);
     dragInitWidth.current = target.getBoundingClientRect().width;
     dragInitX.current = target.getBoundingClientRect().left;
     dragInitPercent.current = calculatePercent(clip.start, clip.end, dragInitX.current, dragInitWidth.current, e.clientX)
@@ -420,27 +558,34 @@ const ProjectView = () => {
 
   const handleMoveLeft = (deltaPercent) => {
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    const clip = clips.get(clipId)
-    if (!clip){
-      console.warn("moveLeft failed")
-      return
+    const clip = clips.get(clipId);
+    if (!clip) {
+      console.warn("moveLeft failed");
+      return;
     }
-    let desiredNewStart = clip.start + deltaPercent
-    const actualNewStart = Math.min(Math.max(0, desiredNewStart), clip.end - MIN_CLIP_SIZE)
-    return {'start': actualNewStart, 'end': clip.end}
-  }
+    let desiredNewStart = clip.start + deltaPercent;
+    const actualNewStart = Math.min(
+      Math.max(0, desiredNewStart),
+      clip.end - MIN_CLIP_SIZE
+    );
+    return { start: actualNewStart, end: clip.end };
+  };
 
   const handleMoveRight = (deltaPercent) => {
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    const clip = clips.get(clipId)
-    if (!clip){
-      console.warn("moveRight failed")
-      return
-    } 
-    let desiredNewEnd = clip.end + deltaPercent
-    const actualNewEnd = Math.max(Math.min(100, desiredNewEnd), clip.start + MIN_CLIP_SIZE)
-    return {'start': clip.start, 'end': actualNewEnd}
-  }
+    const clip = clips.get(clipId);
+    if (!clip) {
+      console.warn("moveRight failed");
+      return;
+    }
+    let desiredNewEnd = clip.end + deltaPercent;
+    const actualNewEnd = Math.max(
+      Math.min(100, desiredNewEnd),
+      clip.start + MIN_CLIP_SIZE
+    );
+    // console.log("desiredNewEnd", desiredNewEnd)
+    return { start: clip.start, end: actualNewEnd };
+  };
 
   const handleDrag = (deltaPercent) => {
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
@@ -484,7 +629,7 @@ const ProjectView = () => {
     }
   };
 
-  const moveRight = () => {
+  const moveRight = async () => {
     if (!resizing) {
       return;
     }
@@ -498,18 +643,18 @@ const ProjectView = () => {
       if (newStart >= oldClip.end) {
         return;
       }
-      addClip(newStart, oldClip.end, newClips, clipId);
+      await addClip(newStart, oldClip.end, newClips, clipId);
     } else {
       const newEnd = oldClip.end + 1;
       if (newEnd > 100) {
         return;
       }
-      addClip(oldClip.start, newEnd, newClips, clipId);
+      await addClip(oldClip.start, newEnd, newClips, clipId);
     }
   };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (currentClipId === undefined) {
       return;
     }
@@ -520,6 +665,8 @@ const ProjectView = () => {
     let newClips = new Map(clips);
     newClips.delete(currentClipId);
     setClips(newClips);
+    await saveClipsToDB(newClips);
+    setCurrentClipId(undefined);
   };
 
   const calculatePercent = (clipStart, clipEnd, clipX, clipWidth, newX) => {
@@ -624,88 +771,105 @@ const ProjectView = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClipId]);
 
-  const clip = () =>{
+  const clip = () => {
     setNewClipStatus(1);
-    setNewClipObj({'start': 0, 'end': 100});
-  }
+    setNewClipObj({ start: 0, end: 100 });
+  };
 
-  const handleKeyDownNewClip = (e) =>{
-    const buttonPressed = e.key
-    if(buttonPressed == 'Enter'){
-        console.log("entering!!!");
-        let newNewClipStatus = (newClipStatus + 1) % 3;
-        setNewClipStatus(newNewClipStatus);
-        if(newNewClipStatus == 0){
-            addNewClip();
-        }
-    }
-    else if(buttonPressed == 'ArrowRight'){
-      if(newClipStatus === 1){ //setting the left side
-        const newStart = Math.min(newClipObj.end-1, newClipObj.start+1);
+  const handleKeyDownNewClip = (e) => {
+    const buttonPressed = e.key;
+    if (buttonPressed == "Enter") {
+      console.log("entering!!!");
+      let newNewClipStatus = (newClipStatus + 1) % 3;
+      setNewClipStatus(newNewClipStatus);
+      if (newNewClipStatus == 0) {
+        addNewClip();
+      }
+    } else if (buttonPressed == "ArrowRight") {
+      if (newClipStatus === 1) {
+        //setting the left side
+        const newStart = Math.min(newClipObj.end - 1, newClipObj.start + 1);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.start = newStart;
         setNewClipObj(newNewClipObj);
-      } else{ //setting the right side
-        const newEnd = Math.min(newClipObj.end+1, 100);
+      } else {
+        //setting the right side
+        const newEnd = Math.min(newClipObj.end + 1, 100);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.end = newEnd;
         setNewClipObj(newNewClipObj);
       }
-    } else if(buttonPressed == 'ArrowLeft'){
-      if(newClipStatus === 1){ //setting the left side
-        const newStart = Math.max(newClipObj.start-1, 0);
+    } else if (buttonPressed == "ArrowLeft") {
+      if (newClipStatus === 1) {
+        //setting the left side
+        const newStart = Math.max(newClipObj.start - 1, 0);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.start = newStart;
         setNewClipObj(newNewClipObj);
-      } else{ //setting the right side
-        const newEnd = Math.max(newClipObj.end-1, newClipObj.start+1);
+      } else {
+        //setting the right side
+        const newEnd = Math.max(newClipObj.end - 1, newClipObj.start + 1);
         let newNewClipObj = structuredClone(newClipObj);
         newNewClipObj.end = newEnd;
         setNewClipObj(newNewClipObj);
       }
-    } else{
+    } else {
       //do nothing
     }
-  }
+  };
 
-  const addNewClip = () =>{
+  const addNewClip = () => {
     setNewClipStatus(0);
     addClip(newClipObj.start, newClipObj.end);
-  }
+  };
 
-  const handleBlurNewClip = () =>{
-    if(newClipStatus !== 2){
+  const handleBlurNewClip = () => {
+    if (newClipStatus !== 2) {
       setNewClipStatus(0);
       return;
     }
     addNewClip();
-  }
+  };
 
-  useEffect(() =>{
-    if(newClipStatus !== 0){
+  useEffect(() => {
+    if (newClipStatus !== 0) {
       newClipRef.current?.focus();
     }
-  }, [newClipStatus])
+  }, [newClipStatus]);
 
-  const renderNewClip = () =>{
-    if(newClipStatus === 0){
+  useEffect(() => {
+    loadClipsFromDB();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projectId]);
+
+  const renderNewClip = () => {
+    if (newClipStatus === 0) {
       return;
     }
     const height = 45;
     const top = 0;
-    const width = ((newClipObj.end - newClipObj.start) * (19/20))
-    const left = (newClipObj.start * (19/20))+2.5
-    //eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    return <div style={{
-      "position": 'absolute',
-      "bottom": `${top*2}px`,
-      "height": `${height*2}px`,
-      "left": `${left}%`,
-      "width": `${width}%`
-      //eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex, jsx-a11y/tabindex-no-positive
-    }} ref={newClipRef} id={"newClip"} tabIndex={32767} onKeyDown={(e) => handleKeyDownNewClip(e)} className='clip newClip' onBlur={handleBlurNewClip}></div>
-  }
-
+    const width = (newClipObj.end - newClipObj.start) * (19 / 20);
+    const left = newClipObj.start * (19 / 20) + 2.5;
+    return (
+      //eslint-disable-next-line jsx-a11y/no-static-element-interactions
+      <div
+        style={{
+          position: "absolute",
+          bottom: `${top * 2}px`,
+          height: `${height * 2}px`,
+          left: `${left}%`,
+          width: `${width}%`,
+        }}
+        ref={newClipRef}
+        id={"newClip"}
+        //eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex, jsx-a11y/tabindex-no-positive
+        tabIndex={32767}
+        onKeyDown={(e) => handleKeyDownNewClip(e)}
+        className="clip newClip"
+        onBlur={handleBlurNewClip}
+      ></div>
+    );
+  };
 
   return (
     <div
@@ -714,6 +878,46 @@ const ProjectView = () => {
     >
       {!isLearningMode && (
         <>
+          <Joyride
+            steps={tutorialSteps}
+            run={runTutorial}
+            continuous
+            showProgress
+            showSkipButton
+            locale={{
+              back: "Back",
+              close: "Close",
+              last: "Finish",
+              next: "Next",
+              skip: "Skip Tutorial",
+            }}
+            styles={{
+              options: {
+                primaryColor: "#7d3bf6ff",
+                zIndex: 10000,
+                backgroundColor: "#fff",
+                overlayColor: "rgba(0, 0, 0, 0.5)",
+                arrowColor: "#fff",
+                textColor: "#333",
+              },
+              tooltip: {
+                borderRadius: 12,
+              },
+              buttonNext: {
+                borderRadius: 8,
+              },
+              buttonBack: {
+                borderRadius: 8,
+                color: "#666",
+              },
+            }}
+            callback={(data) => {
+              const { status } = data;
+              if (status === "finished" || status === "skipped") {
+                setRunTutorial(false);
+              }
+            }}
+          />
           <div id="projectViewEditor">
             <div id="projectViewToolbar">
               <button
@@ -782,6 +986,13 @@ const ProjectView = () => {
               >
                 Learning Mode
               </button>
+              <button
+                id="helpBtn"
+                onClick={handleHelpClick}
+                title="Show tutorial"
+              >
+                Help
+              </button>
             </div>
 
             <div id="projectViewVideoPlayer">
@@ -800,7 +1011,7 @@ const ProjectView = () => {
           <div id="projectViewFooter">
             {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
             {renderNewClip()}
-            <AnnotationPanel headerText="Notes">
+            <AnnotationPanel headerText="Notes" id="annotationPanel">
               <div className="annotation-content">
                 <h2>Annotations</h2>
                 {currentClipId === 0 ? (
@@ -829,6 +1040,7 @@ const ProjectView = () => {
       {isLearningMode && (
         <LearningMode
           videoUrl={videoUrl}
+          projectId={parseInt(projectId, 10)}
           startTime={getCurrentStartClipTimeStamp()}
           endTime={getCurrentEndClipTimeStamp()}
           onExit={exitLearningMode}

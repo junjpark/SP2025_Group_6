@@ -23,5 +23,9 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/api/, ''),
       }
     }
+  },
+  // Optimize for MediaPipe dependencies
+  optimizeDeps: {
+    exclude: ['@mediapipe/pose', '@mediapipe/drawing_utils', '@mediapipe/camera_utils']
   }
 })

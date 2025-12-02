@@ -2,19 +2,23 @@
 FastAPI application with authentication endpoints.
 Handles user registration, login, Google OAuth, and protected routes using server-side sessions.
 """
-#from datetime import timedelta
+# pylint: disable=too-many-lines
 import os
 import uuid
 import shutil
 import logging
 import time
 from pathlib import Path
+from typing import Optional
+from typing import List
 import cv2
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile
 from fastapi import Form, File, Request, Response
 from fastapi.responses import FileResponse
 #from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from psycopg2.extras import Json
 from .models import (
     UserCreate, UserLogin, GoogleUserCreate, UserResponse, SessionResponse, SessionData,
     ForgotPasswordRequest, ResetPasswordRequest, PasswordResetResponse
@@ -81,6 +85,31 @@ app.add_middleware(SessionMiddleware, cleanup_interval=3600)  # Cleanup every ho
 os.makedirs("uploads", exist_ok=True)
 # Add logging middleware (optional, for development)
 app.add_middleware(LoggingMiddleware)
+
+# Pydantic models for clip timestamps
+class Clip(BaseModel):
+    """
+    Represents a single clip or segment of a video.
+    
+    Attributes:
+        id: Unique identifier for the clip.
+        row: Display row position for the clip in the UI.
+        start: Start position as a percentage of the video (0-100).
+        end: End position as a percentage of the video (0-100).
+    """
+    id: int
+    row: int
+    start: float
+    end: float
+
+class ClipsUpdate(BaseModel):
+    """
+    Request model for updating clipping timestamps for a project.
+    
+    Attributes:
+        clipping_timestamps: List of Clip objects representing all clips to save for a project.
+    """
+    clipping_timestamps: List[Clip]
 
 
 def get_current_user(request: Request):
@@ -198,8 +227,9 @@ async def get_project_video_with_landmarks(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT video_url FROM projects WHERE id = %s AND user_id = %s",
-                (project_id, user_id)
+                "SELECT video_url FROM projects WHERE id = %s " \
+                "AND (user_id = %s OR %s = ANY(editor_ids))",
+                (project_id, user_id, user_id)
             )
             project = cur.fetchone()
             if not project:
@@ -424,7 +454,7 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
         current_user: Current user data from JWT token (dependency injection)
 
     Returns:
-        list: List of projects belonging to the user
+        list: List of projects belonging to the user or shared with the user
     Raises:
         HTTPException: If database error occurs
     """
@@ -435,8 +465,9 @@ async def get_user_projects(current_user: dict = Depends(get_current_user)):
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT id, title, last_opened, thumbnail_url FROM projects WHERE user_id = %s",
-                (current_user['user_id'],)
+                "SELECT id, title, created_at, last_opened, user_id, thumbnail_url " \
+                "FROM projects WHERE user_id = %s OR %s = ANY(editor_ids)",
+                (current_user['user_id'], current_user['user_id'])
             )
             projects = cur.fetchall()
 
@@ -469,8 +500,8 @@ async def get_project_thumbnail(project_id: int, current_user: dict = Depends(ge
     try:
         with conn.cursor() as cur:
             cur.execute("SELECT thumbnail_url, user_id FROM projects" \
-            " WHERE id = %s AND user_id = %s",
-                        (project_id, current_user['user_id']))
+            " WHERE id = %s AND (user_id = %s OR %s = ANY(editor_ids))",
+            (project_id, current_user['user_id'], current_user['user_id']))
             row = cur.fetchone()
             if not row:
                 raise HTTPException(status_code=404, detail="Project not found")
@@ -587,8 +618,9 @@ async def get_project(
         with conn.cursor() as cur:
             # Query for the project owned by the current user (single-step authorization)
             cur.execute(
-                "SELECT title, video_url FROM projects WHERE id = %s AND user_id = %s",
-                (project_id, user_id)
+                "SELECT title, video_url FROM projects " \
+                "WHERE id = %s (user_id = %s OR %s = ANY(editor_ids))",
+                (project_id, user_id, user_id)
             )
             project = cur.fetchone()
 
@@ -711,7 +743,8 @@ async def get_project_landmarks(
     current_user: dict = Depends(get_current_user),
     sample_rate: int = 1,
     use_parallel: bool = True,
-    model_complexity: int = 1
+    model_complexity: int = 1,
+    num_workers: Optional[int] = None
 ):
     """
     Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
@@ -731,8 +764,9 @@ async def get_project_landmarks(
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT video_url FROM projects WHERE id = %s AND user_id = %s",
-                (project_id, user_id)
+                "SELECT video_url FROM projects WHERE id = %s " \
+                "AND (user_id = %s OR %s = ANY(editor_ids))",
+                (project_id, user_id, user_id)
             )
             project = cur.fetchone()
             if not project:
@@ -746,6 +780,7 @@ async def get_project_landmarks(
                     video_path,
                     video_sample_rate=sample_rate,
                     use_parallel=use_parallel,
+                    num_workers=num_workers,
                     model_complexity=model_complexity
                 )
                 return landmarks_data
@@ -765,6 +800,95 @@ async def get_project_landmarks(
         raise HTTPException(status_code=500, detail="Internal server error") from e
     finally:
         conn.close()
+
+# load clips for project
+@app.get('/projects/{project_id}/clips', tags=["projects"])
+async def get_project_clips(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Retrieve clipping timestamps for a specific project by its ID for the current
+    authenticated user.
+
+    Args:
+        project_id: ID of the project to retrieve (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        list: Clipping timestamps for the project
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT clipping_timestamps FROM projects WHERE id = %s " \
+            "AND (user_id = %s OR %s = ANY(editor_ids))",
+            (project_id, current_user['user_id'], current_user['user_id'])
+        )
+        result = cursor.fetchone()
+
+        if not result:
+            raise HTTPException(status_code=404, detail="Project not found")
+        clipping_timestamps = result['clipping_timestamps']
+
+        cursor.close()
+        conn.close()
+
+        return {"clipping_timestamps": clipping_timestamps or []}
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+
+# save clips for project
+@app.put('/projects/{project_id}/clips', tags=["projects"])
+async def save_project_clips(
+    project_id: int,
+    clips_update: ClipsUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Save clipping timestamps for a specific project by its ID for the current authenticated user.
+
+    Args:
+        project_id: ID of the project to update (path parameter)
+        clips_update: Clipping timestamps to save
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Success message
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE projects SET clipping_timestamps = %s WHERE id = %s " \
+            "AND (user_id = %s OR %s = ANY(editor_ids))",
+            ( Json([clip.dict() for clip in clips_update.clipping_timestamps]), project_id,
+             current_user['user_id'], current_user['user_id'])
+        )
+        if cursor.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Project not found")
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return {"success": True, "message": "Clipping timestamps updated successfully"}
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.exception("Error saving clips for project %s: %s", project_id, str(error))
+        if conn:
+            conn.rollback()
+        raise HTTPException(status_code=500,
+                            detail=f"Internal server error: {str(error)}")from error
+    finally:
+        if cursor:
+            cursor.close()
+        if conn:
+            conn.close()
 
 # Create or update annotation for the current project, timestamp, and user
 @app.post("/projects/{project_id}/annotations", tags=["annotations"])
@@ -832,7 +956,6 @@ async def create_annotation(
 async def fetch_annotation(
     project_id: int,
     timestamp: float,
-    current_user: dict = Depends(get_current_user)
 ):
     """
     Retrieves the text of an existing annotation.
@@ -855,14 +978,138 @@ async def fetch_annotation(
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT description FROM annotations WHERE timestamp = %s " \
-                "AND user_id = %s AND project_id = %s",
-                (timestamp, current_user["user_id"], project_id)
+                "AND project_id = %s",
+                (timestamp, project_id)
             )
             text_row = cur.fetchone()
             conn.commit()
 
             return {"text": text_row['description'] if text_row else None}
 
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# update time last edited for project
+@app.post('/projects/{project_id}/update-last-edited', tags=["projects"])
+async def update_project_last_edited(
+    project_id: int,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Update the last opened timestamp for a specific project by its ID for the current
+    authenticated user.
+
+    Args:
+        project_id: ID of the project to update (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # update the last edited timestamp of the project owned by the current user
+            cur.execute(
+                "UPDATE projects SET last_opened = now() WHERE id = %s " \
+                "AND (user_id = %s OR %s = ANY(editor_ids))",
+                (project_id, user_id, user_id)
+            )
+            conn.commit()
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# share project with another user given project ID and editor email
+@app.post('/projects/{project_id}/share', tags=["projects"])
+async def share_project(
+    project_id: int,
+    email: str = Form(...),
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Share a specific project by its ID with another user via their email.
+
+    Args:
+        project_id: ID of the project to share (path parameter)
+        editor_email: Email of the user to share the project with (form data)
+        current_user: Current user data from JWT token (dependency injection)
+    Returns:
+        dict: Success message
+    Raises:
+        HTTPException: If project not found or database error occurs
+    """
+    user_id = current_user['user_id']
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            # Get the user ID of the editor by email
+            cur.execute(
+                "SELECT id FROM users WHERE email = %s",
+                (email,)
+            )
+            editor = cur.fetchone()
+            if not editor:
+                raise HTTPException(status_code=404, detail="Editor user not found")
+
+            # Update the project's editor_ids array to include the new editor
+            cur.execute(
+                "UPDATE projects SET editor_ids = array_append(editor_ids, %s) "
+                "WHERE id = %s AND user_id = %s",
+                (editor['id'], project_id, user_id)
+            )
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Project not found or unauthorized")
+
+            conn.commit()
+            return {"message": "Project shared successfully"}
+
+    except HTTPException:
+        raise
+    except Exception as error:
+        raise HTTPException(status_code=500, detail="Internal server error") from error
+    finally:
+        conn.close()
+
+# get email address for user ID
+@app.get('/users/{user_id}/email', tags=["user"])
+async def get_user_email(
+    user_id: int
+):
+    """
+    Retrieve the email address for a specific user by their user ID.
+
+    Args:
+        user_id: ID of the user to retrieve (path parameter)
+        current_user: Current user data from JWT token (dependency injection)
+    """
+    conn = get_db_connection()
+    if not conn:
+        raise HTTPException(status_code=500, detail="Database connection failed")
+
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT email FROM users WHERE id = %s",
+                (user_id,)
+            )
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            return {"email": user['email']}
+
+    except HTTPException:
+        raise
     except Exception as error:
         raise HTTPException(status_code=500, detail="Internal server error") from error
     finally:
