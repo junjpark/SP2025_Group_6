@@ -85,7 +85,7 @@ export default function ProjectThumbnail({
       return;
     }
     fetchOwnerEmail();
-  }, [owner, isOwner]);
+  }, [owner, isOwner, isCreate]);
 
   const handleClick = () => {
     if (isCreate) {
@@ -263,6 +263,7 @@ export default function ProjectThumbnail({
                       setIsEditingTitle(false);
                     }
                   }}
+                  // eslint-disable-next-line jsx-a11y/no-autofocus
                   autoFocus
                 />
               ) : (
@@ -316,7 +317,7 @@ export default function ProjectThumbnail({
                 onClick={handleSave}
                 onKeyDown={(e) => {
                   if (e.key === "s") {
-                    handleSave;
+                    handleSave();
                   }
                 }}
                 id="save-button"

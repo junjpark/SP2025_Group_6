@@ -88,7 +88,11 @@ const ProjectView = () => {
     {
       target: "#projectViewFooter",
       content:
-        "Once you've added clips, you can resize them by clicking near the edges.",
+        "Once you've added clips, you can move and resize them by double clicking on the clip.",
+    },
+    {
+      target: "#mirrorHolder",
+      content: "Click here to mirror the video preview.",
     },
     {
       target: "#deleteHolder",
@@ -472,7 +476,6 @@ const ProjectView = () => {
   useEffect(() => {
     if (!isDragging) return;
     const handleMouseMoving = (e) => {
-      
       const newPercent = calculatePercent(
         dragInitStart.current,
         dragInitEnd.current,
