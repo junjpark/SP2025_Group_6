@@ -272,7 +272,7 @@ const ProjectView = () => {
       if (!response.ok) {
         throw new Error(`Server returned ${response.status}`);
       }
-      console.log("Project timestamp updated:", projectId);
+      // console.log("Project timestamp updated:", projectId);
     } catch (error) {
       console.error("Error updating project timestamp:", projectId, error);
     }
@@ -469,13 +469,7 @@ const ProjectView = () => {
   useEffect(() => {
     if (!isDragging) return;
     const handleMouseMoving = (e) => {
-      // console.table({
-      //   dragInitStart: dragInitStart.current,
-      //   dragInitEnd: dragInitEnd.current,
-      //   dragInitX: dragInitX.current,
-      //   dragInitWidth: dragInitWidth.current,
-      //   clientX: e.clientX,
-      // });
+      
       const newPercent = calculatePercent(
         dragInitStart.current,
         dragInitEnd.current,
@@ -483,6 +477,15 @@ const ProjectView = () => {
         dragInitWidth.current,
         e.clientX
       );
+      console.table({
+        dragInitStart: dragInitStart.current,
+        dragInitEnd: dragInitEnd.current,
+        dragInitX: dragInitX.current,
+        dragInitWidth: dragInitWidth.current,
+        clientX: e.clientX,
+        newPercent: newPercent,
+      });
+      // console.log("new percent", newPercent)
       const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
       const oldClip = clips.get(clipId);
       let newClips = new Map(clips);
@@ -537,7 +540,6 @@ const ProjectView = () => {
     const clip = clips.get(clipId);
     if (!clip) return;
     setIsDragging({ clipId, type });
-    dragInitX.current = e.clientX;
     dragInitStart.current = clip.start;
     dragInitEnd.current = clip.end;
     let target = e.currentTarget;
@@ -546,8 +548,9 @@ const ProjectView = () => {
     } else if (type === "right") {
       target = target.previousElementSibling.previousElementSibling;
     }
-    console.log(target);
+    // console.log(target);
     dragInitWidth.current = target.getBoundingClientRect().width;
+    dragInitX.current = target.getBoundingClientRect().left;
   };
 
   const handleMoveLeft = (deltaPercent) => {
@@ -577,7 +580,7 @@ const ProjectView = () => {
       Math.min(100, desiredNewEnd),
       clip.start + MIN_CLIP_SIZE
     );
-    console.log("desiredNewEnd", desiredNewEnd)
+    // console.log("desiredNewEnd", desiredNewEnd)
     return { start: clip.start, end: actualNewEnd };
   };
 
