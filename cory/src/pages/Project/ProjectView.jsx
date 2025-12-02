@@ -251,7 +251,7 @@ const ProjectView = () => {
       if (!response.ok) {
         throw new Error(`Failed to save clips: ${response.status}`);
       }
-      console.log("Clips saved to DB:", clipArray);
+      // console.log("Clips saved to DB:", clipArray);
       updateTimeLastEdited();
       return true;
     } catch (error) {
@@ -469,13 +469,13 @@ const ProjectView = () => {
   useEffect(() => {
     if (!isDragging) return;
     const handleMouseMoving = (e) => {
-      console.table({
-        dragInitStart: dragInitStart.current,
-        dragInitEnd: dragInitEnd.current,
-        dragInitX: dragInitX.current,
-        dragInitWidth: dragInitWidth.current,
-        clientX: e.clientX,
-      });
+      // console.table({
+      //   dragInitStart: dragInitStart.current,
+      //   dragInitEnd: dragInitEnd.current,
+      //   dragInitX: dragInitX.current,
+      //   dragInitWidth: dragInitWidth.current,
+      //   clientX: e.clientX,
+      // });
       const newPercent = calculatePercent(
         dragInitStart.current,
         dragInitEnd.current,
@@ -577,6 +577,7 @@ const ProjectView = () => {
       Math.min(100, desiredNewEnd),
       clip.start + MIN_CLIP_SIZE
     );
+    console.log("desiredNewEnd", desiredNewEnd)
     return { start: clip.start, end: actualNewEnd };
   };
 
