@@ -437,16 +437,21 @@ def render_landmarks_video(
     input_video_path: str,
     output_video_path: Optional[str] = None,
     model_complexity: int = 1,
-    use_hw_accel: bool = True
+    use_hw_accel: bool = True,
+    use_parallel: bool = True,
+    num_workers: Optional[int] = None
 ) -> str:
     """
     Render pose landmarks onto a copy of the input video and return the output path.
+    Uses parallel processing for significant speedup on long videos.
 
     Args:
         input_video_path: Path to the input video file.
         output_video_path: Optional explicit path for the annotated output.
         model_complexity: MediaPipe model complexity (0=lite, 1=full, 2=heavy).
         use_hw_accel: Use hardware acceleration for ffmpeg encoding if available.
+        use_parallel: Use parallel processing for landmark detection (much faster).
+        num_workers: Number of parallel workers (defaults to optimal CPU count).
 
     Returns:
         The path to the annotated output video (MP4).
@@ -454,6 +459,23 @@ def render_landmarks_video(
     if not os.path.exists(input_video_path):
         raise FileNotFoundError(f"Video not found: {input_video_path}")
 
+    logger.info("Rendering landmarks video with parallel=%s", use_parallel)
+
+    # Step 1: Process video for landmarks using parallel processing
+    try:
+        landmarks_data = process_video_for_landmarks(
+            input_video_path,
+            video_sample_rate=1,  # Process every frame for video rendering
+            use_parallel=use_parallel,
+            num_workers=num_workers,
+            model_complexity=model_complexity
+        )
+        logger.info("Landmarks extraction complete, got %d frames", len(landmarks_data))
+    except Exception as exc:
+        logger.exception("Failed to extract landmarks")
+        raise RuntimeError("Failed to extract landmarks for video rendering") from exc
+
+    # Step 2: Open video and prepare output
     cap = cv2.VideoCapture(input_video_path)
     if not cap.isOpened():
         raise RuntimeError(f"Failed to open video: {input_video_path}")
@@ -485,50 +507,65 @@ def render_landmarks_video(
         drawing_utils = mp.solutions.drawing_utils
 
         # Custom purple drawing specifications
-        # Purple in BGR format: (128, 0, 128)
         landmark_style = drawing_utils.DrawingSpec(
             color=(128, 0, 128),  # Purple color in BGR
-            thickness=1,           # Smaller dots
-            circle_radius=2        # Smaller radius (default is 5)
+            thickness=1,
+            circle_radius=2
         )
 
         connection_style = drawing_utils.DrawingSpec(
             color=(128, 0, 128),  # Purple color in BGR
-            thickness=2            # Line thickness
+            thickness=2
         )
 
-        with mp_pose.Pose(
-            static_image_mode=False,
-            model_complexity=model_complexity,
-            enable_segmentation=False,
-            min_detection_confidence=0.5,
-            min_tracking_confidence=0.5
-        ) as pose:
-            while True:
-                ret, frame = cap.read()
-                if not ret:
-                    break
+        # Create a mapping of frame index to landmarks for fast lookup
+        landmarks_by_frame = {entry['frame']: entry['landmarks'] for entry in landmarks_data}
+        
+        # Import mediapipe landmark format
+        from mediapipe.framework.formats import landmark_pb2
+        
+        # Step 3: Draw landmarks on each frame
+        frame_idx = 0
+        frames_processed = 0
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
 
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                res = pose.process(rgb)
+            # Get landmarks for this frame
+            if frame_idx in landmarks_by_frame and landmarks_by_frame[frame_idx]:
+                landmarks = landmarks_by_frame[frame_idx]
+                
+                # Convert landmarks back to MediaPipe NormalizedLandmarkList format
+                pose_landmarks_proto = landmark_pb2.NormalizedLandmarkList()
+                
+                for lm in landmarks:
+                    landmark = pose_landmarks_proto.landmark.add()
+                    landmark.x = float(lm['x'])
+                    landmark.y = float(lm['y'])
+                    landmark.z = float(lm['z'])
+                    if 'visibility' in lm and lm['visibility'] is not None:
+                        landmark.visibility = float(lm['visibility'])
+                    else:
+                        landmark.visibility = 1.0
 
-                if res.pose_landmarks:
-                    drawing_utils.draw_landmarks(
-                        frame,
-                        res.pose_landmarks,
-                        mp_pose.POSE_CONNECTIONS,
-                        landmark_drawing_spec=landmark_style,
-                        connection_drawing_spec=connection_style
-                    )
+                # Draw the landmarks on the frame
+                drawing_utils.draw_landmarks(
+                    frame,
+                    pose_landmarks_proto,
+                    mp_pose.POSE_CONNECTIONS,
+                    landmark_drawing_spec=landmark_style,
+                    connection_drawing_spec=connection_style
+                )
+                frames_processed += 1
 
-                writer.write(frame)
+            writer.write(frame)
+            frame_idx += 1
 
         writer.release()
+        logger.info("Drew landmarks on %d/%d frames", frames_processed, frame_idx)
 
         # Transcode to H.264/AVC for broad browser compatibility
-        # - yuv420p pixel format
-        # - +faststart to move moov atom to beginning for progressive playback
-        # - Preserve audio from original video
         ffmpeg_cmd = [
             "ffmpeg",
             "-y",
@@ -564,6 +601,7 @@ def render_landmarks_video(
             subprocess.run(
                 ffmpeg_cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
+            logger.info("Video encoding complete: %s", output_video_path)
         except subprocess.CalledProcessError as exc:
             stderr_msg = exc.stderr.decode(errors='ignore') if exc.stderr else str(exc)
             logger.exception("ffmpeg transcode failed: %s", stderr_msg)

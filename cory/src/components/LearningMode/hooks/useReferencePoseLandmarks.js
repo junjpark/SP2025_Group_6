@@ -33,7 +33,8 @@ export const useReferencePoseLandmarks = (projectId, videoElement, isActive) => 
         setLoading(true);
         console.log('[ReferenceLandmarks] Fetching landmarks for project:', projectId);
         
-        const url = `/api/projects/${projectId}/landmarks?sample_rate=1`;
+        // Enable parallel processing for ~10x faster landmark processing
+        const url = `/api/projects/${projectId}/landmarks?sample_rate=1&use_parallel=true&num_workers=12`;
         console.log('[ReferenceLandmarks] API URL:', url);
         
         const response = await fetch(url, {
