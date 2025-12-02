@@ -16,6 +16,11 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
   const [poseResults, setPoseResults] = useState(null);
   const [comparisonScore, setComparisonScore] = useState(0);
   const referencePoseRef = useRef(referencePose);
+  const hasErroredRef = useRef(false); // Track if MediaPipe has crashed
+  
+  // Temporal smoothing for stable landmarks
+  const previousLandmarksRef = useRef(null);
+  const smoothingFactorRef = useRef(0.3); // 0-1, lower = smoother but slightly laggier
 
   // Update reference pose ref when it changes
   useEffect(() => {
@@ -88,18 +93,42 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
         });
 
         pose.setOptions({
-          modelComplexity: 1,
+          modelComplexity: 2,                    // Higher complexity for better accuracy
           smoothLandmarks: true,
           enableSegmentation: false,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.5
+          minDetectionConfidence: 0.7,           // Increased from 0.5 for stability
+          minTrackingConfidence: 0.7             // Increased from 0.5 to reduce jitter
         });
 
         pose.onResults((results) => {
+          // Apply temporal smoothing to reduce jitter
+          if (results.poseLandmarks && previousLandmarksRef.current) {
+            const alpha = smoothingFactorRef.current; // 0.3 = 70% old, 30% new
+            const smoothedLandmarks = results.poseLandmarks.map((landmark, i) => {
+              const prev = previousLandmarksRef.current[i];
+              return {
+                x: prev.x * (1 - alpha) + landmark.x * alpha,
+                y: prev.y * (1 - alpha) + landmark.y * alpha,
+                z: prev.z * (1 - alpha) + landmark.z * alpha,
+                visibility: landmark.visibility
+              };
+            });
+            results.poseLandmarks = smoothedLandmarks;
+          }
+          
+          // Store current landmarks for next frame smoothing
+          if (results.poseLandmarks) {
+            previousLandmarksRef.current = results.poseLandmarks.map(lm => ({...lm}));
+          }
+          
           setPoseResults(results);
           drawPoseResults(results);
         });
 
+        // Wait for pose to fully initialize (give WASM time to load)
+        // MediaPipe doesn't have initialize() method, so we wait a moment
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
         poseRef.current = pose;
         setIsInitialized(true);
         console.log('[PoseDetection] MediaPipe initialization complete!');
@@ -358,7 +387,11 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
 
     let frameCount = 0;
     const processFrame = async () => {
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      // Validate video is ready and has valid dimensions
+      if (video.readyState === video.HAVE_ENOUGH_DATA && 
+          video.videoWidth > 0 && 
+          video.videoHeight > 0) {
+        
         // Ensure canvas matches video size
         const canvas = canvasRef.current;
         if (canvas && (canvas.width !== video.videoWidth || canvas.height !== video.videoHeight)) {
@@ -367,17 +400,23 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
           console.log('[PoseDetection] Canvas resized during processing:', canvas.width, 'x', canvas.height);
         }
 
-        // Only process pose if initialized
-        if (isInitialized && poseRef.current) {
+        // Only process pose if initialized and no previous errors
+        if (isInitialized && poseRef.current && !hasErroredRef.current) {
           try {
-            await poseRef.current.send({ image: video });
+            // Additional check: ensure pose is ready to receive frames
+            if (typeof poseRef.current.send === 'function') {
+              await poseRef.current.send({ image: video });
 
-            // Log every 60 frames (about once per second at 60fps)
-            if (frameCount % 60 === 0) {
-              console.log('[PoseDetection] Processed frame', frameCount);
+              // Log every 60 frames (about once per second at 60fps)
+              if (frameCount % 60 === 0) {
+                console.log('[PoseDetection] Processed frame', frameCount);
+              }
             }
           } catch (error) {
-            console.error('[PoseDetection] Error processing frame:', error);
+            // Mark that an error occurred to stop further processing attempts
+            hasErroredRef.current = true;
+            console.error('[PoseDetection] Fatal error processing frame, stopping pose detection:', error);
+            setIsInitialized(false);
           }
         } else {
           // If pose detection not ready, just draw the video to canvas

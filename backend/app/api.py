@@ -8,6 +8,8 @@ import uuid
 import shutil
 import logging
 import time
+import json
+from pathlib import Path
 from pathlib import Path
 from typing import Optional
 from typing import List
@@ -207,7 +209,9 @@ async def get_project_video_with_landmarks(
     refresh: bool = False,
     current_user: dict = Depends(get_current_user),
     model_complexity: int = 1,
-    use_hw_accel: bool = True
+    use_hw_accel: bool = True,
+    use_parallel: bool = True,
+    num_workers: Optional[int] = None
 ):
     """
     Return the project's video with pose landmarks rendered onto it.
@@ -217,6 +221,8 @@ async def get_project_video_with_landmarks(
         refresh: Force re-rendering even if cached version exists
         model_complexity: MediaPipe model (0=lite/fastest, 1=full/default, 2=heavy/accurate)
         use_hw_accel: Enable hardware acceleration for video encoding (faster)
+        use_parallel: Use parallel processing for landmark detection (~10x faster)
+        num_workers: Number of parallel workers (defaults to optimal CPU count)
     """
     user_id = current_user['user_id']
 
@@ -250,7 +256,9 @@ async def get_project_video_with_landmarks(
                         input_path,
                         output_path,
                         model_complexity=model_complexity,
-                        use_hw_accel=use_hw_accel
+                        use_hw_accel=use_hw_accel,
+                        use_parallel=use_parallel,
+                        num_workers=num_workers
                     )
                 except FileNotFoundError as exc:
                     raise HTTPException(status_code=404, detail="Video file not found") from exc
@@ -744,16 +752,18 @@ async def get_project_landmarks(
     sample_rate: int = 1,
     use_parallel: bool = True,
     model_complexity: int = 1,
-    num_workers: Optional[int] = None
+    num_workers: Optional[int] = None,
+    refresh: bool = False
 ):
     """
-    Serve the landmarks JSON for a project if available. Returns 200 with JSON when ready,
-    202 Accepted if processing/not yet available, or 404 if project not found/unauthorized.
+    Serve the landmarks JSON for a project. Uses cached landmarks if available.
     
     Query Parameters:
         sample_rate: Process every Nth frame (1 = every frame, 2 = every other frame, etc.)
         use_parallel: Enable parallel processing for faster processing on multi-core systems
         model_complexity: MediaPipe model (0=lite/fastest, 1=full/default, 2=heavy/accurate)
+        num_workers: Number of parallel workers (defaults to optimal CPU count)
+        refresh: Force reprocessing even if cached landmarks exist
     """
     user_id = current_user['user_id']
 
@@ -775,6 +785,29 @@ async def get_project_landmarks(
             video_path = project['video_url']
             if not os.path.exists(video_path):
                 raise HTTPException(status_code=404, detail="Video file not found")
+            
+            # Create cache file path based on video path and processing parameters
+            video_stem = Path(video_path).stem
+            cache_dir = os.path.join("uploads", "landmarks_cache")
+            os.makedirs(cache_dir, exist_ok=True)
+            cache_filename = f"{video_stem}_sr{sample_rate}_mc{model_complexity}.json"
+            cache_path = os.path.join(cache_dir, cache_filename)
+            
+            # Check if cached landmarks exist and are newer than the video file
+            if not refresh and os.path.exists(cache_path):
+                video_mtime = os.path.getmtime(video_path)
+                cache_mtime = os.path.getmtime(cache_path)
+                
+                if cache_mtime > video_mtime:
+                    logger.info("Using cached landmarks for project %s from %s", project_id, cache_path)
+                    try:
+                        with open(cache_path, 'r', encoding='utf-8') as f:
+                            return json.load(f)
+                    except Exception as e:
+                        logger.warning("Failed to read cache file, will reprocess: %s", e)
+            
+            # Process video for landmarks (with parallel processing!)
+            logger.info("Processing video for landmarks: project %s, parallel=%s", project_id, use_parallel)
             try:
                 landmarks_data = process_video_for_landmarks(
                     video_path,
@@ -783,6 +816,15 @@ async def get_project_landmarks(
                     num_workers=num_workers,
                     model_complexity=model_complexity
                 )
+                
+                # Cache the results for future requests
+                try:
+                    with open(cache_path, 'w', encoding='utf-8') as f:
+                        json.dump(landmarks_data, f)
+                    logger.info("Cached landmarks to %s", cache_path)
+                except Exception as e:
+                    logger.warning("Failed to cache landmarks: %s", e)
+                
                 return landmarks_data
             except FileNotFoundError as e:
                 raise HTTPException(status_code=404, detail="Video file not found") from e

@@ -1,10 +1,10 @@
 import React, { useRef } from 'react';
 import CustomVideoPlayer from '../../CustomVideoPlayer';
 import WebcamCanvas from '../WebcamCanvas';
-import { useVideoPose } from '../hooks/useVideoPose';
 import PoseScoreDisplay from '../PoseScoreDisplay';
 import { usePoseComparison } from '../hooks/usePoseComparison';
 import { useMediaPipePose } from '../hooks/useMediaPipePose';
+import { useReferencePoseLandmarks } from '../hooks/useReferencePoseLandmarks';
 
 /**
  * Comparison View - Shows webcam and reference video side-by-side
@@ -14,6 +14,7 @@ const ComparisonView = ({
   videoPlayerRef,
   webcamStream,
   videoUrl,
+  projectId,
   startTime,
   endTime
 }) => {
@@ -22,8 +23,9 @@ const ComparisonView = ({
   // Get pose from webcam
   const { poseResults: livePose } = useMediaPipePose(webcamStream, true);
   
-  // Get pose from reference video
-  const { currentPose: referencePose, canvasRef: videoCanvasRef } = useVideoPose(
+  // Get pre-computed pose from reference video (fetched from backend, NOT reprocessed!)
+  const { currentPose: referencePose } = useReferencePoseLandmarks(
+    projectId,
     refVideoRef.current,
     true
   );
@@ -64,17 +66,7 @@ const ComparisonView = ({
                 background: '#000'
               }}
             />
-            <canvas
-              ref={videoCanvasRef}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                pointerEvents: 'none'
-              }}
-            />
+            {/* Landmarks are pre-computed on backend, no need for canvas overlay here */}
           </div>
         </div>
       </div>
@@ -109,6 +101,7 @@ const ComparisonView = ({
 };
 
 export default ComparisonView;
+
 
 
 
