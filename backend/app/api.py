@@ -992,7 +992,7 @@ async def fetch_annotation(
         conn.close()
 
 # update time last edited for project
-@app.post('/projects/{project_id}/update-last-opened', tags=["projects"])
+@app.post('/projects/{project_id}/update-last-edited', tags=["projects"])
 async def update_project_last_edited(
     project_id: int,
     current_user: dict = Depends(get_current_user)
