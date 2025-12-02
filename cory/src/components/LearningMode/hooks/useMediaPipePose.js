@@ -372,9 +372,9 @@ export const useMediaPipePose = (webcamStream, isActive, referencePose = null) =
           try {
             await poseRef.current.send({ image: video });
 
-            // Log every 60 frames (about once per second at 60fps)
-            if (frameCount % 60 === 0) {
-              console.log('[PoseDetection] Processed frame', frameCount);
+            // Log every 300 frames (about once per 5 seconds at 60fps) - reduced logging
+            if (frameCount % 300 === 0) {
+              console.log('[PoseDetection] Processed', frameCount, 'frames (webcam is live)');
             }
           } catch (error) {
             console.error('[PoseDetection] Error processing frame:', error);
