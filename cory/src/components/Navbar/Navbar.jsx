@@ -1,12 +1,11 @@
-import { useAuth } from '../../contexts/AuthContext';
-import { Link } from 'react-router-dom'
-import "./NavBar.css"
+import { useAuth } from "../../contexts/AuthContext";
+import { Link } from "react-router-dom";
+import "./Navbar.css";
 
-
-export default function NavBar() {
+export default function NavBar({ onHelpClick }) {
   const { user, logout } = useAuth();
   const handleLogout = () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm("Are you sure you want to logout?")) {
       logout();
     }
   };
@@ -14,19 +13,23 @@ export default function NavBar() {
     <div>
       {/* Header with user info and logout */}
       <header className="dashboard-header">
-        <h1 className="dashboard-title"><Link to="/" className="brand-link">cory</Link></h1>
-        {user && (<div className="user-info">
-          <span className="welcome-text">Welcome, {user?.display_name}!</span>
-          <button
-            onClick={handleLogout}
-            className="logout-button"
-          >
-            Logout
-          </button>
-        </div>
+        <h1 className="dashboard-title">
+          <Link to="/" className="brand-link">
+            cory
+          </Link>
+        </h1>
+        {user && (
+          <div className="user-info">
+            <span className="welcome-text">Welcome, {user?.display_name}!</span>
+            <button onClick={handleLogout} className="logout-button">
+              Logout
+            </button>
+            <button className="help-button" onClick={onHelpClick}>
+              Help
+            </button>
+          </div>
         )}
       </header>
     </div>
   );
-
 }

@@ -3,7 +3,7 @@
 /* Main Layout */
 #projectView {
   width: 100vw;
-  height: calc(100vh - 95px);
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: var(--color-bg-primary);
@@ -16,9 +16,11 @@
   display: flex;
   gap: var(--spacing-lg);
   padding: var(--spacing-lg);
-  background: linear-gradient(135deg,
-      var(--color-bg-secondary) 0%,
-      var(--color-bg-elevated) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-elevated) 100%
+  );
   min-height: 0;
   overflow: hidden;
 }
@@ -37,9 +39,11 @@
 }
 
 #scissorsHolder {
-  background: linear-gradient(135deg,
-      var(--color-primary) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   border: none;
   border-radius: var(--radius-md);
   width: 100%;
@@ -56,9 +60,11 @@
 #scissorsHolder:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
-  background: linear-gradient(135deg,
-      var(--color-accent-dark) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
 }
 
 #scissorsHolder:active {
@@ -78,9 +84,11 @@
 }
 
 #deleteHolder {
-  background: linear-gradient(135deg,
-      var(--color-primary) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   border: none;
   border-radius: var(--radius-md);
   width: 100%;
@@ -97,9 +105,11 @@
 #deleteHolder:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
-  background: linear-gradient(135deg,
-      var(--color-accent-dark) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
 }
 
 #deleteHolder:active {
@@ -141,8 +151,6 @@
   text-align: center;
   line-height: 1.15;
 }
-
-
 
 #learningModeBtn:hover:not(:disabled) {
   transform: translateY(-2px);
@@ -187,7 +195,7 @@
   box-shadow: var(--shadow-md);
 }
 
-#clipInfo>p {
+#clipInfo > p {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
@@ -217,15 +225,25 @@
 
 /* ===== TIMELINE FOOTER ===== */
 #projectViewFooter {
+  overflow: hidden;
   flex-shrink: 0;
   height: 180px;
   background: var(--color-bg-tertiary);
   display: flex;
+  align-items: stretch; /* Changed from center to stretch */
+  border-top: 2px solid var(--color-border);
+  width: 100%;
+  overflow: hidden; /* Changed from overflow-x: auto */
+}
+
+.clipsContainer {
+  display: flex;
+  flex: 1;
   gap: var(--spacing-sm);
-  align-items: center;
   padding: var(--spacing-lg) var(--spacing-xl);
   overflow-x: auto;
   overflow-y: hidden;
+  align-items: center;
   border-top: 2px solid var(--color-border);
   cursor: default;
   box-sizing: border-box;
@@ -233,31 +251,33 @@
   position: relative;
 }
 
-#projectViewFooter::-webkit-scrollbar {
+.clipsContainer::-webkit-scrollbar {
   height: 8px;
 }
 
-#projectViewFooter::-webkit-scrollbar-track {
+.clipsContainer::-webkit-scrollbar-track {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-sm);
 }
 
-#projectViewFooter::-webkit-scrollbar-thumb {
+.clipsContainer::-webkit-scrollbar-thumb {
   background: var(--color-border-light);
   border-radius: var(--radius-sm);
 }
 
-#projectViewFooter::-webkit-scrollbar-thumb:hover {
+.clipsContainer::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
 
 /* ===== CLIP THUMBNAILS ===== */
 .clip {
-  min-width: 140px;
+  /* min-width: 140px; */
   height: 120px;
-  background: linear-gradient(135deg,
-      var(--color-primary) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -278,7 +298,7 @@
 
 .clip:hover {
   border-color: var(--color-primary);
-  transform: translateY(-4px);
+  /* transform: translateY(-4px); */
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
@@ -286,14 +306,24 @@
   opacity: 1;
 }
 
+.clip.newClip {
+  /*
+   * Created with https://www.css-gradient.com
+   * Gradient link: https://www.css-gradient.com/?c1=f99e66&c2=e8b371&gt=r&gd=dcc
+   */
+  background: transparent !important;
+  border: 2px solid #f99e66;
+}
+
 .clip.selected {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-  background: linear-gradient(135deg,
-      var(--color-primary-dark) 0%,
-      var(--color-accent-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark) 0%,
+    var(--color-accent-dark) 100%
+  );
 }
-
 
 /* ===== UTILITY CLASSES ===== */
 .hidden {
@@ -359,7 +389,7 @@
   gap: 10px;
   align-content: center;
   flex-wrap: nowrap;
-  overflow-x: auto;
+  overflow-x: hidden;
   overflow-y: hidden;
   padding: 10px;
   position: relative;
@@ -386,7 +416,7 @@
 }
 
 .selected {
-  border: 2px solid #FFFFFF;
+  border: 2px solid #ffffff;
 }
 
 .hidden {
@@ -402,4 +432,104 @@
     min-width: 80px;
     height: 60px;
   }
+}
+
+#helpBtn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  text-align: center;
+  line-height: 1.15;
+}
+
+#helpBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.45);
+  filter: brightness(1.02);
+}
+
+#helpBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.handle {
+  position: absolute;
+  width: 4px;
+  height: 26px;
+  background: #ff6b6b;
+  border: 4px solid #d63031;
+  border-radius: 4px;
+  cursor: ew-resize;
+  z-index: 10;
+  transition: background 0.2s;
+}
+
+.handle:hover {
+  background: #ff5252;
+}
+
+#mirrorHolder {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
+  border: none;
+  border-radius: var(--radius-md);
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+#mirrorHolder:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
+}
+
+#mirrorHolder:active {
+  transform: translateY(0);
+}
+
+#mirrorHolder:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#mirrorHolder svg {
+  color: white;
+  font-size: 24px;
+}
+
+#mirrorHolder svg {
+  font-size: 16px;
 }

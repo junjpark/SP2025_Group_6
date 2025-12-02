@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flyway-config
+data:
+  flyway.conf: |
+    flyway.url=jdbc:postgresql://postgres:5432/cory
+    flyway.user=postgres
+    flyway.password=postgres
+    flyway.locations=filesystem:/flyway/sql
+
