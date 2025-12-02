@@ -484,3 +484,52 @@
 .handle:hover {
   background: #ff5252;
 }
+
+#mirrorHolder {
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
+  border: none;
+  border-radius: var(--radius-md);
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+#mirrorHolder:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
+}
+
+#mirrorHolder:active {
+  transform: translateY(0);
+}
+
+#mirrorHolder:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+#mirrorHolder svg {
+  color: white;
+  font-size: 24px;
+}
+
+#mirrorHolder svg {
+  font-size: 16px;
+}
