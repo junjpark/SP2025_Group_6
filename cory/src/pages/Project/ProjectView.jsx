@@ -476,6 +476,7 @@ const ProjectView = () => {
   useEffect(() => {
     if (!isDragging) return;
     const handleMouseMoving = (e) => {
+
       const newPercent = calculatePercent(
         dragInitStart.current,
         dragInitEnd.current,
@@ -773,6 +774,42 @@ const ProjectView = () => {
     fetchAnnotation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentClipId]);
+
+  // Click outside to deselect clip and hide resize handles
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      const projectFooter = document.getElementById('projectViewFooter');
+
+      // If click is completely outside the footer, clear selection
+      if (projectFooter && !projectFooter.contains(e.target)) {
+        setCurrentClipBeingDraggedId("xx");
+        setResizing(false);
+        return;
+      }
+
+      // If click is inside footer, check if it's on the active clip or its handles
+      const activeClipId = currentClipBeingDraggedId.charAt(0);
+      const clickedClip = e.target.closest('.clip');
+      const clickedHandle = e.target.closest('.handle');
+
+      // If clicked on a handle or the active clip, don't deselect
+      if (clickedHandle || (clickedClip && clickedClip.dataset.clipId === activeClipId)) {
+        return;
+      }
+
+      // Otherwise, clear the resize handles (clicked on different clip or empty space)
+      setCurrentClipBeingDraggedId("xx");
+      setResizing(false);
+    };
+
+    // Add the event listener
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Cleanup on unmount
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [currentClipBeingDraggedId]);
 
   const clip = () => {
     setNewClipStatus(1);

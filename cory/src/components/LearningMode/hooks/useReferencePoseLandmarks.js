@@ -28,13 +28,15 @@ export const useReferencePoseLandmarks = (projectId, videoElement, isActive) => 
       return;
     }
 
+    let pollInterval = null;
+
     const fetchLandmarks = async () => {
       try {
         setLoading(true);
         console.log('[ReferenceLandmarks] Fetching landmarks for project:', projectId);
         
-        // Enable parallel processing for ~10x faster landmark processing
-        const url = `/api/projects/${projectId}/landmarks?sample_rate=1&use_parallel=true&num_workers=12`;
+        // Disable parallel processing for faster, simpler processing
+        const url = `/api/projects/${projectId}/landmarks?sample_rate=1&use_parallel=false`;
         console.log('[ReferenceLandmarks] API URL:', url);
         
         const response = await fetch(url, {
@@ -45,9 +47,46 @@ export const useReferencePoseLandmarks = (projectId, videoElement, isActive) => 
 
         if (response.ok) {
           const data = await response.json();
+          
+          // Check if processing is still in progress
+          if (data.status === "processing") {
+            console.log('[ReferenceLandmarks] Processing in background, will poll...');
+            setError('Processing video in background...');
+            
+            // Poll every 2 seconds for completion
+            if (!pollInterval) {
+              pollInterval = setInterval(async () => {
+                console.log('[ReferenceLandmarks] Polling for completion...');
+                try {
+                  const pollResponse = await fetch(url, { credentials: 'include' });
+                  if (pollResponse.ok) {
+                    const pollData = await pollResponse.json();
+                    if (pollData.status !== "processing") {
+                      // Processing complete or failed
+                      clearInterval(pollInterval);
+                      if (Array.isArray(pollData)) {
+                        console.log('[ReferenceLandmarks] ✓ Loaded', pollData.length, 'frames of landmarks');
+                        setAllLandmarks(pollData);
+                        setError(null);
+                        setLoading(false);
+                      } else {
+                        console.error('[ReferenceLandmarks] Processing failed:', pollData);
+                        setError('Processing failed');
+                        setLoading(false);
+                      }
+                    }
+                  }
+                } catch (err) {
+                  console.error('[ReferenceLandmarks] Polling error:', err);
+                }
+              }, 2000);
+            }
+          } else {
+            // Data is ready
           console.log('[ReferenceLandmarks] ✓ Loaded', data.length, 'frames of landmarks');
           setAllLandmarks(data);
           setError(null);
+          }
         } else {
           const errorText = await response.text();
           console.error('[ReferenceLandmarks] Failed to fetch:', response.status, errorText);
@@ -57,11 +96,20 @@ export const useReferencePoseLandmarks = (projectId, videoElement, isActive) => 
         console.error('[ReferenceLandmarks] Error fetching landmarks:', err);
         setError(err.message);
       } finally {
+        if (!pollInterval) {
         setLoading(false);
+        }
       }
     };
 
     fetchLandmarks();
+    
+    // Cleanup polling on unmount
+    return () => {
+      if (pollInterval) {
+        clearInterval(pollInterval);
+      }
+    };
   }, [projectId, isActive]);
 
   // Sync landmarks with video playback
