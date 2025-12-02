@@ -24,12 +24,11 @@ const ProjectView = () => {
   const [annotationText, setAnnotationText] = useState("");
   const [runTutorial, setRunTutorial] = useState(false);
 
-  
-  const dragInitStart = useRef(0)
-  const dragInitEnd = useRef(0)
-  const dragInitX = useRef(0)
-  const dragInitWidth = useRef(0)
-  const [isDragging, setIsDragging] = useState(null) // { clipId, type: 'left'|'right'|'move' }
+  const dragInitStart = useRef(0);
+  const dragInitEnd = useRef(0);
+  const dragInitX = useRef(0);
+  const dragInitWidth = useRef(0);
+  const [isDragging, setIsDragging] = useState(null); // { clipId, type: 'left'|'right'|'move' }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isInRow = (row) => {
@@ -264,7 +263,7 @@ const ProjectView = () => {
   const updateTimeLastEdited = async () => {
     try {
       const response = await fetch(
-        `/api/projects/${projectId}/update-timestamp`,
+        `/api/projects/${projectId}/update-last-edited`,
         {
           method: "POST",
           credentials: "include",
@@ -326,9 +325,51 @@ const ProjectView = () => {
     const width = (clip.end - clip.start) * (19 / 20);
     const left = clip.start * (19 / 20) + 2.5;
     // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    if(id == currentClipBeingDraggedId.charAt(0)){
+    if (id == currentClipBeingDraggedId.charAt(0)) {
       return (
         <>
+          <div
+            style={{
+              position: "absolute",
+              bottom: `${top * 2}px`,
+              height: `${height * 2}px`,
+              left: `${left}%`,
+              width: `${width}%`,
+            }}
+            key={id}
+            role="button"
+            onClick={handleClick}
+            data-clip-id={id}
+            tabIndex={id + 1}
+            onKeyDown={(e) => handleKeyDown(e, id)}
+            onDoubleClick={() => {
+              handleResize(id);
+            }}
+            className="clip"
+          ></div>
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+          <div
+            className="handle handle-left"
+            style={{
+              bottom: `${top * 2 - 3}px`,
+              left: `${left}%`,
+            }}
+            onMouseDown={mouseDownOnHandle("left")}
+          />
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+          <div
+            className="handle handle-right"
+            style={{
+              bottom: `${top * 2 - 3}px`,
+              left: `${left + width - 0.4}%`,
+            }}
+            onMouseDown={mouseDownOnHandle("right")}
+          />
+        </>
+      );
+    }
+    return (
+      <>
         <div
           style={{
             position: "absolute",
@@ -343,52 +384,9 @@ const ProjectView = () => {
           data-clip-id={id}
           tabIndex={id + 1}
           onKeyDown={(e) => handleKeyDown(e, id)}
-          onDoubleClick={() => {handleResize(id);}}
+          onDoubleClick={() => handleResize(id)}
           className="clip"
-        >
-        </div>
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-          <div
-            className="handle handle-left"
-            style={{
-              bottom: `${top * 2 - 3}px`,
-              left: `${left}%`,
-            }}
-            onMouseDown={mouseDownOnHandle('left')}
-          />
-          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
-          <div
-            className="handle handle-right"
-            style={{
-              bottom: `${top * 2 - 3}px`,
-              left: `${left + width - 0.4}%`,
-            }}
-            onMouseDown={mouseDownOnHandle('right')}
-          />
-        </>
-      );
-    }
-    return (
-      <>
-      <div
-        style={{
-          position: "absolute",
-          bottom: `${top * 2}px`,
-          height: `${height * 2}px`,
-          left: `${left}%`,
-          width: `${width}%`,
-        }}
-        key={id}
-        role="button"
-        onClick={handleClick}
-        data-clip-id={id}
-        tabIndex={id + 1}
-        onKeyDown={(e) => handleKeyDown(e, id)}
-        onDoubleClick={() => handleResize(id)}
-
-        className="clip"
-      >
-      </div>
+        ></div>
       </>
     );
   };
@@ -469,107 +467,118 @@ const ProjectView = () => {
   }
 
   useEffect(() => {
-    if(!isDragging) return
+    if (!isDragging) return;
     const handleMouseMoving = (e) => {
       console.table({
         dragInitStart: dragInitStart.current,
         dragInitEnd: dragInitEnd.current,
         dragInitX: dragInitX.current,
         dragInitWidth: dragInitWidth.current,
-        clientX: e.clientX
+        clientX: e.clientX,
       });
-      const newPercent = calculatePercent(dragInitStart.current, dragInitEnd.current, dragInitX.current, dragInitWidth.current, e.clientX)
+      const newPercent = calculatePercent(
+        dragInitStart.current,
+        dragInitEnd.current,
+        dragInitX.current,
+        dragInitWidth.current,
+        e.clientX
+      );
       const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
       const oldClip = clips.get(clipId);
       let newClips = new Map(clips);
       newClips.delete(clipId);
-      let start = oldClip.start
-      let end = oldClip.end
-      let resizedClip
-      if (isDragging.type === 'left') {
-        let deltaPercent = newPercent - start
-        resizedClip = handleMoveLeft(deltaPercent)
-      } else if (isDragging.type === 'right') {
-        let deltaPercent = newPercent - end
-        resizedClip = handleMoveRight(deltaPercent)
-      } else if (isDragging.type === 'move') {
+      let start = oldClip.start;
+      let end = oldClip.end;
+      let resizedClip;
+      if (isDragging.type === "left") {
+        let deltaPercent = newPercent - start;
+        resizedClip = handleMoveLeft(deltaPercent);
+      } else if (isDragging.type === "right") {
+        let deltaPercent = newPercent - end;
+        resizedClip = handleMoveRight(deltaPercent);
+      } else if (isDragging.type === "move") {
         //updates = handleMove(deltaX, containerWidth)
-        return
+        return;
       } else {
-        return
+        return;
       }
       addClip(resizedClip.start, resizedClip.end, newClips, clipId);
-    }
-  
-    const handleMouseUp = () => {
-      setIsDragging(null)
-    }
+    };
 
-    window.addEventListener('mousemove', handleMouseMoving)
-    window.addEventListener('mouseup', handleMouseUp)
+    const handleMouseUp = () => {
+      setIsDragging(null);
+    };
+
+    window.addEventListener("mousemove", handleMouseMoving);
+    window.addEventListener("mouseup", handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMoving)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
+      window.removeEventListener("mousemove", handleMouseMoving);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isDragging])
+  }, [isDragging]);
 
   const mouseDownOnHandle = (side) => (e) => {
-    initializeDrag(side, e)
-  }
+    initializeDrag(side, e);
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const mouseDownOnClip = (clipId) => (e) => {
     const activeClipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    if (activeClipId === clipId && !e.target.closest('.handle')) {
-      initializeDrag('move', e)
+    if (activeClipId === clipId && !e.target.closest(".handle")) {
+      initializeDrag("move", e);
     }
-  }
+  };
 
   const initializeDrag = (type, e) => {
     e.preventDefault();
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    const clip = clips.get(clipId)
-    if (!clip) return
-    setIsDragging({ clipId, type })
-    dragInitX.current = e.clientX
-    dragInitStart.current = clip.start
-    dragInitEnd.current = clip.end
-    let target = e.currentTarget
-    if(type === 'left'){
-      target = target.previousElementSibling
+    const clip = clips.get(clipId);
+    if (!clip) return;
+    setIsDragging({ clipId, type });
+    dragInitX.current = e.clientX;
+    dragInitStart.current = clip.start;
+    dragInitEnd.current = clip.end;
+    let target = e.currentTarget;
+    if (type === "left") {
+      target = target.previousElementSibling;
+    } else if (type === "right") {
+      target = target.previousElementSibling.previousElementSibling;
     }
-    else if(type === 'right'){
-      target = target.previousElementSibling.previousElementSibling
-    }
-    console.log(target)
+    console.log(target);
     dragInitWidth.current = target.getBoundingClientRect().width;
-  }
+  };
 
   const handleMoveLeft = (deltaPercent) => {
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    const clip = clips.get(clipId)
-    if (!clip){
-      console.warn("moveLeft failed")
-      return
+    const clip = clips.get(clipId);
+    if (!clip) {
+      console.warn("moveLeft failed");
+      return;
     }
-    let desiredNewStart = clip.start + deltaPercent
-    const actualNewStart = Math.min(Math.max(0, desiredNewStart), clip.end - MIN_CLIP_SIZE)
-    return {'start': actualNewStart, 'end': clip.end}
-  }
+    let desiredNewStart = clip.start + deltaPercent;
+    const actualNewStart = Math.min(
+      Math.max(0, desiredNewStart),
+      clip.end - MIN_CLIP_SIZE
+    );
+    return { start: actualNewStart, end: clip.end };
+  };
 
   const handleMoveRight = (deltaPercent) => {
     const clipId = parseInt(currentClipBeingDraggedId.charAt(0), 10);
-    const clip = clips.get(clipId)
-    if (!clip){
-      console.warn("moveRight failed")
-      return
-    } 
-    let desiredNewEnd = clip.end + deltaPercent
-    const actualNewEnd = Math.max(Math.min(100, desiredNewEnd), clip.start + MIN_CLIP_SIZE)
-    return {'start': clip.start, 'end': actualNewEnd}
-  }
+    const clip = clips.get(clipId);
+    if (!clip) {
+      console.warn("moveRight failed");
+      return;
+    }
+    let desiredNewEnd = clip.end + deltaPercent;
+    const actualNewEnd = Math.max(
+      Math.min(100, desiredNewEnd),
+      clip.start + MIN_CLIP_SIZE
+    );
+    return { start: clip.start, end: actualNewEnd };
+  };
 
   const moveLeft = () => {
     // console.log(clips)
