@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { FiArrowLeft, FiScissors, FiTrash2 } from "react-icons/fi";
+import Joyride from "react-joyride";
 
 let nextClipId = 3;
 
@@ -19,6 +20,7 @@ const ProjectView = () => {
   const [videoUrl, setVideoUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [annotationText, setAnnotationText] = useState("");
+  const [runTutorial, setRunTutorial] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const isInRow = (row) => {
@@ -48,6 +50,52 @@ const ProjectView = () => {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user } = useAuth(); //this user object tells us what is going on
+
+  const tutorialSteps = [
+    {
+      target: "body",
+      content:
+        "Welcome to the Project Editor! Let's learn how to use the tools.",
+      placement: "center",
+    },
+    {
+      target: "#backToLibraryBtn",
+      content: "Click here to return to your Library.",
+    },
+    {
+      target: "#projectViewVideoPlayer",
+      content:
+        "This is your video preview. It will show the selected clip or full video.",
+    },
+    {
+      target: "#scissorsHolder",
+      content:
+        "Click the scissors to create a new clip. Use arrow keys to adjust the clip boundaries.",
+    },
+    {
+      target: "#projectViewFooter",
+      content:
+        "This timeline shows your video and clips. Click clips to select them.",
+    },
+    {
+      target: "#projectViewFooter",
+      content:
+        "Once you've added clips, you can resize them by clicking near the edges.",
+    },
+    {
+      target: "#deleteHolder",
+      content: "Select a clip and click here to delete it.",
+    },
+    {
+      target: "#annotationPanel",
+      content:
+        "Add notes about your selected clip here. Your annotations are saved automatically.",
+    },
+    {
+      target: "#learningModeBtn",
+      content: "Enter Learning Mode to practice along with your webcam!",
+    },
+  ];
 
   /**
    * This handles when a user changes an annotation
@@ -137,6 +185,10 @@ const ProjectView = () => {
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
     };
   }, [videoUrl]);
+
+  const handleHelpClick = () => {
+    setRunTutorial(true);
+  };
 
   const loadClipsFromDB = async () => {
     try {
@@ -643,6 +695,46 @@ const ProjectView = () => {
     >
       {!isLearningMode && (
         <>
+          <Joyride
+            steps={tutorialSteps}
+            run={runTutorial}
+            continuous
+            showProgress
+            showSkipButton
+            locale={{
+              back: "Back",
+              close: "Close",
+              last: "Finish",
+              next: "Next",
+              skip: "Skip Tutorial",
+            }}
+            styles={{
+              options: {
+                primaryColor: "#7d3bf6ff",
+                zIndex: 10000,
+                backgroundColor: "#fff",
+                overlayColor: "rgba(0, 0, 0, 0.5)",
+                arrowColor: "#fff",
+                textColor: "#333",
+              },
+              tooltip: {
+                borderRadius: 12,
+              },
+              buttonNext: {
+                borderRadius: 8,
+              },
+              buttonBack: {
+                borderRadius: 8,
+                color: "#666",
+              },
+            }}
+            callback={(data) => {
+              const { status } = data;
+              if (status === "finished" || status === "skipped") {
+                setRunTutorial(false);
+              }
+            }}
+          />
           <div id="projectViewEditor">
             <div id="projectViewToolbar">
               <button
@@ -709,6 +801,13 @@ const ProjectView = () => {
               >
                 Learning Mode
               </button>
+              <button
+                id="helpBtn"
+                onClick={handleHelpClick}
+                title="Show tutorial"
+              >
+                Help
+              </button>
             </div>
 
             <div id="projectViewVideoPlayer">
@@ -727,7 +826,7 @@ const ProjectView = () => {
           <div id="projectViewFooter">
             {Array.from(clips).map(([id, clip]) => renderClip(clip, id))}
             {renderNewClip()}
-            <AnnotationPanel headerText="Notes">
+            <AnnotationPanel headerText="Notes" id="annotationPanel">
               <div className="annotation-content">
                 <h2>Annotations</h2>
                 {currentClipId === 0 ? (

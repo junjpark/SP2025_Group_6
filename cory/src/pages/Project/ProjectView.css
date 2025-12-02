@@ -16,9 +16,11 @@
   display: flex;
   gap: var(--spacing-lg);
   padding: var(--spacing-lg);
-  background: linear-gradient(135deg,
-      var(--color-bg-secondary) 0%,
-      var(--color-bg-elevated) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-secondary) 0%,
+    var(--color-bg-elevated) 100%
+  );
   min-height: 0;
   overflow: hidden;
 }
@@ -37,9 +39,11 @@
 }
 
 #scissorsHolder {
-  background: linear-gradient(135deg,
-      var(--color-primary) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   border: none;
   border-radius: var(--radius-md);
   width: 100%;
@@ -56,9 +60,11 @@
 #scissorsHolder:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
-  background: linear-gradient(135deg,
-      var(--color-accent-dark) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
 }
 
 #scissorsHolder:active {
@@ -78,9 +84,11 @@
 }
 
 #deleteHolder {
-  background: linear-gradient(135deg,
-      var(--color-primary) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   border: none;
   border-radius: var(--radius-md);
   width: 100%;
@@ -97,9 +105,11 @@
 #deleteHolder:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.5);
-  background: linear-gradient(135deg,
-      var(--color-accent-dark) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent-dark) 0%,
+    var(--color-accent) 100%
+  );
 }
 
 #deleteHolder:active {
@@ -185,7 +195,7 @@
   box-shadow: var(--shadow-md);
 }
 
-#clipInfo>p {
+#clipInfo > p {
   font-size: 14px;
   font-weight: 600;
   color: var(--color-text-primary);
@@ -262,9 +272,11 @@
 .clip {
   min-width: 140px;
   height: 120px;
-  background: linear-gradient(135deg,
-      var(--color-primary) 0%,
-      var(--color-accent) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 0%,
+    var(--color-accent) 100%
+  );
   border: 2px solid var(--color-border);
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -299,15 +311,17 @@
    * Gradient link: https://www.css-gradient.com/?c1=f99e66&c2=e8b371&gt=r&gd=dcc
    */
   background: transparent !important;
-  border: 2px solid #F99E66;
+  border: 2px solid #f99e66;
 }
 
 .clip.selected {
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
-  background: linear-gradient(135deg,
-      var(--color-primary-dark) 0%,
-      var(--color-accent-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary-dark) 0%,
+    var(--color-accent-dark) 100%
+  );
 }
 
 /* ===== UTILITY CLASSES ===== */
@@ -401,7 +415,7 @@
 }
 
 .selected {
-  border: 2px solid #FFFFFF;
+  border: 2px solid #ffffff;
 }
 
 .hidden {
@@ -417,4 +431,40 @@
     min-width: 80px;
     height: 60px;
   }
+}
+
+#helpBtn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.25);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+  text-align: center;
+  line-height: 1.15;
+}
+
+#helpBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(139, 92, 246, 0.45);
+  filter: brightness(1.02);
+}
+
+#helpBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
